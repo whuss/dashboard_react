@@ -1,8 +1,33 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-<div class="jubotron text-center">
-    <h1>Welcome to Reprolight</h1>
-    <p class="lead">Reprolight PTL dashbord</p>
+
+<div id="content">
+<table style="width:100%">
+    <tr>
+        <th>Device ID</th>
+        <th>Device Mode</th>
+        <th>Device State</th>
+        <th>Lighting Mode</th>
+        <th>Since</th>
+        <th>Lighting Changes</th>
+        <th>Mouse Movements</th>
+        <th>Last Connection</th>
+        <th>Health Status</th>
+    </tr>
+    {% for ptl in dashboard%}
+    <tr>
+    <td> {{ptl.uk_device_sn}}</td>
+    <td><div class="deviceMode {{'NORM' if ptl.device_mode_ind == 'NORM' else 'FULL'}}" data-id="{{ptl.uk_device_sn}}" data-mode="{{ptl.device_mode_ind}}">{{ptl.device_mode_ind}}</div></td>
+    <td><i class="fa fa-lightbulb-o {{'OFF' if ptl.ix_mode_ind == 'OFF' else 'ON'}}"></i></td>
+    <td>{{ptl.ix_mode_ind if ptl.ix_mode_ind else ''}}</td>
+    <td>{{ptl.since if ptl.since else ''}}</td>
+    <td>{{ptl.light_count if ptl.light_count else ''}}</td>
+    <td>{{ptl.mouse_count}}</td>
+    <td>{{ptl.last_update_dtm}}</td>
+    <td><i class="fa fa-heartbeat SICK"></i></td>
+    </tr>
+    {% endfor %}
+</table>
 </div>
 {% endblock %}

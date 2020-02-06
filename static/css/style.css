@@ -1,0 +1,107 @@
+/* -------------------------------------------------------------------- */
+/*                              HEADER                                  */
+/* -------------------------------------------------------------------- */
+
+#header {
+    position: absolute;
+    top: 25px;
+    left: 25px;
+    right: 25px;
+    height: 50px;
+}
+
+#header #logo {
+    float: left
+}
+
+#header #compLogo {
+    float: right;
+}
+
+/* -------------------------------------------------------------------- */
+/*                              CONTENT                                 */
+/* -------------------------------------------------------------------- */
+
+#content {
+    position: absolute;
+    top: 100px;
+    left: 25px;
+    right: 25px;
+    bottom: 25px;
+}
+
+#content #table {
+    font-family: sans-serif;
+}
+
+#content table th {
+    font-size: 12px;
+    height: 25px;
+    color: #fff;
+    text-transform: uppercase;
+    background-color: #fa4251;
+}
+
+#content table td {
+    font-size: 16px;
+    height: 30px;
+    text-align: center;
+    color: grey;
+}
+
+#content table tr:hover {
+    background-color: #f0f0f0;
+}
+
+#content table .deviceMode {
+    margin: auto;
+    height: 25px;
+    width: 80%;
+    vertical-align: middle;
+    line-height: 25px;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+}
+
+#content table i {
+    margin: auto;
+    height: 25px;
+    width: 25px;
+    vertical-align: middle;
+    line-height: 25px;
+    border-radius: 5px;
+    color: white;
+}
+
+.NORM {
+    background-color: #d5d5d5;
+}
+
+.FULL {
+    background-color: #b3d67e;
+}
+
+.NORM:hover {
+    background-color: #a5a5a5;
+}
+
+.FULL:hover {
+    background-color: #88b04b;
+}
+
+.ON {
+    background-color: #b3d67e;
+}
+
+.OFF {
+    background-color: #d5d5d5;
+}
+
+.HEALTHY {
+    background-color: #b3d67e;
+}
+
+.SICK {
+    background-color: #fb6671;
+}
