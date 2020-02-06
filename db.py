@@ -1,5 +1,7 @@
 import sqlalchemy as db
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+
 from datetime import datetime, timedelta
 
 _host: str = "83.175.125.85"
@@ -8,12 +10,20 @@ _password: str = "iGe9kH9j"
 _dbname: str = "bbf_inf_rep"
 
 engine = db.create_engine(f'mysql://{_user}:{_password}@{_host}/{_dbname}')
+
+Base = declarative_base()
+Base.metadata.bind = engine
+
 connection = engine.connect()
 metadata = db.MetaData()
 metadata.reflect(bind=engine)
 
 Session = sessionmaker(bind=engine)
 session = Session()
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Load all tables
+# ----------------------------------------------------------------------------------------------------------------------
 
 device_info = metadata.tables['DeviceInfo']
 lighting_package = metadata.tables['LightingPackage']
@@ -34,28 +44,75 @@ temperatur_package = metadata.tables['TemperaturePackage']
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
+class DeviceInfo(Base):
+    __tablename__ = 'DeviceInfo'
+    __table_args__ = dict(autoload=True)
+
+    device = db.Column('uk_device_sn', key='device')
+    mode = db.Column('device_mode_ind', key='mode')
+    last_update = db.Column('last_update_dtm', key='last_update')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class LightingPackage(Base):
+    __tablename__ = 'LightingPackage'
+    __table_args__ = dict(autoload=True)
+
+    id = db.Column('pk_lighting_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('create_dtm', key='timestamp')
+    mode = db.Column('ix_mode_ind', key='mode')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class MouseGesturePackage(Base):
+    __tablename__ = 'MouseGesturePackage'
+    __table_args__ = dict(autoload=True)
+
+    id = db.Column('pk_mouse_gesture_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('create_dtm', key='timestamp')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class TemperaturePackage(Base):
+    __tablename__ = 'TemperaturePackage'
+    __table_args__ = dict(autoload=True)
+
+    id = db.Column('pk_temperature_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('create_dtm', key='timestamp')
+    temperature = db.Column('temperature_dbl', key='temperature')
+    unit = db.Column('unit_sn', key='unit')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class Dashboard(object):
     def __init__(self):
         # ---- Device query ----
-        self.query_device = session.query(device_info.columns.uk_device_sn)
+        self.query_device = session.query(DeviceInfo.device)
 
         # ---- Info query ----
-        self.query_info = session.query(device_info.columns.uk_device_sn,
-                                        device_info.columns.device_mode_ind,
-                                        device_info.columns.last_update_dtm)
-
+        self.query_info = session.query(DeviceInfo.device,
+                                        DeviceInfo.mode,
+                                        DeviceInfo.last_update)
 
         # ---- Mode query ----
-        lc = lighting_package.columns
-        lastone = db.func.max(lc.pk_lighting_package_id).label('lastone')
-        last_light_query = session.query(lc.ix_device_sn, lastone) \
-                                  .group_by(lc.ix_device_sn)
+        lp = LightingPackage
+        lastone = db.func.max(lp.id).label('lastone')
+        last_light_package = session.query(lp.device, lastone) \
+                                    .group_by(lp.device)
 
-        sq = last_light_query.subquery()
+        sq = last_light_package.subquery()
         # last know operating mode per PTL-device
-        self.query_mode = session.query(lc.ix_device_sn, lc.ix_data_dtm, lc.ix_mode_ind) \
-                                 .join(sq, lc.pk_lighting_package_id == sq.columns.lastone) \
-                                 .group_by(lc.ix_device_sn)
+        self.query_mode = session.query(lp.device, lp.timestamp, lp.mode) \
+                                 .join(sq, sq.columns.lastone == lp.id) \
+                                 .group_by(lp.device)
 
         super().__init__()
 
@@ -63,44 +120,37 @@ class Dashboard(object):
 
     def query_light(self, start_date):
         """number of lighting changes since start_date per PTL-device"""
-        lc = lighting_package.columns
-        return session.query(lc.ix_device_sn, db.func.count(lc).label('light_count')) \
-                      .filter(lc.ix_data_dtm >= start_date) \
-                      .group_by(lc.ix_device_sn) \
+        lp = LightingPackage
+        light_count = db.func.count(lp.id).label('light_count')
+        return session.query(lp.device, light_count) \
+                      .filter(lp.timestamp >= start_date) \
+                      .group_by(lp.device)
 
     # ------------------------------------------------------------------------------------------------------------------
 
     def query_mouse(self, start_date):
-        """number of mause gestures since start_date per PTL-device"""
-        mc = mouse_gesture_package.columns
-        return session.query(mc.ix_device_sn, db.func.count(mc).label('mouse_count')) \
-                      .filter(mc.ix_data_dtm >= start_date) \
-                      .group_by(mc.ix_device_sn)
+        """number of mouse gestures since start_date per PTL-device"""
+        mp = MouseGesturePackage
+        mouse_count = db.func.count(mp.id).label('mouse_count')
+        return session.query(mp.device, mouse_count) \
+                      .filter(mp.timestamp >= start_date) \
+                      .group_by(mp.device)
 
     # ------------------------------------------------------------------------------------------------------------------
 
     def query_dashboard(self, start_date):
         """database query for main information dashboard"""
-        device_sn_info = device_info.columns.uk_device_sn
-
         sq_mode = self.query_mode.subquery()
-        device_sn_mode = sq_mode.columns.ix_device_sn
-
         sq_mouse = self.query_mouse(start_date).subquery()
-        device_sn_mouse = sq_mouse.columns.ix_device_sn
-
         sq_light = self.query_light(start_date).subquery()
-        device_sn_light = sq_light.columns.ix_device_sn
 
-        since = db.func.timediff(db.func.now(), sq_mode.columns.ix_data_dtm).label('since')
+        since = db.func.timediff(db.func.now(), sq_mode.c.timestamp).label('since')
 
-        return self.query_info.outerjoin(sq_mode, device_sn_info == device_sn_mode) \
-                              .add_column(sq_mode.columns.ix_mode_ind) \
-                              .outerjoin(sq_mouse, device_sn_info == device_sn_mouse) \
-                              .add_column(sq_mouse.columns.mouse_count) \
-                              .outerjoin(sq_light, device_sn_info == device_sn_light) \
-                              .add_column(sq_light.columns.light_count) \
-                              .add_column(since)
+        return self.query_info \
+                   .outerjoin(sq_mode, DeviceInfo.device == sq_mode.c.device) \
+                   .outerjoin(sq_mouse, DeviceInfo.device == sq_mouse.c.device) \
+                   .outerjoin(sq_light, DeviceInfo.device == sq_light.c.device) \
+                   .add_columns(sq_mode.c.mode, sq_mouse.c.mouse_count, sq_light.columns.light_count, since)
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -109,6 +159,7 @@ class Dashboard(object):
         return query.all()
 
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 class SensorData(object):
     def __init__(self):
