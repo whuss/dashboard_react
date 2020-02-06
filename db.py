@@ -108,6 +108,41 @@ class Dashboard(object):
         query = self.query_dashboard(start_date)
         return query.all()
 
+# ----------------------------------------------------------------------------------------------------------------------
+
+class SensorData(object):
+    def __init__(self):
+        # ---- Device query ----
+        self.query_device = session.query(device_info.columns.uk_device_sn)
+
+        tp = temperatur_package.columns
+        self.query_temperature = session.query(tp.ix_device_sn,
+                                               db.func.max(tp.ix_data_dtm),
+                                               tp.temperature_dbl,
+                                               tp.unit_sn) \
+                                        .group_by(tp.ix_device_sn)
+
+        super().__init__()
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def current_temperature(self):
+        device_sn_info = device_info.columns.uk_device_sn.label('device_id')
+
+        sq_temperature = self.query_temperature.subquery()
+        device_sn = sq_temperature.columns.ix_device_sn
+
+        temperature = sq_temperature.columns.temperature_dbl.label('temperature')
+        unit = sq_temperature.columns.unit_sn.label('unit')
+
+        return self.query_device \
+                   .outerjoin(sq_temperature, device_sn_info == device_sn) \
+                   .add_column(device_sn_info) \
+                   .add_column(temperature) \
+                   .add_column(unit) \
+                   .all()
+
+
 #start_date = datetime.strptime('2020-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -116,3 +151,7 @@ if __name__ == '__main__':
     dash = Dashboard()
     data = dash.dashboard(start_date)
     print(data[0].keys())
+
+    sensor_data = SensorData()
+    sensor = sensor_data.current_temperature()
+    print(sensor)

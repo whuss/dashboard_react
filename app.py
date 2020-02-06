@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 from data import Articles
 
-from db import Dashboard
+from db import Dashboard, SensorData
 
 import mysql.connector
 import humanfriendly
@@ -70,9 +70,15 @@ def utility_processor():
     def _number(input):
         return input if input else ""
 
+    def _temperature(input, unit="°C"):
+        if not input:
+            return ""
+        return f"{input:.2f}{unit}"
+
     return dict(_str=_str,
                 _time_span=_time_span,
-                _number=_number)
+                _number=_number,
+                _temperature=_temperature)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -89,16 +95,12 @@ def index():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-def index_old():
+@app.route('/sensors')
+def sensors():
+    sensor_data = SensorData()
+    temperature = sensor_data.current_temperature()
 
-
-    return render_template('home.html', dashboard=db_result)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-@app.route('/about')
-def about():
-    return render_template('about.html')
+    return render_template('sensors.html', sensors=temperature)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
