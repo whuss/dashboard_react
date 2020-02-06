@@ -3,10 +3,14 @@
 
 from flask import Flask, render_template
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 
 from data import Articles
 
+from db import Dashboard
+
 import mysql.connector
+import humanfriendly
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -33,37 +37,42 @@ class FusionLink(object):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-db = FusionLink()
+database = FusionLink()
 
-dashboard_sql_query = """SELECT info.uk_device_sn, info.device_mode_ind, info.last_update_dtm, mode.ix_mode_ind,
-       CONCAT(LPAD(HOUR(TIMEDIFF(now(), mode.ix_data_dtm)), 2, '0'), ':', LPAD(MINUTE(TIMEDIFF(now(), mode.ix_data_dtm)), 2, '0'), ':', LPAD(SECOND(TIMEDIFF(now(), mode.ix_data_dtm)), 2, '0')) as since,
-       light.light_count, mouse.mouse_count
-FROM
-bbf_inf_rep.DeviceInfo info
-LEFT JOIN
-(SELECT sub1.ix_device_sn as ix_device_sn, sub1.ix_data_dtm as ix_data_dtm, sub1.ix_mode_ind as ix_mode_ind
-FROM bbf_inf_rep.LightingPackage sub1
-JOIN (SELECT ix_device_sn, ix_data_dtm, MAX(pk_lighting_package_id) as lastone
-FROM bbf_inf_rep.LightingPackage
-GROUP BY ix_device_sn) sub2 on sub1.pk_lighting_package_id = sub2.lastone) as mode
-ON info.uk_device_sn = mode.ix_device_sn
-LEFT JOIN
-(SELECT ix_device_sn, COUNT(*) AS mouse_count
-FROM bbf_inf_rep.MouseGesturePackage
-WHERE ix_data_dtm>='2020-01-01 00:00:00'
-GROUP BY ix_device_sn) as mouse
-ON info.uk_device_sn = mouse.ix_device_sn
-LEFT JOIN
-(SELECT ix_device_sn, COUNT(*) AS light_count
-FROM bbf_inf_rep.LightingPackage
-WHERE ix_data_dtm>='2020-01-01 00:00:00'
-GROUP BY ix_device_sn) as light
-ON info.uk_device_sn = light.ix_device_sn;
-"""
 
-keys = ["uk_device_sn", "device_mode_ind", "last_update_dtm", "ix_mode_ind", "since", "light_count", "mouse_count"]
+sql = "SELECT info.uk_device_sn, info.device_mode_ind, info.last_update_dtm FROM bbf_inf_rep.DeviceInfo info;"
+def example_query(sql):
+    db_result = database.query(sql)
+    return db_result
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 app = Flask(__name__)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+@app.context_processor
+def utility_processor():
+    def _str(input):
+        return input if input else ""
+
+    def _time_span(input):
+        if input:
+            seconds = input.seconds
+            minutes = seconds // 60
+            seconds = seconds % 60
+            hours = minutes // 60
+            minutes = minutes % 60
+            return f"{hours:02}:{minutes:02}:{seconds:02}"
+            #return humanfriendly.format_timespan(input, max_units=2)
+        return ""
+
+    def _number(input):
+        return input if input else ""
+
+    return dict(_str=_str,
+                _time_span=_time_span,
+                _number=_number)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -73,9 +82,15 @@ Articles = Articles()
 
 @app.route('/')
 def index():
-    #sql = "SELECT info.uk_device_sn, info.device_mode_ind, info.last_update_dtm FROM bbf_inf_rep.DeviceInfo info;"
-    db_result = db.query(dashboard_sql_query)
-    db_result = [dict(zip(keys, row)) for row in db_result]
+    dash = Dashboard()
+    start_date = datetime.now() - timedelta(days=7)
+    dashboard = dash.dashboard(start_date)
+    return render_template('home.html', dashboard=dashboard)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+def index_old():
+
 
     return render_template('home.html', dashboard=db_result)
 

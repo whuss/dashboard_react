@@ -20,10 +20,10 @@
     <td> {{ptl.uk_device_sn}}</td>
     <td><div class="deviceMode {{'NORM' if ptl.device_mode_ind == 'NORM' else 'FULL'}}" data-id="{{ptl.uk_device_sn}}" data-mode="{{ptl.device_mode_ind}}">{{ptl.device_mode_ind}}</div></td>
     <td><i class="fa fa-lightbulb-o {{'OFF' if ptl.ix_mode_ind == 'OFF' else 'ON'}}"></i></td>
-    <td>{{ptl.ix_mode_ind if ptl.ix_mode_ind else ''}}</td>
-    <td>{{ptl.since if ptl.since else ''}}</td>
-    <td>{{ptl.light_count if ptl.light_count else ''}}</td>
-    <td>{{ptl.mouse_count}}</td>
+    <td>{{_str(ptl.ix_mode_ind)}}</td>
+    <td>{{_time_span(ptl.since)}}</td>
+    <td>{{_number(ptl.light_count)}}</td>
+    <td>{{_number(ptl.mouse_count)}}</td>
     <td>{{ptl.last_update_dtm}}</td>
     <td><i class="fa fa-heartbeat SICK"></i></td>
     </tr>
