@@ -92,6 +92,48 @@ class TemperaturePackage(Base):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class HumidityPackage(Base):
+    __tablename__ = 'HumidityPackage'
+    __table_args__ = dict(autoload=True)
+
+    id = db.Column('pk_humidity_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('create_dtm', key='timestamp')
+    humidity = db.Column('humidity_dbl', key='humidity')
+    unit = db.Column('unit_sn', key='unit')
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PressurePackage(Base):
+    __tablename__ = 'PressurePackage'
+    __table_args__ = dict(autoload=True)
+
+    id = db.Column('pk_pressure_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('create_dtm', key='timestamp')
+    pressure = db.Column('pressure_dbl', key='pressure')
+    unit = db.Column('unit_sn', key='unit')
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class GasPackage(Base):
+    __tablename__ = 'GasPackage'
+    __table_args__ = dict(autoload=True)
+
+    id = db.Column('pk_gas_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('create_dtm', key='timestamp')
+    gas = db.Column('gas_ind', key='gas')
+    amount = db.Column('amount_dbl', key='amount')
+    unit = db.Column('unit_sn', key='unit')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class Dashboard(object):
     def __init__(self):
         # ---- Device query ----
@@ -150,8 +192,8 @@ class Dashboard(object):
                    .outerjoin(sq_mode, DeviceInfo.device == sq_mode.c.device) \
                    .outerjoin(sq_mouse, DeviceInfo.device == sq_mouse.c.device) \
                    .outerjoin(sq_light, DeviceInfo.device == sq_light.c.device) \
-                   .add_columns(sq_mode.c.mode, sq_mouse.c.mouse_count, sq_light.columns.light_count, since)
-
+                   .add_columns(sq_mode.c.mode, sq_mouse.c.mouse_count, sq_light.columns.light_count, since) \
+                   .order_by(DeviceInfo.device)
     # ------------------------------------------------------------------------------------------------------------------
 
     def dashboard(self, start_date):
@@ -164,38 +206,51 @@ class Dashboard(object):
 class SensorData(object):
     def __init__(self):
         # ---- Device query ----
-        self.query_device = session.query(device_info.columns.uk_device_sn)
+        self.query_device = session.query(DeviceInfo.device)
 
-        tp = temperatur_package.columns
-        self.query_temperature = session.query(tp.ix_device_sn,
-                                               db.func.max(tp.ix_data_dtm),
-                                               tp.temperature_dbl,
-                                               tp.unit_sn) \
-                                        .group_by(tp.ix_device_sn)
+        tp = TemperaturePackage
+        self.sq_temperature = session.query(tp.device, db.func.max(tp.timestamp), tp.temperature, tp.unit) \
+                                     .group_by(tp.device) \
+                                     .subquery()
+
+        hp = HumidityPackage
+        self.sq_humidity = session.query(hp.device, db.func.max(hp.timestamp), hp.humidity, hp.unit) \
+                                  .group_by(hp.device) \
+                                  .subquery()
+
+        pp = PressurePackage
+        self.sq_pressure = session.query(pp.device, db.func.max(pp.timestamp), pp.pressure, pp.unit) \
+                                  .group_by(pp.device) \
+                                  .subquery()
+
+        gp = GasPackage
+        self.sq_gas = session.query(gp.device, db.func.max(gp.timestamp), gp.gas, gp.amount, pp.unit) \
+                             .group_by(gp.device) \
+                             .subquery()
 
         super().__init__()
 
     # ------------------------------------------------------------------------------------------------------------------
 
     def current_temperature(self):
-        device_sn_info = device_info.columns.uk_device_sn.label('device_id')
-
-        sq_temperature = self.query_temperature.subquery()
-        device_sn = sq_temperature.columns.ix_device_sn
-
-        temperature = sq_temperature.columns.temperature_dbl.label('temperature')
-        unit = sq_temperature.columns.unit_sn.label('unit')
+        sq_temperature = self.sq_temperature
+        sq_humidity = self.sq_humidity
+        sq_pressure = self.sq_pressure
+        sq_gas = self.sq_gas
 
         return self.query_device \
-                   .outerjoin(sq_temperature, device_sn_info == device_sn) \
-                   .add_column(device_sn_info) \
-                   .add_column(temperature) \
-                   .add_column(unit) \
+                   .outerjoin(sq_temperature, DeviceInfo.device == sq_temperature.c.device) \
+                   .add_columns(sq_temperature.c.temperature, sq_temperature.c.unit.label('temperature_unit')) \
+                   .outerjoin(sq_humidity, DeviceInfo.device == sq_humidity.c.device) \
+                   .add_columns(sq_humidity.c.humidity, sq_humidity.c.unit.label('humidity_unit')) \
+                   .outerjoin(sq_pressure, DeviceInfo.device == sq_pressure.c.device) \
+                   .add_columns(sq_pressure.c.pressure, sq_pressure.c.unit.label('pressure_unit')) \
+                   .outerjoin(sq_gas, DeviceInfo.device == sq_gas.c.device) \
+                   .add_columns(sq_gas.c.gas, sq_gas.c.amount.label('gas_amount'), sq_gas.c.unit.label('gas_unit')) \
                    .all()
 
-
-#start_date = datetime.strptime('2020-01-01 00:00:00', "%Y-%m-%d %H:%M:%S")
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 if __name__ == '__main__':
     start_date = datetime.now() - timedelta(days=7)

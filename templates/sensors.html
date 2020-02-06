@@ -7,11 +7,19 @@
     <tr>
         <th>Device ID</th>
         <th>Temperature</th>
+        <th>Humidity</th>
+        <th>Pressure</th>
+        <th>Gas</th>
+        <th>Brightness</th>
+        <th>Loundness</th>
     </tr>
     {% for ptl in sensors%}
     <tr>
-    <td> {{ptl.device_id}}</td>
-    <td> {{_temperature(ptl.temperature, ptl.unit)}}</td>
+        <td> {{_str(ptl.device)}}</td>
+        <td> {{_unit(ptl.temperature, ptl.temperature_unit)}}</td>
+        <td> {{_unit(ptl.humidity, ptl.humidity_unit)}}</td>
+        <td> {{_unit(ptl.pressure, ptl.pressure_unit)}}</td>
+        <td> {{ptl.gas}} {{_unit(ptl.gas_amount, ptl.gas_unit)}}</td>
     </tr>
     {% endfor %}
 </table>

@@ -70,15 +70,15 @@ def utility_processor():
     def _number(input):
         return input if input else ""
 
-    def _temperature(input, unit="°C"):
+    def _unit(input, unit):
         if not input:
             return ""
-        return f"{input:.2f}{unit}"
+        return f"{input:.2f} {unit}"
 
     return dict(_str=_str,
                 _time_span=_time_span,
                 _number=_number,
-                _temperature=_temperature)
+                _unit=_unit)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
