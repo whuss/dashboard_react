@@ -43,13 +43,13 @@ class Dashboard(object):
 
 
         # ---- Mode query ----
-
         lc = lighting_package.columns
         lastone = db.func.max(lc.pk_lighting_package_id).label('lastone')
         last_light_query = session.query(lc.ix_device_sn, lastone)
                                         .group_by(lc.ix_device_sn)
 
         sq = last_light_query.subquery()
+        # last know operating mode per PTL-device
         self.query_mode = session.query(lc.ix_device_sn, lc.ix_data_dtm, lc.ix_mode_ind)
                                  .join(sq, lc.pk_lighting_package_id == sq.columns.lastone)
                                  .group_by(lc.ix_device_sn)
@@ -59,6 +59,7 @@ class Dashboard(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     def light_query(self, start_date):
+        """number of lighting changes since start_date per PTL-device"""
         lc = lighting_package.columns
         return session.query(lc.ix_device_sn, db.func.count(lc).label('light_count'))
                         .filter(lc.ix_data_dtm >= start_date)
@@ -67,6 +68,7 @@ class Dashboard(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     def mouse_query(self, start_date):
+        """number of mause gestures since start_date per PTL-device"""
         mc = mouse_gesture_package.columns
         return session.query(mc.ix_device_sn, db.func.count(mc).label('mouse_count'))
                         .filter(mc.ix_data_dtm >= start_date)
@@ -75,6 +77,7 @@ class Dashboard(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     def dashboard_query(self, start_date):
+        """database query for main information dashboard"""
         device_sn_info = device_info.columns.uk_device_sn
 
         sq_mode = self.query_mode.subquery()
