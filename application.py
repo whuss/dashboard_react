@@ -119,6 +119,15 @@ def chart():
     values = [10, 9, 8, 7, 6, 4, 7, 8]
     return render_template('charts.html', values=values, labels=labels, legend=legend)
 
+
+@app.route("/pie_chart")
+def pie_chart():
+    legend = 'Monthly Data'
+    labels = ["January", "February", "March", "April", "May", "June", "July", "August"]
+    values = [10, 9, 8, 7, 6, 4, 7, 8]
+    return render_template('pie_charts.html', values=values, labels=labels, legend=legend)
+
+
 @app.route('/articles')
 def articles():
     return render_template('articles.html', articles = Articles)
