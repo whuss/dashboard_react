@@ -6,12 +6,28 @@
 
 {% block body %}
 <div id="content">
+  <table class="table">
+    <thead class="thead-dark">
+    <tr>
+        <th>Device ID</th>
+        <th>Auto</th>
+        <th>Off</th>
+        <th>Manual</th>
+        <th>Light Shower</th>
+        <th>Chart</th>
+    </tr>
+    </thead>
   {% for ptl in data %}
-
-  <h1>{{ptl["legend"]}}</h1>
-  <!-- bar chart canvas element -->
-  <canvas id="myChart_{{ptl["legend"]}}" width="200" height="200"></canvas>
+  <tr>
+    <td> {{ptl['object'].device}}</td>
+    <td>{{_str(ptl['object'].auto)}}</td>
+    <td>{{_str(ptl['object'].off)}}</td>
+    <td>{{_str(ptl['object'].manual)}}</td>
+    <td>{{_str(ptl['object'].light_shower)}}</td>
+    <td><canvas id="chart_{{ptl["legend"]}}" width="50" height="50"></canvas></td>
+  </tr>
   {% endfor %}
+  </table>
 </div>
 
 
@@ -63,7 +79,7 @@ datasets : [{
 }
 
 // get chart canvas
-var ctx_{{ptl['legend']}} = document.getElementById("myChart_{{ptl['legend']}}").getContext("2d");
+var ctx_{{ptl['legend']}} = document.getElementById("chart_{{ptl['legend']}}").getContext("2d");
 
 // create the chart using the chart canvas
 var myChart_{{ptl['legend']}} = new Chart(ctx_{{ptl['legend']}}, {

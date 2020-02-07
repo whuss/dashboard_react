@@ -322,6 +322,9 @@ class ModeStatistics(object):
         manual: int = 0
         light_shower: int = 0
     
+        def data(self):
+            return [self.auto, self.off, self.manual, self.light_shower]
+    
     # ------------------------------------------------------------------------------------------------------------------
 
     def __init__(self):
