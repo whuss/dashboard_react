@@ -95,6 +95,15 @@ def index():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+@app.route('/statistics/mode')
+def statistics_mode():
+    dash = Dashboard()
+    start_date = datetime.now() - timedelta(days=7)
+    dashboard = dash.dashboard(start_date)
+    return render_template('statistics_mode.html', dashboard=dashboard)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 @app.route('/sensors')
 def sensors():
     sensor_data = SensorData().current_sensor_data()
