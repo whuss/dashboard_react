@@ -1,6 +1,80 @@
 {% extends 'layout.html' %}
 
 {% block body %}
+
+
+<div id="content">
+  <table class="table">
+    <thead class="thead-dark">
+      <tr>
+          <th>Device ID</th>
+          <th>Device Mode</th>
+          <th>Device State</th>
+          <th>Lighting Mode</th>
+          <th>Since</th>
+          <th>Lighting Changes</th>
+          <th>Mouse Movements</th>
+          <th>Last Connection</th>
+          <th>Health Status</th>
+      </tr>
+    </thead>
+      <tr>
+      <td> device</td>
+      <td><div class="deviceMode NORM" data-id="device">NORMAL</div></td>
+      <td><i class="fa fa-lightbulb-o ON"></i></td>
+      <td>3</td>
+      <td>4</td>
+      <td>5</td>
+      <td>6</td>
+      <td>7</td>
+      <td><i class="fa fa-heartbeat HEALTHY"></i></td>
+      </tr>
+      <tr>
+        <td> device3</td>
+        <td><div class="deviceMode NORM" data-id="device">NORMAL</div></td>
+        <td><i class="fa fa-lightbulb-o ON"></i></td>
+        <td>3334</td>
+        <td>asdfas4</td>
+        <td>5sdfasdf</td>
+        <td>6</td>
+        <td>7asdfasdf</td>
+        <td><i class="fa fa-heartbeat HEALTHY"></i></td>
+        </tr>
+        <tr>
+          <td> device3</td>
+          <td><div class="deviceMode NORM" data-id="device">NORMAL</div></td>
+          <td><i class="fa fa-lightbulb-o ON"></i></td>
+          <td>3334</td>
+          <td>asdfas4</td>
+          <td>5sdfasdf</td>
+          <td>6</td>
+          <td>7asdfasdf</td>
+          <td><i class="fa fa-heartbeat HEALTHY"></i></td>
+          </tr>
+          <tr>
+            <td> device3</td>
+            <td><div class="deviceMode NORM" data-id="device">NORMAL</div></td>
+            <td><i class="fa fa-lightbulb-o ON"></i></td>
+            <td>3334</td>
+            <td>asdfas4</td>
+            <td>5sdfasdf</td>
+            <td>6</td>
+            <td>7asdfasdf</td>
+            <td><i class="fa fa-heartbeat HEALTHY"></i></td>
+            </tr>
+  </table>
+</div>
+
+<div class="container">
+  <div class="row">
+    <div class="col">Column</div>
+    <div class="col">Column</div>
+    <div class="w-100"></div>
+    <div class="col">Column</div>
+    <div class="col">Column</div>
+  </div>
+</div>
+
 <h1>Articles</h1>
 <ul class="list-group">
 {% for article in articles%}

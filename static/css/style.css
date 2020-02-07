@@ -23,7 +23,6 @@
 /* -------------------------------------------------------------------- */
 
 #content {
-    position: absolute;
     top: 100px;
     left: 25px;
     right: 25px;
@@ -35,12 +34,7 @@
 }
 
 #content table th {
-    font-size: 12px;
-    height: 25px;
-    color: #fff;
-    text-transform: uppercase;
     text-align: center;
-    background-color: #fa4251;
 }
 
 #content table td {
@@ -48,6 +42,10 @@
     height: 30px;
     text-align: center;
     color: grey;
+}
+
+#content table tr a {
+    color: white;
 }
 
 #content table tr:hover {

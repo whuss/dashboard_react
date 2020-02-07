@@ -2,6 +2,7 @@ import sqlalchemy as db
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 _host: str = "83.175.125.85"
@@ -308,6 +309,50 @@ class SensorData(object):
                    .order_by(DeviceInfo.device) \
                    .order_by(sq_temperature.c.timestamp) \
                    .all()
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class ModeStatistics(object):
+    @dataclass(order=True)
+    class ModeCounts:
+        device: str = field(compare=True)
+        auto: int = 0
+        off: int = 0
+        manual: int = 0
+        light_shower: int = 0
+    
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def __init__(self):
+        query_device = session.query(DeviceInfo.device)
+        
+        lp = LightingPackage
+        sq_mode = session.query(lp.device, lp.mode, db.func.count(lp.mode).label('count')) \
+                 .group_by(lp.mode) \
+                 .group_by(lp.device) \
+                 .order_by(lp.device) \
+                 .subquery()
+
+        self.query_mode = query_device.outerjoin(sq_mode, DeviceInfo.device == sq_mode.c.device) \
+                                      .add_columns(sq_mode.c.mode, sq_mode.c.count) \
+                                      .order_by(DeviceInfo.device)
+    
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _table_to_python(self, table):
+        data = {}
+        for row in table:
+            if row.device not in data:
+                data[row.device] = ModeStatistics.ModeCounts(device=row.device)
+            if row.mode:
+                setattr(data[row.device], row.mode.lower(), row.count)
+        return sorted(data.values())
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def mode_counts(self):
+        return self._table_to_python(self.query_mode.all())
 
 # ----------------------------------------------------------------------------------------------------------------------
 

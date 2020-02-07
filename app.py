@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 from data import Articles
 
-from db import Dashboard, SensorData
+from db import Dashboard, SensorData, ModeStatistics
 
 import mysql.connector
 import humanfriendly
@@ -97,10 +97,9 @@ def index():
 
 @app.route('/statistics/mode')
 def statistics_mode():
-    dash = Dashboard()
-    start_date = datetime.now() - timedelta(days=7)
-    dashboard = dash.dashboard(start_date)
-    return render_template('statistics_mode.html', dashboard=dashboard)
+    data = ModeStatistics().mode_counts()
+    #start_date = datetime.now() - timedelta(days=7)
+    return render_template('statistics_mode.html', data=data)
 
 # ----------------------------------------------------------------------------------------------------------------------
 

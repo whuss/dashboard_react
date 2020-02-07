@@ -4,9 +4,10 @@
 
 <div id="content">
 <table class="table">
+    <thead class="thead-dark">
     <tr>
         <th>Device ID</th>
-        <th>Device Mode</th>
+        <th><a href="/statistics/mode">Device Mode</a></th>
         <th>Device State</th>
         <th>Lighting Mode</th>
         <th>Since</th>
@@ -15,6 +16,7 @@
         <th>Last Connection</th>
         <th>Health Status</th>
     </tr>
+    </thead>
     {% for ptl in dashboard%}
     <tr>
     <td> {{ptl.device}}</td>
