@@ -1,0 +1,19 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+
+<div id="content">
+<table class="table">
+    <tr>
+        <th>Device ID</th>
+        <th>Temperature</th>
+    </tr>
+    {% for ptl in sensors%}
+    <tr>
+        <td> {{_str(ptl.device)}}</td>
+        <td> time series </td>
+    </tr>
+    {% endfor %}
+</table>
+</div>
+{% endblock %}

@@ -97,12 +97,27 @@ def index():
 
 @app.route('/sensors')
 def sensors():
-    sensor_data = SensorData()
-    temperature = sensor_data.current_temperature()
+    sensor_data = SensorData().current_sensor_data()
 
-    return render_template('sensors.html', sensors=temperature)
+    return render_template('sensors.html', sensors=sensor_data)
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+@app.route('/sensors/temperature')
+def sensors_temp():
+    start_date = datetime.now() - timedelta(days=7)
+    sensor_data = SensorData().temperature(start_date)
+
+    return render_template('sensors_temperature.html', sensors=sensor_data)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+@app.route("/simple_chart")
+def chart():
+    legend = 'Monthly Data'
+    labels = ["January", "February", "March", "April", "May", "June", "July", "August"]
+    values = [10, 9, 8, 7, 6, 4, 7, 8]
+    return render_template('charts.html', values=values, labels=labels, legend=legend)
 
 @app.route('/articles')
 def articles():
@@ -117,4 +132,4 @@ def article(id):
 # ----------------------------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

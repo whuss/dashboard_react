@@ -268,7 +268,7 @@ class SensorData(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def current_temperature(self):
+    def current_sensor_data(self):
         sq_temperature = self.sq_temperature
         sq_humidity = self.sq_humidity
         sq_pressure = self.sq_pressure
@@ -289,8 +289,25 @@ class SensorData(object):
                    .add_columns(sq_brightness.c.brightness, sq_brightness.c.unit.label('brightness_unit')) \
                    .outerjoin(sq_loudness, DeviceInfo.device == sq_loudness.c.device) \
                    .add_columns(sq_loudness.c.loudness, sq_loudness.c.unit.label('loudness_unit')) \
+                   .order_by(DeviceInfo.device) \
                    .all()
 
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def temperature(self, since):
+        tp = TemperaturePackage
+        sq_temperature = session.query(tp.device, tp.temperature, tp.unit, tp.timestamp) \
+                                .filter(tp.timestamp >= since) \
+                                .group_by(tp.device) \
+                                .order_by(tp.temperature) \
+                                .subquery()
+
+        return self.query_device \
+                   .outerjoin(sq_temperature, DeviceInfo.device == sq_temperature.c.device) \
+                   .add_columns(sq_temperature.c.temperature, sq_temperature.c.unit, sq_temperature.c.timestamp) \
+                   .order_by(DeviceInfo.device) \
+                   .order_by(sq_temperature.c.timestamp) \
+                   .all()
 
 # ----------------------------------------------------------------------------------------------------------------------
 
