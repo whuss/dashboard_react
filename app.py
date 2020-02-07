@@ -99,15 +99,8 @@ def index():
 def statistics_mode():
     data = ModeStatistics().mode_counts()
     #start_date = datetime.now() - timedelta(days=7)
-    d = data[19]
-
-    dd = [dict(object=mode, legend=mode.device, values=mode.data()) for mode in data]
-
-    #dd=[dict(values=[10, 14, 17, 5], legend=d.device),
-    #    dict(values=[20, 12, 5, 13], legend=data[20].device)]
     labels=["Auto", "Off", "Manual", "Light Shower"]
-    return render_template('statistics_mode_debug.html', data=dd, labels=labels)
-    #return render_template('statistics_mode.html', data=data[0:2])
+    return render_template('statistics_mode.html', data=data, labels=labels)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
