@@ -3,7 +3,7 @@
 {% block body %}
 
 <div id="content">
-<table style="width:100%">
+<table class="table">
     <tr>
         <th>Device ID</th>
         <th>Device Mode</th>
@@ -25,7 +25,7 @@
     <td>{{_number(ptl.light_count)}}</td>
     <td>{{_number(ptl.mouse_count)}}</td>
     <td>{{ptl.last_update}}</td>
-    <td><i class="fa fa-heartbeat SICK"></i></td>
+    <td><i class="fa fa-heartbeat {{'HEALTHY' if ptl.mode else 'SICK'}}"></i></td>
     </tr>
     {% endfor %}
 </table>

@@ -3,7 +3,7 @@
 {% block body %}
 
 <div id="content">
-<table style="width:100%">
+<table class="table">
     <tr>
         <th>Device ID</th>
         <th>Temperature</th>
@@ -11,7 +11,7 @@
         <th>Pressure</th>
         <th>Gas</th>
         <th>Brightness</th>
-        <th>Loundness</th>
+        <!--<th>Loundness</th>-->
     </tr>
     {% for ptl in sensors%}
     <tr>
@@ -20,6 +20,8 @@
         <td> {{_unit(ptl.humidity, ptl.humidity_unit)}}</td>
         <td> {{_unit(ptl.pressure, ptl.pressure_unit)}}</td>
         <td> {{ptl.gas}} {{_unit(ptl.gas_amount, ptl.gas_unit)}}</td>
+        <td> {{_unit(ptl.brightness, ptl.brightness_unit)}}</td>
+        <!--<td> {{_unit(ptl.loudness, ptl.loudness_unit)}}</td>-->
     </tr>
     {% endfor %}
 </table>

@@ -134,6 +134,32 @@ class GasPackage(Base):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class BrightnessPackage(Base):
+    __tablename__ = 'BrightnessPackage'
+    __table_args__ = dict(autoload=True)
+
+    id = db.Column('pk_brightness_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('create_dtm', key='timestamp')
+    brightness = db.Column('brightness_int', key='brightness')
+    unit = db.Column('unit_sn', key='unit')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class LoudnessPackage(Base):
+    __tablename__ = 'LoudnessPackage'
+    __table_args__ = dict(autoload=True)
+
+    id = db.Column('pk_loudness_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('create_dtm', key='timestamp')
+    loudness = db.Column('loudness_dbl', key='loudness')
+    unit = db.Column('unit_sn', key='unit')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class Dashboard(object):
     def __init__(self):
         # ---- Device query ----
@@ -224,9 +250,19 @@ class SensorData(object):
                                   .subquery()
 
         gp = GasPackage
-        self.sq_gas = session.query(gp.device, db.func.max(gp.timestamp), gp.gas, gp.amount, pp.unit) \
+        self.sq_gas = session.query(gp.device, db.func.max(gp.timestamp), gp.gas, gp.amount, gp.unit) \
                              .group_by(gp.device) \
                              .subquery()
+
+        bp = BrightnessPackage
+        self.sq_brightness = session.query(bp.device, db.func.max(bp.timestamp), bp.brightness, bp.unit) \
+                                    .group_by(bp.device) \
+                                    .subquery()
+
+        lp = LoudnessPackage
+        self.sq_loudness = session.query(lp.device, db.func.max(lp.timestamp), lp.loudness, lp.unit) \
+                                  .group_by(lp.device) \
+                                  .subquery()
 
         super().__init__()
 
@@ -237,6 +273,8 @@ class SensorData(object):
         sq_humidity = self.sq_humidity
         sq_pressure = self.sq_pressure
         sq_gas = self.sq_gas
+        sq_brightness = self.sq_brightness
+        sq_loudness = self.sq_loudness
 
         return self.query_device \
                    .outerjoin(sq_temperature, DeviceInfo.device == sq_temperature.c.device) \
@@ -247,7 +285,12 @@ class SensorData(object):
                    .add_columns(sq_pressure.c.pressure, sq_pressure.c.unit.label('pressure_unit')) \
                    .outerjoin(sq_gas, DeviceInfo.device == sq_gas.c.device) \
                    .add_columns(sq_gas.c.gas, sq_gas.c.amount.label('gas_amount'), sq_gas.c.unit.label('gas_unit')) \
+                   .outerjoin(sq_brightness, DeviceInfo.device == sq_brightness.c.device) \
+                   .add_columns(sq_brightness.c.brightness, sq_brightness.c.unit.label('brightness_unit')) \
+                   .outerjoin(sq_loudness, DeviceInfo.device == sq_loudness.c.device) \
+                   .add_columns(sq_loudness.c.loudness, sq_loudness.c.unit.label('loudness_unit')) \
                    .all()
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
