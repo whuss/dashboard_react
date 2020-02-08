@@ -8,6 +8,7 @@ from bokeh.plotting import figure
 from bokeh.resources import INLINE
 from bokeh.util.string import encode_utf8
 from humanfriendly import format_timespan
+from typing import Tuple
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -137,16 +138,14 @@ def time_series_plot(x, y, x_range):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-@app.route('/sensors/temperature')
-def sensors_temp():
-    now = datetime.now()
-    start_date = now - timedelta(days=2)
-    sensor_data = SensorData().temperature(start_date)
 
+def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[datetime, datetime]):
+    start_date, end_date = time_range
     plot_scripts = {}
     plot_divs = {}
     for device, data in sensor_data.items():
-        script, div = time_series_plot(data.timestamp, data[['temperature']].iloc[:,0], x_range=(start_date, datetime.now()))
+        script, div = time_series_plot(data.timestamp, data[[sensor.lower()]].iloc[:, 0],
+                                       x_range=(start_date, end_date))
         plot_scripts[device] = script
         plot_divs[device] = div
 
@@ -157,9 +156,9 @@ def sensors_temp():
     # render template
     html = render_template(
         'sensors_timeseries.html',
-        timespan=humanfriendly.format_timespan(now - start_date, max_units=2),
-        sensor="Temperature",
-        unit="°C",
+        timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
+        sensor=sensor,
+        unit=unit,
         plot_scripts=plot_scripts,
         plot_divs=plot_divs,
         js_resources=js_resources,
@@ -170,36 +169,25 @@ def sensors_temp():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
+@app.route('/sensors/temperature')
+def sensors_temp():
+    now = datetime.now()
+    start_date = now - timedelta(days=2)
+    sensor_data = SensorData().temperature(start_date)
+
+    return create_timeseries(sensor_data, sensor="Temperature", unit="°C", time_range=(start_date, now))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 @app.route('/sensors/brightness')
 def sensors_brightness():
     now = datetime.now()
     start_date = now - timedelta(days=2)
     sensor_data = SensorData().brightness(start_date)
 
-    plot_scripts = {}
-    plot_divs = {}
-    for device, data in sensor_data.items():
-        script, div = time_series_plot(data.timestamp, data[['brightness']].iloc[:, 0], x_range=(start_date, datetime.now()))
-        plot_scripts[device] = script
-        plot_divs[device] = div
-
-    # grab the static resources
-    js_resources = INLINE.render_js()
-    css_resources = INLINE.render_css()
-
-    # render template
-    html = render_template(
-        'sensors_timeseries.html',
-        timespan=humanfriendly.format_timespan(now - start_date, max_units=2),
-        sensor="Brightness",
-        unit="lx",
-        plot_scripts=plot_scripts,
-        plot_divs=plot_divs,
-        js_resources=js_resources,
-        css_resources=css_resources,
-    )
-
-    return encode_utf8(html)
+    return create_timeseries(sensor_data, sensor="Brightness", unit="lx", time_range=(start_date, now))
 
 # ----------------------------------------------------------------------------------------------------------------------
 
