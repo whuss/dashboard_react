@@ -146,7 +146,7 @@ def sensors_temp():
     plot_scripts = {}
     plot_divs = {}
     for device, data in sensor_data.items():
-        script, div = time_series_plot(data.timestamp, data.temperature, x_range=(start_date, datetime.now()))
+        script, div = time_series_plot(data.timestamp, data[['temperature']].iloc[:,0], x_range=(start_date, datetime.now()))
         plot_scripts[device] = script
         plot_divs[device] = div
 
@@ -179,7 +179,7 @@ def sensors_brightness():
     plot_scripts = {}
     plot_divs = {}
     for device, data in sensor_data.items():
-        script, div = time_series_plot(data.timestamp, data.brightness, x_range=(start_date, datetime.now()))
+        script, div = time_series_plot(data.timestamp, data[['brightness']].iloc[:, 0], x_range=(start_date, datetime.now()))
         plot_scripts[device] = script
         plot_divs[device] = div
 
