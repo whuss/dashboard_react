@@ -1,4 +1,5 @@
 import sqlalchemy as db
+import pandas as pd
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -299,16 +300,30 @@ class SensorData(object):
         tp = TemperaturePackage
         sq_temperature = session.query(tp.device, tp.temperature, tp.unit, tp.timestamp) \
                                 .filter(tp.timestamp >= since) \
-                                .group_by(tp.device) \
                                 .order_by(tp.temperature) \
                                 .subquery()
 
-        return self.query_device \
+        data = self.query_device \
                    .outerjoin(sq_temperature, DeviceInfo.device == sq_temperature.c.device) \
                    .add_columns(sq_temperature.c.temperature, sq_temperature.c.unit, sq_temperature.c.timestamp) \
                    .order_by(DeviceInfo.device) \
                    .order_by(sq_temperature.c.timestamp) \
                    .all()
+
+        data = pd.DataFrame(data)
+        data = data.set_index(['device', data.index])
+
+
+        devices = self.query_device.all()
+        data_dict = {}
+        for device in devices:
+            device = device[0]
+            df = data.loc[device]
+            df = df.sort_values(by=['timestamp'])
+            data_dict[device] = df[['timestamp', 'temperature']].dropna()
+
+
+        return data_dict
 
 # ----------------------------------------------------------------------------------------------------------------------
 

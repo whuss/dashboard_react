@@ -1,17 +1,26 @@
 {% extends 'layout.html' %}
 
-{% block body %}
+{% block head %}
+{{ js_resources|indent(4)|safe }}
+{{ css_resources|indent(4)|safe }}
+{% for device, plot_script in plot_scripts.items() %}
+{{ plot_script|indent(4)|safe }}
+{% endfor %}
+{% endblock %}
 
+{% block body %}
 <div id="content">
 <table class="table">
+    <thead class="thead-dark">
     <tr>
         <th>Device ID</th>
         <th>Temperature</th>
     </tr>
-    {% for ptl in sensors%}
+    </thead>
+    {% for device, plot_div in plot_divs.items()%}
     <tr>
-        <td> {{_str(ptl.device)}}</td>
-        <td> time series </td>
+        <td> {{_str(device)}}</td>
+        <td> {{ plot_div|indent(4)|safe }} </td>
     </tr>
     {% endfor %}
 </table>

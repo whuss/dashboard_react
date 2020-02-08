@@ -2,6 +2,12 @@
 # Code from: https://github.com/bradtraversy/myflaskapp
 
 from flask import Flask, render_template, jsonify
+
+from bokeh.embed import components
+from bokeh.plotting import figure
+from bokeh.resources import INLINE
+from bokeh.util.string import encode_utf8
+
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -112,12 +118,48 @@ def sensors():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+def time_series_plot(device, x, y, x_range):
+    if len(x) == 0:
+        return "", ""
+    fig = figure(plot_width=800, plot_height=150, x_range=x_range, x_axis_type='datetime', toolbar_location=None)
+    #fig.sizing_mode = 'scale_width'
+    fig.line(
+        x=x,
+        line_width=1,
+        y=y,
+        line_color='navy'
+    )
+
+    # render template
+    script, div = components(fig)
+    return script, div
+
 @app.route('/sensors/temperature')
 def sensors_temp():
-    start_date = datetime.now() - timedelta(days=7)
+    start_date = datetime.now() - timedelta(days=2)
     sensor_data = SensorData().temperature(start_date)
 
-    return render_template('sensors_temperature.html', sensors=sensor_data)
+    plot_scripts = {}
+    plot_divs = {}
+    for device, data in sensor_data.items():
+        script, div = time_series_plot(device, data.timestamp, data.temperature, x_range=(start_date, datetime.now()))
+        plot_scripts[device] = script
+        plot_divs[device] = div
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    # render template
+    html = render_template(
+        'sensors_temperature.html',
+        plot_scripts=plot_scripts,
+        plot_divs=plot_divs,
+        js_resources=js_resources,
+        css_resources=css_resources,
+    )
+
+    return encode_utf8(html)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -141,6 +183,34 @@ def pie_chart():
 def articles():
     return render_template('articles.html', articles = Articles)
 
+@app.route('/bokeh')
+def bokeh():
+
+    # init a basic bar chart:
+    # http://bokeh.pydata.org/en/latest/docs/user_guide/plotting.html#bars
+    fig = figure(plot_width=600, plot_height=600)
+    fig.line(
+        x=[1, 2, 3, 4],
+        line_width=1,
+        y=[1.7, 2.2, 4.6, 3.9],
+        line_color='navy'
+    )
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    # render template
+    script, div = components(fig)
+    html = render_template(
+        'bokeh.html',
+        plot_script=script,
+        plot_div=div,
+        js_resources=js_resources,
+        css_resources=css_resources,
+    )
+    return encode_utf8(html)
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 @app.route('/article/<string:id>/')
@@ -149,5 +219,5 @@ def article(id):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-#if __name__ == '__main__':
-#    app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
