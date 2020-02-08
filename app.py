@@ -1,7 +1,7 @@
 # Video: https://www.youtube.com/watch?v=zRwy8gtgJ1A
 # Code from: https://github.com/bradtraversy/myflaskapp
 
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -54,7 +54,7 @@ app = Flask(__name__)
 @app.context_processor
 def utility_processor():
     def _str(input):
-        return input if input else ""
+        return str(input) if input else ""
 
     def _time_span(input):
         if input:
@@ -100,7 +100,7 @@ def statistics_mode():
     data = ModeStatistics().mode_counts()
     #start_date = datetime.now() - timedelta(days=7)
     labels=["Auto", "Off", "Manual", "Light Shower"]
-    return render_template('statistics_mode.html', data=data, labels=labels)
+    return render_template('statistics_mode.html', data=data, labels=jsonify(labels))
 
 # ----------------------------------------------------------------------------------------------------------------------
 

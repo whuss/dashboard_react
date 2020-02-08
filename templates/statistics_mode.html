@@ -25,12 +25,11 @@
     <td>{{_str(ptl.off)}}</td>
     <td>{{_str(ptl.manual)}}</td>
     <td>{{_str(ptl.light_shower)}}</td>
-    <td><canvas id="chart_{{ptl.device}}" width="50" height="50"></canvas></td>
+    <td class="chart"><div align="center"><canvas id="chart_{{ptl.device}}" width="50" height="50"></canvas></div></td>
   </tr>
   {% endfor %}
   </table>
 </div>
-
 
 <script>
 chart_colors = {
@@ -48,44 +47,34 @@ Chart.defaults.global.responsive = false;
 
 {% for ptl in data %}
 // define the chart data
-var chartData_{{ptl.device}} = {
+var chartData = {
 datasets : [{
     label: '{{ptl.device}}',
-    fill: true,
-    lineTension: 0.1,
-    borderCapStyle: 'butt',
-    borderDash: [],
-    borderDashOffset: 0.0,
-    borderJoinStyle: 'miter',
-    pointBorderColor: "rgba(75,192,192,1)",
-    pointBackgroundColor: "#fff",
-    pointBorderWidth: 1,
-    pointHoverRadius: 5,
-    pointHoverBackgroundColor: "rgba(75,192,192,1)",
-    pointHoverBorderColor: "rgba(220,220,220,1)",
-    pointHoverBorderWidth: 2,
-    pointRadius: 1,
-    pointHitRadius: 10,
-    data : [{% for item in ptl.data() %}
-              {{item}},
-            {% endfor %}],
+    data : {{_str(ptl.data())}},
     backgroundColor: [
 						chart_colors.green,
 						chart_colors.gray,
 						chart_colors.red,
 						chart_colors.yellow,
     ],
-    spanGaps: false
-}]
+}],
+labels: ["Auto", "Off", "Manual", "Light Shower"]
+}
+
+var opts = { 
+  legend: { 
+    display : false
+  }
 }
 
 // get chart canvas
-var ctx_{{ptl.device}} = document.getElementById("chart_{{ptl.device}}").getContext("2d");
+var ctx = document.getElementById("chart_{{ptl.device}}").getContext("2d");
 
 // create the chart using the chart canvas
-var myChart_{{ptl.device}} = new Chart(ctx_{{ptl.device}}, {
+var myChart = new Chart(ctx, {
 type: 'pie',
-data: chartData_{{ptl.device}},
+data: chartData,
+options: opts,
 });
 {% endfor %}
 </script>
