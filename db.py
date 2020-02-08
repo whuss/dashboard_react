@@ -313,7 +313,6 @@ class SensorData(object):
         data = pd.DataFrame(data)
         data = data.set_index(['device', data.index])
 
-
         devices = self.query_device.all()
         data_dict = {}
         for device in devices:
@@ -322,6 +321,34 @@ class SensorData(object):
             df = df.sort_values(by=['timestamp'])
             data_dict[device] = df[['timestamp', 'temperature']].dropna()
 
+        return data_dict
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def brightness(self, since):
+        bp = BrightnessPackage
+        sq_brightness = session.query(bp.device, bp.brightness, bp.unit, bp.timestamp) \
+                               .filter(bp.timestamp >= since) \
+                               .order_by(bp.brightness) \
+                               .subquery()
+
+        data = self.query_device \
+                   .outerjoin(sq_brightness, DeviceInfo.device == sq_brightness.c.device) \
+                   .add_columns(sq_brightness.c.brightness, sq_brightness.c.unit, sq_brightness.c.timestamp) \
+                   .order_by(DeviceInfo.device) \
+                   .order_by(sq_brightness.c.timestamp) \
+                   .all()
+
+        data = pd.DataFrame(data)
+        data = data.set_index(['device', data.index])
+
+        devices = self.query_device.all()
+        data_dict = {}
+        for device in devices:
+            device = device[0]
+            df = data.loc[device]
+            df = df.sort_values(by=['timestamp'])
+            data_dict[device] = df[['timestamp', 'brightness']].dropna()
 
         return data_dict
 

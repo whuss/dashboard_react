@@ -9,18 +9,19 @@
 {% endblock %}
 
 {% block body %}
+<h1>{{sensor}} data for the last {{timespan}}</h1>
 <div id="content">
 <table class="table">
     <thead class="thead-dark">
     <tr>
         <th>Device ID</th>
-        <th>Temperature</th>
+        <th>{{sensor}}</th>
     </tr>
     </thead>
     {% for device, plot_div in plot_divs.items()%}
     <tr>
         <td> {{_str(device)}}</td>
-        <td> {{ plot_div|indent(4)|safe }} </td>
+        <td><div align="center">{{ plot_div|indent(4)|safe }}</div></td>
     </tr>
     {% endfor %}
 </table>
