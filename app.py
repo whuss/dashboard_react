@@ -1,6 +1,3 @@
-# Video: https://www.youtube.com/watch?v=zRwy8gtgJ1A
-# Code from: https://github.com/bradtraversy/myflaskapp
-
 from flask import Flask, render_template, jsonify
 
 from bokeh.embed import components
@@ -139,12 +136,14 @@ def time_series_plot(x, y, x_range):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[datetime, datetime]):
+def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[datetime, datetime], **kwargs):
+    # If no sensor_key is given, use the lower case sensor name
+    sensor_key = kwargs.get("sensor_key", sensor).lower()
     start_date, end_date = time_range
     plot_scripts = {}
     plot_divs = {}
     for device, data in sensor_data.items():
-        script, div = time_series_plot(data.timestamp, data[[sensor.lower()]].iloc[:, 0],
+        script, div = time_series_plot(data.timestamp, data[[sensor_key]].iloc[:, 0],
                                        x_range=(start_date, end_date))
         plot_scripts[device] = script
         plot_divs[device] = div
@@ -181,6 +180,39 @@ def sensors_temp():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+@app.route('/sensors/humidity')
+def sensors_humidity():
+    now = datetime.now()
+    start_date = now - timedelta(days=2)
+    sensor_data = SensorData().humidity(start_date)
+
+    return create_timeseries(sensor_data, sensor="Humidity", unit="%RH", time_range=(start_date, now))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/sensors/pressure')
+def sensors_pressure():
+    now = datetime.now()
+    start_date = now - timedelta(days=2)
+    sensor_data = SensorData().pressure(start_date)
+
+    return create_timeseries(sensor_data, sensor="Pressure", unit="hPa", time_range=(start_date, now))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/sensors/gas')
+def sensors_gas():
+    now = datetime.now()
+    start_date = now - timedelta(days=2)
+    sensor_data = SensorData().gas(start_date)
+
+    return create_timeseries(sensor_data, sensor="Gas", sensor_key="amount", unit="VOC kOhm", time_range=(start_date, now))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 @app.route('/sensors/brightness')
 def sensors_brightness():
     now = datetime.now()
@@ -209,7 +241,7 @@ def pie_chart():
 
 @app.route('/articles')
 def articles():
-    return render_template('articles.html', articles = Articles)
+    return render_template('articles.html', articles=Articles)
 
 @app.route('/bokeh')
 def bokeh():

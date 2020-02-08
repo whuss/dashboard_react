@@ -64,7 +64,7 @@ class LightingPackage(Base):
 
     id = db.Column('pk_lighting_package_id', db.Integer, key='id', primary_key=True)
     device = db.Column('ix_device_sn', key='device')
-    timestamp = db.Column('create_dtm', key='timestamp')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
     mode = db.Column('ix_mode_ind', key='mode')
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -76,7 +76,7 @@ class MouseGesturePackage(Base):
 
     id = db.Column('pk_mouse_gesture_package_id', db.Integer, key='id', primary_key=True)
     device = db.Column('ix_device_sn', key='device')
-    timestamp = db.Column('create_dtm', key='timestamp')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -87,7 +87,7 @@ class TemperaturePackage(Base):
 
     id = db.Column('pk_temperature_package_id', db.Integer, key='id', primary_key=True)
     device = db.Column('ix_device_sn', key='device')
-    timestamp = db.Column('create_dtm', key='timestamp')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
     temperature = db.Column('temperature_dbl', key='temperature')
     unit = db.Column('unit_sn', key='unit')
 
@@ -100,7 +100,7 @@ class HumidityPackage(Base):
 
     id = db.Column('pk_humidity_package_id', db.Integer, key='id', primary_key=True)
     device = db.Column('ix_device_sn', key='device')
-    timestamp = db.Column('create_dtm', key='timestamp')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
     humidity = db.Column('humidity_dbl', key='humidity')
     unit = db.Column('unit_sn', key='unit')
 
@@ -114,7 +114,7 @@ class PressurePackage(Base):
 
     id = db.Column('pk_pressure_package_id', db.Integer, key='id', primary_key=True)
     device = db.Column('ix_device_sn', key='device')
-    timestamp = db.Column('create_dtm', key='timestamp')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
     pressure = db.Column('pressure_dbl', key='pressure')
     unit = db.Column('unit_sn', key='unit')
 
@@ -128,7 +128,7 @@ class GasPackage(Base):
 
     id = db.Column('pk_gas_package_id', db.Integer, key='id', primary_key=True)
     device = db.Column('ix_device_sn', key='device')
-    timestamp = db.Column('create_dtm', key='timestamp')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
     gas = db.Column('gas_ind', key='gas')
     amount = db.Column('amount_dbl', key='amount')
     unit = db.Column('unit_sn', key='unit')
@@ -142,7 +142,7 @@ class BrightnessPackage(Base):
 
     id = db.Column('pk_brightness_package_id', db.Integer, key='id', primary_key=True)
     device = db.Column('ix_device_sn', key='device')
-    timestamp = db.Column('create_dtm', key='timestamp')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
     brightness = db.Column('brightness_int', key='brightness')
     unit = db.Column('unit_sn', key='unit')
 
@@ -155,7 +155,7 @@ class LoudnessPackage(Base):
 
     id = db.Column('pk_loudness_package_id', db.Integer, key='id', primary_key=True)
     device = db.Column('ix_device_sn', key='device')
-    timestamp = db.Column('create_dtm', key='timestamp')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
     loudness = db.Column('loudness_dbl', key='loudness')
     unit = db.Column('unit_sn', key='unit')
 
@@ -296,6 +296,22 @@ class SensorData(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def _timeseries(self, data, sensor: str):
+        data = pd.DataFrame(data)
+        data = data.set_index(['device', data.index])
+
+        devices = self.query_device.all()
+        data_dict = {}
+        for device in devices:
+            device = device[0]
+            df = data.loc[device]
+            df = df.sort_values(by=['timestamp'])
+            data_dict[device] = df[['timestamp', sensor]].dropna()
+
+        return data_dict
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def temperature(self, since):
         tp = TemperaturePackage
         sq_temperature = session.query(tp.device, tp.temperature, tp.unit, tp.timestamp) \
@@ -310,18 +326,7 @@ class SensorData(object):
                    .order_by(sq_temperature.c.timestamp) \
                    .all()
 
-        data = pd.DataFrame(data)
-        data = data.set_index(['device', data.index])
-
-        devices = self.query_device.all()
-        data_dict = {}
-        for device in devices:
-            device = device[0]
-            df = data.loc[device]
-            df = df.sort_values(by=['timestamp'])
-            data_dict[device] = df[['timestamp', 'temperature']].dropna()
-
-        return data_dict
+        return self._timeseries(data, 'temperature')
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -339,18 +344,61 @@ class SensorData(object):
                    .order_by(sq_brightness.c.timestamp) \
                    .all()
 
-        data = pd.DataFrame(data)
-        data = data.set_index(['device', data.index])
+        return self._timeseries(data, 'brightness')
 
-        devices = self.query_device.all()
-        data_dict = {}
-        for device in devices:
-            device = device[0]
-            df = data.loc[device]
-            df = df.sort_values(by=['timestamp'])
-            data_dict[device] = df[['timestamp', 'brightness']].dropna()
+# ------------------------------------------------------------------------------------------------------------------
 
-        return data_dict
+    def humidity(self, since):
+        hp = HumidityPackage
+        sq_humidity = session.query(hp.device, hp.humidity, hp.unit, hp.timestamp) \
+                             .filter(hp.timestamp >= since) \
+                             .order_by(hp.humidity) \
+                             .subquery()
+
+        data = self.query_device \
+                   .outerjoin(sq_humidity, DeviceInfo.device == sq_humidity.c.device) \
+                   .add_columns(sq_humidity.c.humidity, sq_humidity.c.unit, sq_humidity.c.timestamp) \
+                   .order_by(DeviceInfo.device) \
+                   .order_by(sq_humidity.c.timestamp) \
+                   .all()
+
+        return self._timeseries(data, 'humidity')
+
+# ------------------------------------------------------------------------------------------------------------------
+
+    def pressure(self, since):
+        pp = PressurePackage
+        sq_pressure = session.query(pp.device, pp.pressure, pp.unit, pp.timestamp) \
+                             .filter(pp.timestamp >= since) \
+                             .order_by(pp.pressure) \
+                             .subquery()
+
+        data = self.query_device \
+                   .outerjoin(sq_pressure, DeviceInfo.device == sq_pressure.c.device) \
+                   .add_columns(sq_pressure.c.pressure, sq_pressure.c.unit, sq_pressure.c.timestamp) \
+                   .order_by(DeviceInfo.device) \
+                   .order_by(sq_pressure.c.timestamp) \
+                   .all()
+
+        return self._timeseries(data, 'pressure')
+
+# ------------------------------------------------------------------------------------------------------------------
+
+    def gas(self, since):
+        gp = GasPackage
+        sq_gas = session.query(gp.device, gp.gas, gp.amount, gp.unit, gp.timestamp) \
+                        .filter(gp.timestamp >= since) \
+                        .order_by(gp.gas) \
+                        .subquery()
+
+        data = self.query_device \
+                   .outerjoin(sq_gas, DeviceInfo.device == sq_gas.c.device) \
+                   .add_columns(sq_gas.c.gas, sq_gas.c.unit, sq_gas.c.amount, sq_gas.c.timestamp) \
+                   .order_by(DeviceInfo.device) \
+                   .order_by(sq_gas.c.timestamp) \
+                   .all()
+
+        return self._timeseries(data, 'amount')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
