@@ -1,8 +1,11 @@
 from flask import Flask, render_template, jsonify
 
+from bokeh.core.enums import Dimensions
 from bokeh.embed import components
 from bokeh.plotting import figure
 from bokeh.resources import INLINE
+from bokeh.models import ColumnDataSource
+from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
 from bokeh.util.string import encode_utf8
 from humanfriendly import format_timespan
 from typing import Tuple
@@ -12,7 +15,7 @@ from datetime import datetime, timedelta
 
 from data import Articles
 
-from db import Dashboard, SensorData, ModeStatistics
+from db import Dashboard, SensorData, ModeStatistics, MouseData
 
 import mysql.connector
 import humanfriendly
@@ -103,9 +106,42 @@ def index():
 @app.route('/statistics/mode')
 def statistics_mode():
     data = ModeStatistics().mode_counts()
-    #start_date = datetime.now() - timedelta(days=7)
     labels=["Auto", "Off", "Manual", "Light Shower"]
     return render_template('statistics_mode.html', data=data, labels=jsonify(labels))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+def histogram_plot(data):
+    if len(x) == 0:
+        return "", ""
+    fig = figure(plot_width=150, plot_height=150,
+                 x_axis_label="Gesture length",
+                 y_axis_type='Number of Mouse gestures',
+                 toolbar_location=None)
+    #fig.sizing_mode = 'scale_width'
+    fig.line(
+        x=x,
+        line_width=1,
+        y=y,
+        line_color='navy'
+    )
+
+    # render template
+    script, div = components(fig)
+    return script, div
+
+@app.route('/statistics/mouse')
+def statistics_mouse():
+    start_date = datetime.now() - timedelta(days=2)
+    mouse_data = MouseData().gesture_data(start_date)
+    statistics_data = {}
+    for device, data in mouse_data.items():
+        if data.count()[0] > 0:
+            statistics_data[device] = data.describe().to_html()
+        else:
+            statistics_data[device] = "No data available"
+
+    return render_template("statistics_mouse.html", data=statistics_data)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -120,7 +156,12 @@ def sensors():
 def time_series_plot(x, y, x_range):
     if len(x) == 0:
         return "", ""
-    fig = figure(plot_width=800, plot_height=150, x_range=x_range, x_axis_type='datetime', toolbar_location=None)
+    fig = figure(plot_width=800, plot_height=180, x_range=x_range, x_axis_type='datetime', toolbar_location="right")
+    fig.toolbar.logo = None
+    fig.tools = [WheelZoomTool(dimensions=Dimensions.width),
+                 PanTool(dimensions=Dimensions.width),
+                 ResetTool(),
+                 SaveTool()]
     #fig.sizing_mode = 'scale_width'
     fig.line(
         x=x,

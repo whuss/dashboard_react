@@ -77,6 +77,12 @@ class MouseGesturePackage(Base):
     id = db.Column('pk_mouse_gesture_package_id', db.Integer, key='id', primary_key=True)
     device = db.Column('ix_device_sn', key='device')
     timestamp = db.Column('ix_data_dtm', key='timestamp')
+    gesture_start = db.Column('gesture_start_dtm', key='gesture_start')
+    gesture_end = db.Column('gesture_end_dtm', key='gesture_end')
+    event_count = db.Column('event_count_int', key='event_count')
+    gesture_distance = db.Column('gesture_distance_dbl', key='gesture_distance')
+    gesture_speed = db.Column('gesture_speed_dbl', key='gesture_speed')
+    gesture_deviation = db.Column('gesture_deviation_dbl', key='gesture_deviation')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -446,6 +452,43 @@ class ModeStatistics(object):
 
     def mode_counts(self):
         return self._table_to_python(self.query_mode.all())
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class MouseData(object):
+    def __init__(self):
+        # ---- Device query ----
+        self.query_device = session.query(DeviceInfo.device)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def gesture_data(self, since):
+        mgp = MouseGesturePackage
+        sq_gesture = session.query(mgp.device, mgp.timestamp, mgp.gesture_start, mgp.gesture_end,
+                                   mgp.gesture_distance, mgp.gesture_speed, mgp.gesture_deviation) \
+                            .filter(mgp.timestamp >= since) \
+                            .subquery()
+
+        query = self.query_device\
+                    .outerjoin(sq_gesture, DeviceInfo.device == sq_gesture.c.device) \
+                    .add_columns(sq_gesture.c.timestamp, sq_gesture.c.gesture_start,
+                                 sq_gesture.c.gesture_end, sq_gesture.c.gesture_distance,
+                                 sq_gesture.c.gesture_speed, sq_gesture.c.gesture_deviation) \
+                    .order_by(DeviceInfo.device)
+
+        data = pd.DataFrame(query.all())
+        data = data.set_index(['device', data.index])
+
+        devices = self.query_device.all()
+        data_dict = {}
+        for device in devices:
+            device = device[0]
+            df = data.loc[device]
+            df = df.sort_values(by=['timestamp'])
+            data_dict[device] = df.dropna()
+
+        return data_dict
 
 # ----------------------------------------------------------------------------------------------------------------------
 

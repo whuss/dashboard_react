@@ -1,0 +1,26 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+<script src={{ url_for('static', filename = 'Chart.min.js') }}></script>
+{% endblock %}
+
+{% block body %}
+<div id="content">
+  <h1>Mouse gesture statistics</h1>
+  <table class="table">
+    <thead class="thead-dark">
+    <tr>
+        <th>Device ID</th>
+        <th>Mouse gesture</th>
+    </tr>
+    </thead>
+  {% for device, statistics_data in data.items() %}
+  <tr>
+    <td> {{device}}</td>
+    <td><div align="center">{{statistics_data|safe}}</div></td>
+  </tr>
+  {% endfor %}
+  </table>
+</div>
+{% endblock %}
+  
