@@ -11,7 +11,7 @@
 {% block body %}
 <h1>{{sensor}} data for the last {{timespan}}</h1>
 <div id="content">
-<table class="table">
+<table id="data-table" class="table">
     <thead class="thead-dark">
     <tr>
         <th>Device ID</th>
@@ -20,10 +20,14 @@
     </thead>
     {% for device, plot_div in plot_divs.items()%}
     <tr>
-        <td> {{_str(device)}}</td>
+        <th scope="row"> {{_str(device)}}</th>
         <td><div align="center">{{ plot_div|indent(4)|safe }}</div></td>
     </tr>
     {% endfor %}
 </table>
 </div>
-{% endblock %}
+{% endblock body %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+{% endblock script %}

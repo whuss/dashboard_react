@@ -7,7 +7,7 @@
 {% block body %}
 <div id="content">
   <h1>Relative frequence of Operation modes</h1>
-  <table class="table">
+  <table id="data-table" class="table">
     <thead class="thead-dark">
     <tr>
         <th>Device ID</th>
@@ -20,7 +20,7 @@
     </thead>
   {% for ptl in data %}
   <tr>
-    <td> {{ptl.device}}</td>
+    <th scope="row"> {{ptl.device}}</th>
     <td>{{_str(ptl.auto)}}</td>
     <td>{{_str(ptl.off)}}</td>
     <td>{{_str(ptl.manual)}}</td>
@@ -61,8 +61,8 @@ datasets : [{
 labels: ["Auto", "Off", "Manual", "Light Shower"]
 }
 
-var opts = { 
-  legend: { 
+var opts = {
+  legend: {
     display : false
   }
 }
@@ -78,5 +78,8 @@ options: opts,
 });
 {% endfor %}
 </script>
-{% endblock %}
-  
+{% endblock body %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+{% endblock script %}

@@ -1,4 +1,5 @@
 from flask import Flask, render_template, jsonify
+from flask_table import Table, Col
 
 from bokeh.core.enums import Dimensions
 from bokeh.embed import components
@@ -263,6 +264,28 @@ def sensors_brightness():
     return create_timeseries(sensor_data, sensor="Brightness", unit="lx", time_range=(start_date, now))
 
 # ----------------------------------------------------------------------------------------------------------------------
+# Test routes
+# ----------------------------------------------------------------------------------------------------------------------
+
+# Declare your table
+class ItemTable(Table):
+    name = Col('Name')
+    description = Col('Description')
+
+# Get some objects
+class Item(object):
+    def __init__(self, name, description):
+        self.name = name
+        self.description = description
+items = [Item('Name1', 'Description1'),
+         Item('Name2', 'Description2'),
+         Item('Name3', 'Description3')]
+
+@app.route("/table_test")
+def table_test():
+
+    table = ItemTable(items)
+    return render_template("table.html", table=table)
 
 @app.route("/simple_chart")
 def chart():

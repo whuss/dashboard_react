@@ -1,10 +1,9 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-
 <div id="content">
 <h1>Latest environment sensor readings</h1>
-<table class="table">
+<table id="data-table", class="table">
     <thead class="thead-dark">
     <tr>
         <th>Device ID</th>
@@ -18,7 +17,7 @@
     </thead>
     {% for ptl in sensors%}
     <tr>
-        <td> {{_str(ptl.device)}}</td>
+        <th scope="row"> {{_str(ptl.device)}}</th>
         <td> {{_unit(ptl.temperature, ptl.temperature_unit)}}</td>
         <td> {{_unit(ptl.humidity, ptl.humidity_unit)}}</td>
         <td> {{_unit(ptl.pressure, ptl.pressure_unit)}}</td>
@@ -29,4 +28,8 @@
     {% endfor %}
 </table>
 </div>
-{% endblock %}
+{% endblock body %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+{% endblock script %}

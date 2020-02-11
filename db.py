@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 _host: str = "83.175.125.85"
+#_host: str = "localhost"
 _user: str = "infinity"
 _password: str = "iGe9kH9j"
 _dbname: str = "bbf_inf_rep"
@@ -187,9 +188,7 @@ class Dashboard(object):
         sq = last_light_package.subquery()
         # last know operating mode per PTL-device
         self.query_mode = session.query(lp.device, lp.timestamp, lp.mode) \
-                                 .join(sq, sq.columns.lastone == lp.id) \
-                                 .group_by(lp.device)
-
+                                 .join(sq, sq.columns.lastone == lp.id)
         super().__init__()
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -299,6 +298,8 @@ class SensorData(object):
                    .add_columns(sq_loudness.c.loudness, sq_loudness.c.unit.label('loudness_unit')) \
                    .order_by(DeviceInfo.device) \
                    .all()
+
+
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -417,15 +418,15 @@ class ModeStatistics(object):
         off: int = 0
         manual: int = 0
         light_shower: int = 0
-    
+
         def data(self):
             return [self.auto, self.off, self.manual, self.light_shower]
-    
+
     # ------------------------------------------------------------------------------------------------------------------
 
     def __init__(self):
         query_device = session.query(DeviceInfo.device)
-        
+
         lp = LightingPackage
         sq_mode = session.query(lp.device, lp.mode, db.func.count(lp.mode).label('count')) \
                  .group_by(lp.mode) \
@@ -436,7 +437,7 @@ class ModeStatistics(object):
         self.query_mode = query_device.outerjoin(sq_mode, DeviceInfo.device == sq_mode.c.device) \
                                       .add_columns(sq_mode.c.mode, sq_mode.c.count) \
                                       .order_by(DeviceInfo.device)
-    
+
     # ------------------------------------------------------------------------------------------------------------------
 
     def _table_to_python(self, table):

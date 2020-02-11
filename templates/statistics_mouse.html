@@ -7,7 +7,7 @@
 {% block body %}
 <div id="content">
   <h1>Mouse gesture statistics</h1>
-  <table class="table">
+  <table id="data-table" class="table">
     <thead class="thead-dark">
     <tr>
         <th>Device ID</th>
@@ -16,11 +16,14 @@
     </thead>
   {% for device, statistics_data in data.items() %}
   <tr>
-    <td> {{device}}</td>
+    <th scope="row"> {{device}}</th>
     <td><div align="center">{{statistics_data|safe}}</div></td>
   </tr>
   {% endfor %}
   </table>
 </div>
 {% endblock %}
-  
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+{% endblock script %}
