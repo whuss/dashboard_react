@@ -4,6 +4,8 @@ from flask_table import Table, Col
 from bokeh.core.enums import Dimensions
 from bokeh.embed import components
 from bokeh.plotting import figure
+from bokeh.layouts import column
+from bokeh.palettes import Spectral11
 from bokeh.resources import INLINE
 from bokeh.models import ColumnDataSource
 from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
@@ -154,26 +156,48 @@ def sensors():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-def time_series_plot(x, y, x_range):
+def time_series_plot(x, y, x_range, **kwargs):
+    """Creates an interactive timeseries plot
+
+    Optional arguments:
+    -------------------
+
+    title: str
+        Figure title
+
+    line_color: str
+        Color of the time series (default: 'navy')
+    """
     if len(x) == 0:
-        return "", ""
-    fig = figure(plot_width=800, plot_height=180, x_range=x_range, x_axis_type='datetime', toolbar_location="right")
+        return None
+
+    figure_kwargs = {}
+    if "title" in kwargs:
+        figure_kwargs['title'] = kwargs['title']
+        figure_kwargs['title_location'] = kwargs.get('title_location', "above")
+
+    fig = figure(plot_width=800, plot_height=180, x_range=x_range, x_axis_type='datetime', toolbar_location="right", **figure_kwargs)
+    if "title" in kwargs:
+        fig.title.text_font_style="italic"
+        fig.title.offset=20
     fig.toolbar.logo = None
     fig.tools = [WheelZoomTool(dimensions=Dimensions.width),
                  PanTool(dimensions=Dimensions.width),
                  ResetTool(),
                  SaveTool()]
     #fig.sizing_mode = 'scale_width'
+    line_kwargs = {}
+    line_kwargs['line_color'] = kwargs.get('line_color', 'navy')
+
     fig.line(
         x=x,
         line_width=1,
         y=y,
-        line_color='navy'
+        **line_kwargs
     )
 
     # render template
-    script, div = components(fig)
-    return script, div
+    return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -184,9 +208,13 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
     start_date, end_date = time_range
     plot_scripts = {}
     plot_divs = {}
+    x_range = (start_date, end_date)
     for device, data in sensor_data.items():
-        script, div = time_series_plot(data.timestamp, data[[sensor_key]].iloc[:, 0],
-                                       x_range=(start_date, end_date))
+        fig = time_series_plot(data.timestamp, data[[sensor_key]].iloc[:, 0], x_range=x_range)
+        if fig:
+            script, div = components(fig)
+        else:
+            script, div = "", ""
         plot_scripts[device] = script
         plot_divs[device] = div
 
@@ -254,6 +282,106 @@ def sensors_gas():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+# ----------------------------------------------------------------------------------------------------------------------
+
+def time_series_plot_brightness(xs, ys, x_range):
+    palette = Spectral11[0:len(xs)]
+    fig = figure(plot_width=800, plot_height=180, x_range=x_range, x_axis_type='datetime', toolbar_location="right")
+    fig.toolbar.logo = None
+    fig.tools = [WheelZoomTool(dimensions=Dimensions.width),
+                 PanTool(dimensions=Dimensions.width),
+                 ResetTool(),
+                 SaveTool()]
+    #fig.sizing_mode = 'scale_width'
+    fig.multi_line(
+        xs=xs,
+        line_width=1,
+        ys=ys,
+        line_color=palette
+    )
+
+    # render template
+    script, div = components(fig)
+    return script, div
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range: Tuple[datetime, datetime], **kwargs):
+    sensor_id_dict = {"brightness_r_h@BH1750": "RH",
+                          "brightness_r_v@BH1750": "RV",
+                          "brightness_l_h@BH1750": "LH",
+                          "brightness_l_v@BH1750": "LV"}
+
+    # If no sensor_key is given, use the lower case sensor name
+    sensor_key = kwargs.get("sensor_key", sensor).lower()
+    start_date, end_date = time_range
+    plot_scripts = {}
+    plot_divs = {}
+
+    # loop over all devices
+    devices = sensor_data.index.levels[0]
+    for device in devices:
+        device_data = sensor_data.loc[device].dropna()
+        script, div = "", ""
+
+        # re-index the data set of each single device
+        # so that sensor_ids only contains items that are
+        # included in the data set of this particular device
+        device_data = device_data.set_index(device_data.index)
+        sensor_ids = device_data.index.levels[0]
+        figures = []
+        x_range = None
+        # loop over all 4 brightness sensors
+        # if data for this sensor is available
+        for sensor_id in sensor_ids:
+            if not x_range:
+                x_range = (start_date, end_date)
+            print(f"{device}: {sensor_id}")
+            data = device_data.loc[sensor_id]
+            data = data.sort_values(by=['timestamp'])
+
+            time_series = data[[sensor_key]].iloc[:, 0]
+            timestamp = data.timestamp
+
+            # Convert sensor name to shorter form
+            sensor_name = sensor_id_dict.get(sensor_id, sensor_id)
+
+            fig = time_series_plot(timestamp, time_series,
+                                   x_range=x_range,
+                                   title=f"Sensor: {sensor_name}")
+            x_range = fig.x_range
+
+            figures.append(fig)
+
+        plot = column(*figures)
+        _script, _div = components(plot)
+        script += _script
+        div += _div
+
+        plot_scripts[device] = script
+        plot_divs[device] = div
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    # render template
+    html = render_template(
+        'sensors_timeseries.html',
+        timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
+        sensor=sensor,
+        unit=unit,
+        plot_scripts=plot_scripts,
+        plot_divs=plot_divs,
+        js_resources=js_resources,
+        css_resources=css_resources,
+    )
+
+    return encode_utf8(html)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 @app.route('/sensors/brightness')
 def sensors_brightness():
@@ -261,7 +389,7 @@ def sensors_brightness():
     start_date = now - timedelta(days=2)
     sensor_data = SensorData().brightness(start_date)
 
-    return create_timeseries(sensor_data, sensor="Brightness", unit="lx", time_range=(start_date, now))
+    return create_timeseries_brightness(sensor_data, sensor="Brightness", unit="lx", time_range=(start_date, now))
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Test routes

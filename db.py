@@ -151,6 +151,7 @@ class BrightnessPackage(Base):
     device = db.Column('ix_device_sn', key='device')
     timestamp = db.Column('ix_data_dtm', key='timestamp')
     brightness = db.Column('brightness_int', key='brightness')
+    source = db.Column('ix_source_sn', key='source')
     unit = db.Column('unit_sn', key='unit')
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -263,6 +264,7 @@ class SensorData(object):
 
         bp = BrightnessPackage
         self.sq_brightness = session.query(bp.device, db.func.max(bp.timestamp), bp.brightness, bp.unit) \
+                                    .filter(bp.source == "brightness_l_h@BH1750") \
                                     .group_by(bp.device) \
                                     .subquery()
 
@@ -323,7 +325,6 @@ class SensorData(object):
         tp = TemperaturePackage
         sq_temperature = session.query(tp.device, tp.temperature, tp.unit, tp.timestamp) \
                                 .filter(tp.timestamp >= since) \
-                                .order_by(tp.temperature) \
                                 .subquery()
 
         data = self.query_device \
@@ -337,21 +338,61 @@ class SensorData(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def _timeseries_brightness(self, data):
+        sensor_id_dict = {"brightness_r_h@BH1750": "rh",
+                          "brightness_r_v@BH1750": "rv",
+                          "brightness_l_h@BH1750": "lh",
+                          "brightness_l_v@BH1750": "lv"}
+
+        data = pd.DataFrame(data)
+        data = data.set_index(['device', 'source', data.index])
+
+        data_dict = {}
+        devices = data.index.levels[0]
+        for device in devices:
+            df = data.loc[device]
+            sensor_data_dict = {}
+            sensor_ids = data.index.level[1]
+            for sensor_id in sensor_ids:
+                try:
+                    print(f"timeseries {device}: {sensor_id}")
+                    df = df.loc[sensor_id]
+                    df = df.sort_values(by=['timestamp'])
+                    sensor_data_dict[sensor_name] = df[['timestamp', 'brightness']]
+                except KeyError:
+                    print(f"key error: {device}: {sensor_id}")
+                    pass
+            data_dict[device] = sensor_data_dict
+
+        return data_dict
+
+# ------------------------------------------------------------------------------------------------------------------
+
     def brightness(self, since):
+        """ Return timeseries of Brightness package for all devices
+
+        Note:
+        -----
+        The PTL has 4 different brightness sensors. Which can be distinguied by column BrightnessBackage.source
+        """
+
         bp = BrightnessPackage
-        sq_brightness = session.query(bp.device, bp.brightness, bp.unit, bp.timestamp) \
+        sq_brightness = session.query(bp.device, bp.brightness, bp.unit, bp.timestamp, bp.source) \
                                .filter(bp.timestamp >= since) \
-                               .order_by(bp.brightness) \
                                .subquery()
 
         data = self.query_device \
                    .outerjoin(sq_brightness, DeviceInfo.device == sq_brightness.c.device) \
-                   .add_columns(sq_brightness.c.brightness, sq_brightness.c.unit, sq_brightness.c.timestamp) \
+                   .add_columns(sq_brightness.c.brightness, sq_brightness.c.unit,
+                                sq_brightness.c.timestamp, sq_brightness.c.source) \
                    .order_by(DeviceInfo.device) \
                    .order_by(sq_brightness.c.timestamp) \
                    .all()
 
-        return self._timeseries(data, 'brightness')
+        data = pd.DataFrame(data)
+        data = data.set_index(['device', 'source', data.index])
+        return data
+        #return self._timeseries_brightness(data)
 
 # ------------------------------------------------------------------------------------------------------------------
 
@@ -359,7 +400,6 @@ class SensorData(object):
         hp = HumidityPackage
         sq_humidity = session.query(hp.device, hp.humidity, hp.unit, hp.timestamp) \
                              .filter(hp.timestamp >= since) \
-                             .order_by(hp.humidity) \
                              .subquery()
 
         data = self.query_device \
@@ -377,7 +417,6 @@ class SensorData(object):
         pp = PressurePackage
         sq_pressure = session.query(pp.device, pp.pressure, pp.unit, pp.timestamp) \
                              .filter(pp.timestamp >= since) \
-                             .order_by(pp.pressure) \
                              .subquery()
 
         data = self.query_device \
@@ -395,7 +434,6 @@ class SensorData(object):
         gp = GasPackage
         sq_gas = session.query(gp.device, gp.gas, gp.amount, gp.unit, gp.timestamp) \
                         .filter(gp.timestamp >= since) \
-                        .order_by(gp.gas) \
                         .subquery()
 
         data = self.query_device \
@@ -490,6 +528,12 @@ class MouseData(object):
             data_dict[device] = df.dropna()
 
         return data_dict
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+def dataframe_from_query(query):
+    """Return the result of a SQLAlchemy query as a pandas dataframe"""
+    return pd.read_sql(query.statement, query.session.bind)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
