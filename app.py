@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify
 from flask_table import Table, Col
 
-from bokeh.core.enums import Dimensions
+from bokeh.core.enums import Dimensions, StepMode
 from bokeh.embed import components
 from bokeh.plotting import figure
 from bokeh.layouts import column
@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 
 from data import Articles
 
-from db import Dashboard, SensorData, ModeStatistics, MouseData
+from db import Dashboard, SensorData, ModeStatistics, MouseData, PresenceDetectorStatistics
 
 import mysql.connector
 import humanfriendly
@@ -167,9 +167,14 @@ def time_series_plot(x, y, x_range, **kwargs):
 
     line_color: str
         Color of the time series (default: 'navy')
+
+    mode: "step" or "line
     """
     if len(x) == 0:
         return None
+
+    # set the drawing mode (default: line)
+    mode = kwargs.pop("mode", "line")
 
     figure_kwargs = {}
     if "title" in kwargs:
@@ -189,12 +194,21 @@ def time_series_plot(x, y, x_range, **kwargs):
     line_kwargs = {}
     line_kwargs['line_color'] = kwargs.get('line_color', 'navy')
 
-    fig.line(
-        x=x,
-        line_width=1,
-        y=y,
-        **line_kwargs
+    if mode=="step":
+        fig.step(
+            x=x,
+            line_width=1,
+            y=y,
+            mode=StepMode.before,
+            **line_kwargs
     )
+    else:
+        fig.line(
+            x=x,
+            line_width=1,
+            y=y,
+            **line_kwargs
+        )
 
     # render template
     return fig
@@ -204,13 +218,13 @@ def time_series_plot(x, y, x_range, **kwargs):
 
 def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[datetime, datetime], **kwargs):
     # If no sensor_key is given, use the lower case sensor name
-    sensor_key = kwargs.get("sensor_key", sensor).lower()
+    sensor_key = kwargs.pop("sensor_key", sensor).lower()
     start_date, end_date = time_range
     plot_scripts = {}
     plot_divs = {}
     x_range = (start_date, end_date)
     for device, data in sensor_data.items():
-        fig = time_series_plot(data.timestamp, data[[sensor_key]].iloc[:, 0], x_range=x_range)
+        fig = time_series_plot(data.timestamp, data[[sensor_key]].iloc[:, 0], x_range=x_range, **kwargs)
         if fig:
             script, div = components(fig)
         else:
@@ -235,6 +249,18 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
     )
 
     return encode_utf8(html)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+@app.route('/sensors/presence')
+def sensors_presence():
+    now = datetime.now()
+    start_date = now - timedelta(days=2)
+
+    on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date)
+
+    return create_timeseries(on_off_data, sensor="Presence detected", sensor_key="value",
+                             unit="on", time_range=(start_date, now), mode="step")
 
 # ----------------------------------------------------------------------------------------------------------------------
 

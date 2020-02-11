@@ -59,6 +59,33 @@ class DeviceInfo(Base):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class InstructionPackage(Base):
+    __tablename__ = 'InstructionPackage'
+    __table_args__ = dict(autoload=True)
+
+    id = db.Column('pk_instruction_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    service = db.Column('service_sn', key='service')
+    source = db.Column('ix_source_sn', key='source')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    instruction = db.Column('instruction_ind', key='instruction')
+    target = db.Column('target_ind', key='target')
+    value = db.Column('value_jsn', key='value')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    # FIXME: make static, get mapped column names
+    def getColumns(self):
+        return self.__table__.columns
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def getColumnNames(self):
+        return self.getColumns().keys()
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class LightingPackage(Base):
     __tablename__ = 'LightingPackage'
     __table_args__ = dict(autoload=True)
@@ -301,24 +328,6 @@ class SensorData(object):
                    .order_by(DeviceInfo.device) \
                    .all()
 
-
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def _timeseries(self, data, sensor: str):
-        data = pd.DataFrame(data)
-        data = data.set_index(['device', data.index])
-
-        devices = self.query_device.all()
-        data_dict = {}
-        for device in devices:
-            device = device[0]
-            df = data.loc[device]
-            df = df.sort_values(by=['timestamp'])
-            data_dict[device] = df[['timestamp', sensor]].dropna()
-
-        return data_dict
-
     # ------------------------------------------------------------------------------------------------------------------
 
     def temperature(self, since):
@@ -334,39 +343,9 @@ class SensorData(object):
                    .order_by(sq_temperature.c.timestamp) \
                    .all()
 
-        return self._timeseries(data, 'temperature')
+        return _timeseries(data, 'temperature')
 
     # ------------------------------------------------------------------------------------------------------------------
-
-    def _timeseries_brightness(self, data):
-        sensor_id_dict = {"brightness_r_h@BH1750": "rh",
-                          "brightness_r_v@BH1750": "rv",
-                          "brightness_l_h@BH1750": "lh",
-                          "brightness_l_v@BH1750": "lv"}
-
-        data = pd.DataFrame(data)
-        data = data.set_index(['device', 'source', data.index])
-
-        data_dict = {}
-        devices = data.index.levels[0]
-        for device in devices:
-            df = data.loc[device]
-            sensor_data_dict = {}
-            sensor_ids = data.index.level[1]
-            for sensor_id in sensor_ids:
-                try:
-                    print(f"timeseries {device}: {sensor_id}")
-                    df = df.loc[sensor_id]
-                    df = df.sort_values(by=['timestamp'])
-                    sensor_data_dict[sensor_name] = df[['timestamp', 'brightness']]
-                except KeyError:
-                    print(f"key error: {device}: {sensor_id}")
-                    pass
-            data_dict[device] = sensor_data_dict
-
-        return data_dict
-
-# ------------------------------------------------------------------------------------------------------------------
 
     def brightness(self, since):
         """ Return timeseries of Brightness package for all devices
@@ -392,7 +371,6 @@ class SensorData(object):
         data = pd.DataFrame(data)
         data = data.set_index(['device', 'source', data.index])
         return data
-        #return self._timeseries_brightness(data)
 
 # ------------------------------------------------------------------------------------------------------------------
 
@@ -409,7 +387,7 @@ class SensorData(object):
                    .order_by(sq_humidity.c.timestamp) \
                    .all()
 
-        return self._timeseries(data, 'humidity')
+        return _timeseries(data, 'humidity')
 
 # ------------------------------------------------------------------------------------------------------------------
 
@@ -426,7 +404,7 @@ class SensorData(object):
                    .order_by(sq_pressure.c.timestamp) \
                    .all()
 
-        return self._timeseries(data, 'pressure')
+        return _timeseries(data, 'pressure')
 
 # ------------------------------------------------------------------------------------------------------------------
 
@@ -443,7 +421,45 @@ class SensorData(object):
                    .order_by(sq_gas.c.timestamp) \
                    .all()
 
-        return self._timeseries(data, 'amount')
+        return _timeseries(data, 'amount')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PresenceDetectorStatistics(object):
+    def __init__(self):
+        self.query_device = session.query(DeviceInfo.device)
+
+
+    def on_off_timeseries(self, since):
+        def on_off(x):
+            return 1 if x=="ON" else 0
+
+        ip = InstructionPackage
+        sq_on_off = session.query(ip.device, ip.service, ip.source, ip.timestamp, ip.instruction, ip.target, ip.value) \
+                       .filter(ip.source.contains("Lullaby")) \
+                       .filter(ip.instruction == "MODE") \
+                       .filter(ip.target == "POWER") \
+                       .filter(ip.timestamp >= since) \
+                       .subquery()
+
+        query = self.query_device \
+                    .outerjoin(sq_on_off, DeviceInfo.device == sq_on_off.c.device) \
+                    .add_columns(sq_on_off.c.timestamp, sq_on_off.c.value)
+
+        data = pd.DataFrame(query.all())
+        data.value = data.value.apply(on_off)
+        data = data.set_index(['device', data.index])
+
+        devices = self.query_device.all()
+        data_dict = {}
+        for device in devices:
+            device = device[0]
+            df = data.loc[device]
+            df = df.sort_values(by=['timestamp'])
+            data_dict[device] = df[['timestamp', 'value']].dropna()
+
+        return data_dict
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -531,6 +547,24 @@ class MouseData(object):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
+def _timeseries(data, sensor: str):
+    data = pd.DataFrame(data)
+    data = data.set_index(['device', data.index])
+
+    devices = self.query_device.all()
+    data_dict = {}
+    for device in devices:
+        device = device[0]
+        df = data.loc[device]
+        df = df.sort_values(by=['timestamp'])
+        data_dict[device] = df[['timestamp', sensor]].dropna()
+
+    return data_dict
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 def dataframe_from_query(query):
     """Return the result of a SQLAlchemy query as a pandas dataframe"""
     return pd.read_sql(query.statement, query.session.bind)
@@ -544,6 +578,4 @@ if __name__ == '__main__':
     data = dash.dashboard(start_date)
     print(data[0].keys())
 
-    sensor_data = SensorData()
-    sensor = sensor_data.current_temperature()
-    print(sensor)
+    print(InstructionPackage().getColumns())
