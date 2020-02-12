@@ -556,10 +556,9 @@ def _timeseries(data, sensor: str):
     data = pd.DataFrame(data)
     data = data.set_index(['device', data.index])
 
-    devices = self.query_device.all()
+    devices = data.index.levels[0]
     data_dict = {}
     for device in devices:
-        device = device[0]
         df = data.loc[device]
         df = df.sort_values(by=['timestamp'])
         data_dict[device] = df[['timestamp', sensor]].dropna()
