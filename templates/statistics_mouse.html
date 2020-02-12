@@ -1,7 +1,11 @@
 {% extends 'layout.html' %}
 
 {% block head %}
-<script src={{ url_for('static', filename = 'Chart.min.js') }}></script>
+{{ js_resources|indent(4)|safe }}
+{{ css_resources|indent(4)|safe }}
+{% for script in scripts %}
+{{ script|safe }}
+{% endfor %}
 {% endblock %}
 
 {% block body %}
@@ -11,13 +15,19 @@
     <thead class="thead-dark">
     <tr>
         <th>Device ID</th>
-        <th>Mouse gesture</th>
+        <th>Statistics</th>
+        <th>Distance</th>
+        <th>Speed</th>
+        <th>Gesture deviation</th>
     </tr>
     </thead>
   {% for device, statistics_data in data.items() %}
   <tr>
     <th scope="row"> {{device}}</th>
-    <td><div align="center">{{statistics_data|safe}}</div></td>
+    <td><div class="pandas_describe" align="center">{{statistics_data.stats|safe}}</div></td>
+    <td>{{statistics_data.plot_distance|safe}}</td>
+    <td>{{statistics_data.plot_speed|safe}}</td>
+    <td>{{statistics_data.plot_deviation|safe}}</td>
   </tr>
   {% endfor %}
   </table>

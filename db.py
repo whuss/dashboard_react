@@ -519,6 +519,9 @@ class MouseData(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     def gesture_data(self, since):
+        column_names = dict(gesture_distance="distance",
+                            gesture_speed="speed",
+                            gesture_deviation="deviation")
         mgp = MouseGesturePackage
         sq_gesture = session.query(mgp.device, mgp.timestamp, mgp.gesture_start, mgp.gesture_end,
                                    mgp.gesture_distance, mgp.gesture_speed, mgp.gesture_deviation) \
@@ -541,6 +544,7 @@ class MouseData(object):
             device = device[0]
             df = data.loc[device]
             df = df.sort_values(by=['timestamp'])
+            df = df.rename(columns=column_names)
             data_dict[device] = df.dropna()
 
         return data_dict

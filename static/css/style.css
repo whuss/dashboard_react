@@ -22,7 +22,18 @@
 /*                              CONTENT                                 */
 /* -------------------------------------------------------------------- */
 
+.pandas_describe {
+    font-size: 12px;
+}
+
+.pandas_describe table td {
+    font-size: 12px;
+    padding-bottom: 4px;
+    padding-top: 4px;
+}
+
 #content {
+    font-size: 16px;
     width: 100%;
     top: 100px;
     left: 25px;
@@ -40,7 +51,6 @@
 }
 
 #content table td {
-    font-size: 16px;
     height: 30px;
     text-align: center;
     vertical-align: middle;

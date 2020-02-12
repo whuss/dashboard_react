@@ -23,6 +23,8 @@ from db import Dashboard, SensorData, ModeStatistics, MouseData, PresenceDetecto
 import mysql.connector
 import humanfriendly
 
+from plots import plot_histogram
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 class FusionLink(object):
@@ -114,37 +116,57 @@ def statistics_mode():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-def histogram_plot(data):
-    if len(x) == 0:
-        return "", ""
-    fig = figure(plot_width=150, plot_height=150,
-                 x_axis_label="Gesture length",
-                 y_axis_type='Number of Mouse gestures',
-                 toolbar_location=None)
-    #fig.sizing_mode = 'scale_width'
-    fig.line(
-        x=x,
-        line_width=1,
-        y=y,
-        line_color='navy'
-    )
-
-    # render template
-    script, div = components(fig)
-    return script, div
-
 @app.route('/statistics/mouse')
 def statistics_mouse():
+    no_data = dict(stats="", plot_distance="", plot_speed="", plot_deviation="")
+
     start_date = datetime.now() - timedelta(days=2)
     mouse_data = MouseData().gesture_data(start_date)
+
     statistics_data = {}
+    scripts = []
     for device, data in mouse_data.items():
         if data.count()[0] > 0:
-            statistics_data[device] = data.describe().to_html()
-        else:
-            statistics_data[device] = "No data available"
+            fig_distance = plot_histogram(data.distance.dropna(),
+                x_axis_label="Mouse distance", y_axis_label="Amount",
+                plot_width=300, plot_height=400
+            )
+            script, div_distance = components(fig_distance)
+            scripts.append(script)
 
-    return render_template("statistics_mouse.html", data=statistics_data)
+            fig_speed = plot_histogram(data.speed.dropna(),
+                x_axis_label="Mouse speed", y_axis_label="Amount",
+                plot_width=300, plot_height=400, fill_color='blue'
+            )
+            script, div_speed = components(fig_speed)
+            scripts.append(script)
+
+            fig_deviation = plot_histogram(data.deviation.dropna(),
+                x_axis_label="Gesture deviation", y_axis_label="Amount",
+                plot_width=300, plot_height=400, fill_color='orange'
+            )
+            script, div_deviation = components(fig_deviation)
+            scripts.append(script)
+
+
+            stats = data.describe().to_html()
+            statistics_data[device] = dict(stats=stats,
+                                      plot_distance=div_distance,
+                                      plot_speed=div_speed,
+                                      plot_deviation=div_deviation)
+
+        else:
+            statistics_data[device] = no_data
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    return render_template("statistics_mouse.html",
+                           data=statistics_data,
+                           scripts=scripts,
+                           js_resources=js_resources,
+                           css_resources=css_resources)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
