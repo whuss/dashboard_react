@@ -1,11 +1,6 @@
 {% extends 'layout.html' %}
 
 {% block head %}
-{{ js_resources|indent(4)|safe }}
-{{ css_resources|indent(4)|safe }}
-{% for script in scripts %}
-{{ script|safe }}
-{% endfor %}
 {% endblock %}
 
 {% block body %}
@@ -18,10 +13,10 @@
         <th>Cycles</th>
     </tr>
     </thead>
-  {% for device in data.index.leves[0] %}
+  {% for device in data.index.levels[0] %}
   <tr>
     <th scope="row"> {{device}}</th>
-    <td>{{data.loc[device].to_html()|safe}}</td>
+    <td>{{data.loc[device].set_index('date').to_html()|safe}}</td>
   </tr>
   {% endfor %}
   </table>
