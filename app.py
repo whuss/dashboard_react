@@ -120,7 +120,7 @@ def statistics_mode():
 def statistics_mouse():
     no_data = dict(stats="", plot_distance="", plot_speed="", plot_deviation="")
 
-    start_date = datetime.now() - timedelta(days=2)
+    start_date = datetime.now() - timedelta(days=4)
     mouse_data = MouseData().gesture_data(start_date)
 
     statistics_data = {}
@@ -167,6 +167,13 @@ def statistics_mouse():
                            scripts=scripts,
                            js_resources=js_resources,
                            css_resources=css_resources)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+@app.route('/statistics/switch_cycles')
+def statistics_switch_cycles():
+    data = PresenceDetectorStatistics().on_off_cycle_count()
+    return render_template("statistics_on_off.html", data=data)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -277,7 +284,7 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
 @app.route('/sensors/presence')
 def sensors_presence():
     now = datetime.now()
-    start_date = now - timedelta(days=2)
+    start_date = now - timedelta(days=4)
 
     on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date)
 
@@ -290,7 +297,7 @@ def sensors_presence():
 @app.route('/sensors/temperature')
 def sensors_temp():
     now = datetime.now()
-    start_date = now - timedelta(days=2)
+    start_date = now - timedelta(days=4)
     sensor_data = SensorData().temperature(start_date)
 
     return create_timeseries(sensor_data, sensor="Temperature", unit="°C", time_range=(start_date, now))
@@ -301,7 +308,7 @@ def sensors_temp():
 @app.route('/sensors/humidity')
 def sensors_humidity():
     now = datetime.now()
-    start_date = now - timedelta(days=2)
+    start_date = now - timedelta(days=4)
     sensor_data = SensorData().humidity(start_date)
 
     return create_timeseries(sensor_data, sensor="Humidity", unit="%RH", time_range=(start_date, now))
@@ -312,7 +319,7 @@ def sensors_humidity():
 @app.route('/sensors/pressure')
 def sensors_pressure():
     now = datetime.now()
-    start_date = now - timedelta(days=2)
+    start_date = now - timedelta(days=4)
     sensor_data = SensorData().pressure(start_date)
 
     return create_timeseries(sensor_data, sensor="Pressure", unit="hPa", time_range=(start_date, now))
@@ -323,7 +330,7 @@ def sensors_pressure():
 @app.route('/sensors/gas')
 def sensors_gas():
     now = datetime.now()
-    start_date = now - timedelta(days=2)
+    start_date = now - timedelta(days=4)
     sensor_data = SensorData().gas(start_date)
 
     return create_timeseries(sensor_data, sensor="Gas", sensor_key="amount", unit="VOC kOhm", time_range=(start_date, now))
@@ -434,7 +441,7 @@ def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range
 @app.route('/sensors/brightness')
 def sensors_brightness():
     now = datetime.now()
-    start_date = now - timedelta(days=2)
+    start_date = now - timedelta(days=4)
     sensor_data = SensorData().brightness(start_date)
 
     return create_timeseries_brightness(sensor_data, sensor="Brightness", unit="lx", time_range=(start_date, now))

@@ -430,11 +430,15 @@ class PresenceDetectorStatistics(object):
     def __init__(self):
         self.query_device = session.query(DeviceInfo.device)
 
+    # ------------------------------------------------------------------------------------------------------------------
 
-    def on_off_timeseries(self, since):
-        def on_off(x):
+    def _on_off(self, x):
             return 1 if x=="ON" else 0
 
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def on_off_timeseries(self, since):
+        sq_device = self.query_device.subquery()
         ip = InstructionPackage
         sq_on_off = session.query(ip.device, ip.service, ip.source, ip.timestamp, ip.instruction, ip.target, ip.value) \
                        .filter(ip.source.contains("Lullaby")) \
@@ -448,7 +452,7 @@ class PresenceDetectorStatistics(object):
                     .add_columns(sq_on_off.c.timestamp, sq_on_off.c.value)
 
         data = pd.DataFrame(query.all())
-        data.value = data.value.apply(on_off)
+        data.value = data.value.apply(self._on_off)
         data = data.set_index(['device', data.index])
 
         devices = self.query_device.all()
@@ -460,6 +464,33 @@ class PresenceDetectorStatistics(object):
             data_dict[device] = df[['timestamp', 'value']].dropna()
 
         return data_dict
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def on_off_cycle_count(self):
+        ip = InstructionPackage
+        sq_device = session.query(DeviceInfo.device).subquery()
+
+        query = session.query(ip.device, ip.source, ip.timestamp, ip.instruction, ip.target, ip.value) \
+                    .filter(ip.source.contains("Lullaby")) \
+                    .filter(ip.instruction == "MODE") \
+                    .filter(ip.target == "POWER") \
+                    .filter(ip.value == "ON") \
+                    .outerjoin(sq_device, sq_device.c.device == ip.device)
+
+        def is_night(date):
+            time = date.time()
+            return time.hour <= 6 or time.hour >= 9
+
+        data = pd.DataFrame(query.all())
+        data = data.drop(columns=['source', 'target', 'instruction'])
+        data['date'] = data.timestamp.apply(lambda x: x.date())
+        data['night'] = data.timestamp.apply(is_night)
+        data = data.set_index(['device', 'date', 'night', data.index])
+        data = data.groupby(['device', 'date', 'night']).count()
+        data = data.drop(columns=['timestamp'])
+        data = data.rename(columns=dict(value="count"))
+        return data
 
 # ----------------------------------------------------------------------------------------------------------------------
 
