@@ -16,7 +16,7 @@
   {% for device in data.index.levels[0] %}
   <tr>
     <th scope="row"> {{device}}</th>
-    <td>{{data.loc[device].set_index('date').to_html()|safe}}</td>
+    <td>{{data.loc[device].to_html()|safe}}</td>
   </tr>
   {% endfor %}
   </table>

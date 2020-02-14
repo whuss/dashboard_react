@@ -1,16 +1,11 @@
 from flask import Flask, render_template, jsonify
 from flask_table import Table, Col
 
-from bokeh.core.enums import Dimensions, StepMode
+
 from bokeh.embed import components
-from bokeh.plotting import figure
 from bokeh.layouts import column
-from bokeh.palettes import Spectral11
 from bokeh.resources import INLINE
-from bokeh.models import ColumnDataSource
-from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
 from bokeh.util.string import encode_utf8
-from humanfriendly import format_timespan
 from typing import Tuple
 
 from dataclasses import dataclass
@@ -20,49 +15,16 @@ from data import Articles
 
 from db import Dashboard, SensorData, ModeStatistics, MouseData, PresenceDetectorStatistics
 
-import mysql.connector
 import humanfriendly
 
-from plots import plot_histogram
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-class FusionLink(object):
-    _host: str = "83.175.125.85"
-    _user: str = "infinity"
-    _password: str = "iGe9kH9j"
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def __init__(self):
-        self.db_link = mysql.connector.connect(host=FusionLink._host,
-                                               user=FusionLink._user,
-                                               password=FusionLink._password)
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def query(self, sql: str):
-        cursor = self.db_link.cursor(buffered=True)
-        cursor.execute(sql)
-        result = cursor.fetchall()
-        return result
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-database = FusionLink()
-
-
-sql = "SELECT info.uk_device_sn, info.device_mode_ind, info.last_update_dtm FROM bbf_inf_rep.DeviceInfo info;"
-def example_query(sql):
-    db_result = database.query(sql)
-    return db_result
+from plots import plot_histogram, plot_time_series
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 app = Flask(__name__)
 
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 @app.context_processor
 def utility_processor():
@@ -93,9 +55,6 @@ def utility_processor():
                 _number=_number,
                 _unit=_unit)
 
-# ----------------------------------------------------------------------------------------------------------------------
-
-Articles = Articles()
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -183,64 +142,7 @@ def sensors():
 
     return render_template('sensors.html', sensors=sensor_data)
 
-# ----------------------------------------------------------------------------------------------------------------------
 
-def time_series_plot(x, y, x_range, **kwargs):
-    """Creates an interactive timeseries plot
-
-    Optional arguments:
-    -------------------
-
-    title: str
-        Figure title
-
-    line_color: str
-        Color of the time series (default: 'navy')
-
-    mode: "step" or "line
-    """
-    if len(x) == 0:
-        return None
-
-    # set the drawing mode (default: line)
-    mode = kwargs.pop("mode", "line")
-
-    figure_kwargs = {}
-    if "title" in kwargs:
-        figure_kwargs['title'] = kwargs['title']
-        figure_kwargs['title_location'] = kwargs.get('title_location', "above")
-
-    fig = figure(plot_width=800, plot_height=180, x_range=x_range, x_axis_type='datetime', toolbar_location="right", **figure_kwargs)
-    if "title" in kwargs:
-        fig.title.text_font_style="italic"
-        fig.title.offset=20
-    fig.toolbar.logo = None
-    fig.tools = [WheelZoomTool(dimensions=Dimensions.width),
-                 PanTool(dimensions=Dimensions.width),
-                 ResetTool(),
-                 SaveTool()]
-    #fig.sizing_mode = 'scale_width'
-    line_kwargs = {}
-    line_kwargs['line_color'] = kwargs.get('line_color', 'navy')
-
-    if mode=="step":
-        fig.step(
-            x=x,
-            line_width=1,
-            y=y,
-            mode=StepMode.before,
-            **line_kwargs
-    )
-    else:
-        fig.line(
-            x=x,
-            line_width=1,
-            y=y,
-            **line_kwargs
-        )
-
-    # render template
-    return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -253,7 +155,7 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
     plot_divs = {}
     x_range = (start_date, end_date)
     for device, data in sensor_data.items():
-        fig = time_series_plot(data.timestamp, data[[sensor_key]].iloc[:, 0], x_range=x_range, **kwargs)
+        fig = plot_time_series(data.timestamp, data[[sensor_key]].iloc[:, 0], x_range=x_range, **kwargs)
         if fig:
             script, div = components(fig)
         else:
@@ -334,30 +236,6 @@ def sensors_gas():
     sensor_data = SensorData().gas(start_date)
 
     return create_timeseries(sensor_data, sensor="Gas", sensor_key="amount", unit="VOC kOhm", time_range=(start_date, now))
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-def time_series_plot_brightness(xs, ys, x_range):
-    palette = Spectral11[0:len(xs)]
-    fig = figure(plot_width=800, plot_height=180, x_range=x_range, x_axis_type='datetime', toolbar_location="right")
-    fig.toolbar.logo = None
-    fig.tools = [WheelZoomTool(dimensions=Dimensions.width),
-                 PanTool(dimensions=Dimensions.width),
-                 ResetTool(),
-                 SaveTool()]
-    #fig.sizing_mode = 'scale_width'
-    fig.multi_line(
-        xs=xs,
-        line_width=1,
-        ys=ys,
-        line_color=palette
-    )
-
-    # render template
-    script, div = components(fig)
-    return script, div
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -486,37 +364,11 @@ def pie_chart():
     return render_template('pie_charts.html', values=values, labels=labels, legend=legend)
 
 
+Articles = Articles()
+
 @app.route('/articles')
 def articles():
     return render_template('articles.html', articles=Articles)
-
-@app.route('/bokeh')
-def bokeh():
-
-    # init a basic bar chart:
-    # http://bokeh.pydata.org/en/latest/docs/user_guide/plotting.html#bars
-    fig = figure(plot_width=600, plot_height=600)
-    fig.line(
-        x=[1, 2, 3, 4],
-        line_width=1,
-        y=[1.7, 2.2, 4.6, 3.9],
-        line_color='navy'
-    )
-
-    # grab the static resources
-    js_resources = INLINE.render_js()
-    css_resources = INLINE.render_css()
-
-    # render template
-    script, div = components(fig)
-    html = render_template(
-        'bokeh.html',
-        plot_script=script,
-        plot_div=div,
-        js_resources=js_resources,
-        css_resources=css_resources,
-    )
-    return encode_utf8(html)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -525,6 +377,7 @@ def article(id):
     return render_template('article.html', id=id)
 
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 if __name__ == '__main__':
     app.run(debug=True)

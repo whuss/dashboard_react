@@ -1,7 +1,10 @@
 import pandas as pd
 import numpy as np
 
+from bokeh.core.enums import Dimensions, StepMode
 from bokeh.plotting import figure
+from bokeh.models import ColumnDataSource
+from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -41,7 +44,7 @@ def plot_histogram(data, **kwargs):
     line_color = kwargs.pop('line_color', 'black')
 
     fig = figure(plot_height=plot_height, plot_width=plot_width,
-           title=title, x_axis_label=x_axis_label, y_axis_label=y_axis_label)
+                 title=title, x_axis_label=x_axis_label, y_axis_label=y_axis_label)
     fig.toolbar.logo = None
     fig.toolbar_location = None
 
@@ -50,3 +53,63 @@ def plot_histogram(data, **kwargs):
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_time_series(x, y, x_range, **kwargs):
+    """Creates an interactive timeseries plot
+
+    Optional arguments:
+    -------------------
+
+    title: str
+        Figure title
+
+    line_color: str
+        Color of the time series (default: 'navy')
+
+    mode: "step" or "line
+    """
+    if len(x) == 0:
+        return None
+
+    # set the drawing mode (default: line)
+    mode = kwargs.pop("mode", "line")
+
+    figure_kwargs = {}
+    if "title" in kwargs:
+        figure_kwargs['title'] = kwargs['title']
+        figure_kwargs['title_location'] = kwargs.get('title_location', "above")
+
+    fig = figure(plot_width=800, plot_height=180, x_range=x_range, x_axis_type='datetime', toolbar_location="right", **figure_kwargs)
+    if "title" in kwargs:
+        fig.title.text_font_style="italic"
+        fig.title.offset=20
+    fig.toolbar.logo = None
+    fig.tools = [WheelZoomTool(dimensions=Dimensions.width),
+                 PanTool(dimensions=Dimensions.width),
+                 ResetTool(),
+                 SaveTool()]
+    #fig.sizing_mode = 'scale_width'
+    line_kwargs = dict()
+    line_kwargs['line_color'] = kwargs.get('line_color', 'navy')
+
+    if mode == "step":
+        fig.step(
+            x=x,
+            line_width=1,
+            y=y,
+            mode=StepMode.before,
+            **line_kwargs
+        )
+    else:
+        fig.line(
+            x=x,
+            line_width=1,
+            y=y,
+            **line_kwargs
+        )
+
+    # render template
+    return fig

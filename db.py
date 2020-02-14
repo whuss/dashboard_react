@@ -433,7 +433,7 @@ class PresenceDetectorStatistics(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     def _on_off(self, x):
-            return 1 if x=="ON" else 0
+            return 1 if x == "ON" else 0
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -476,7 +476,8 @@ class PresenceDetectorStatistics(object):
                     .filter(ip.instruction == "MODE") \
                     .filter(ip.target == "POWER") \
                     .filter(ip.value == "ON") \
-                    .outerjoin(sq_device, sq_device.c.device == ip.device)
+                    .filter(ip.device != "PTL_DEFAULT") \
+                    .outerjoin(sq_device, sq_device.c.device == ip.device) \
 
         def is_night(date):
             time = date.time()
