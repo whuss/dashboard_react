@@ -1,7 +1,9 @@
 import pandas as pd
 import numpy as np
+from datetime import timedelta
 
 from bokeh.core.enums import Dimensions, StepMode
+from bokeh.transform import dodge
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource
 from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
@@ -51,8 +53,6 @@ def plot_histogram(data, **kwargs):
     fig.quad(bottom=0, top=hist_df.hist_arr, left=hist_df.left, right=hist_df.right,
              fill_color=fill_color, line_color=line_color)
     return fig
-
-# ----------------------------------------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -112,4 +112,41 @@ def plot_time_series(x, y, x_range, **kwargs):
         )
 
     # render template
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_on_off_cycles(data):
+    dates = list(data.date)
+    x_range = (min(dates) - timedelta(days=1), max(dates) + timedelta(days=1))
+    night_source = ColumnDataSource(data=data[data['night'] == True])
+    day_source = ColumnDataSource(data=data[data['night'] == False])
+
+    vbar_width = timedelta(days=1) / 2.5
+    vbar_shift = vbar_width.total_seconds() * 1000
+
+    fig = figure(x_axis_type="datetime", x_range=x_range, plot_height=400, plot_width=1000,
+                 title="On/Off Cycles", tools="")
+
+    fig.toolbar.logo = None
+    fig.add_tools(HoverTool(
+        tooltips=[
+            ('date', '@date{%F}'),
+            ('night', '@night'),
+            ('on/off cycles', '@count{%d}')
+        ],
+        formatters={
+            'date': 'datetime',
+            'count': 'printf'
+        },
+
+        mode='vline'))
+
+    fig.vbar(x=dodge('date', -vbar_shift / 2, range=fig.x_range),
+             width=vbar_width, top='count', source=night_source,
+             legend_label='night', line_color="black")
+    fig.vbar(x=dodge('date', vbar_shift / 2, range=fig.x_range),
+             width=vbar_width, top='count', source=day_source,
+             legend_label='day', color="#fa9fb5", line_color="black")
     return fig

@@ -17,7 +17,7 @@ from db import Dashboard, SensorData, ModeStatistics, MouseData, PresenceDetecto
 
 import humanfriendly
 
-from plots import plot_histogram, plot_time_series
+from plots import plot_histogram, plot_time_series, plot_on_off_cycles
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -129,12 +129,33 @@ def statistics_mouse():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 @app.route('/statistics/switch_cycles')
 def statistics_switch_cycles():
     data = PresenceDetectorStatistics().on_off_cycle_count()
-    return render_template("statistics_on_off.html", data=data)
+
+    figures = {}
+    scripts = []
+
+    for device in data.index.levels[0]:
+        device_data = data.loc[device].reset_index()
+        fig = plot_on_off_cycles(device_data)
+        script, div = components(fig)
+        figures[device] = div
+        scripts.append(script)
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    return render_template("statistics_on_off.html",
+                           figures=figures,
+                           scripts=scripts,
+                           js_resources=js_resources,
+                           css_resources=css_resources)
 
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 @app.route('/sensors')
 def sensors():
