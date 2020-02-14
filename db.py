@@ -477,11 +477,13 @@ class PresenceDetectorStatistics(object):
                     .filter(ip.target == "POWER") \
                     .filter(ip.value == "ON") \
                     .filter(ip.device != "PTL_DEFAULT") \
+                    .filter(ip.device != "PTL_ES_001") \
                     .outerjoin(sq_device, sq_device.c.device == ip.device) \
+                    .order_by(ip.device)
 
         def is_night(date):
             time = date.time()
-            return time.hour <= 6 or time.hour >= 9
+            return time.hour <= 7 or time.hour >= 9
 
         data = pd.DataFrame(query.all())
         data = data.drop(columns=['source', 'target', 'instruction'])

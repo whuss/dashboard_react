@@ -117,9 +117,13 @@ def plot_time_series(x, y, x_range, **kwargs):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def plot_on_off_cycles(data):
+def plot_on_off_cycles(data, **kwargs):
     dates = list(data.date)
-    x_range = (min(dates) - timedelta(days=1), max(dates) + timedelta(days=1))
+    if 'x_range' in kwargs:
+        x_range = kwargs['x_range']
+    else:
+        x_range = (min(dates) - timedelta(days=1), max(dates) + timedelta(days=1))
+
     night_source = ColumnDataSource(data=data[data['night'] == True])
     day_source = ColumnDataSource(data=data[data['night'] == False])
 
@@ -128,7 +132,6 @@ def plot_on_off_cycles(data):
 
     fig = figure(x_axis_type="datetime", x_range=x_range, plot_height=400, plot_width=1000,
                  title="On/Off Cycles", tools="")
-
     fig.toolbar.logo = None
     fig.add_tools(HoverTool(
         tooltips=[
@@ -148,5 +151,5 @@ def plot_on_off_cycles(data):
              legend_label='night', line_color="black")
     fig.vbar(x=dodge('date', vbar_shift / 2, range=fig.x_range),
              width=vbar_width, top='count', source=day_source,
-             legend_label='day', color="#fa9fb5", line_color="black")
+             legend_label='day (7:00am - 9:00pm)', color="#fa9fb5", line_color="black")
     return fig

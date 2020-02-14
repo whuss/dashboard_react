@@ -137,9 +137,13 @@ def statistics_switch_cycles():
     figures = {}
     scripts = []
 
+    # compute time range
+    dates = data.reset_index().date
+    x_range = min(dates), max(dates)
+
     for device in data.index.levels[0]:
         device_data = data.loc[device].reset_index()
-        fig = plot_on_off_cycles(device_data)
+        fig = plot_on_off_cycles(device_data, x_range=x_range)
         script, div = components(fig)
         figures[device] = div
         scripts.append(script)
