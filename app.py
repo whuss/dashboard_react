@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 
 from data import Articles
 
-from db import Dashboard, SensorData, ModeStatistics, MouseData, PresenceDetectorStatistics
+from db import session, Errors, Dashboard, SensorData, ModeStatistics, MouseData, PresenceDetectorStatistics
 
 import humanfriendly
 
@@ -25,6 +25,12 @@ app = Flask(__name__)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+@app.teardown_request
+def teardown(exception=None):
+    # teardown database session
+    session.close()
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 @app.context_processor
 def utility_processor():
@@ -66,6 +72,12 @@ def index():
     return render_template('home.html', dashboard=dashboard)
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+@app.route('/errors')
+def error_messages():
+    data = Errors().errors()
+    return render_template("errors.html", data=data)
+
 
 @app.route('/statistics/mode')
 def statistics_mode():

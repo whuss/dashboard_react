@@ -48,6 +48,21 @@ temperatur_package = metadata.tables['TemperaturePackage']
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class ErrorPackage(Base):
+    __tablename__ = 'ErrorPackage'
+    __table_args__ = dict(autoload=True)
+
+    id = db.Column('pk_error_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    service = db.Column('service_sn', key='service')
+    source = db.Column('ix_source_sn', key='source')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    errno = db.Column('number_int', key="errno")
+    message = db.Column('message_str', key="message")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class DeviceInfo(Base):
     __tablename__ = 'DeviceInfo'
     __table_args__ = dict(autoload=True)
@@ -493,6 +508,24 @@ class PresenceDetectorStatistics(object):
         data = data.groupby(['device', 'date', 'night']).count()
         data = data.drop(columns=['timestamp'])
         data = data.rename(columns=dict(value="count"))
+        return data
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class Errors(object):
+    def errors(self):
+        ep = ErrorPackage
+        sq_device = session.query(DeviceInfo.device).subquery()
+
+        query = session.query(ep.device, ep.timestamp, ep.errno, ep.message) \
+                       .filter(ep.device != "PTL_DEFAULT") \
+                       .filter(ep.device != "PTL_ES_001") \
+                       .outerjoin(sq_device, sq_device.c.device == ep.device) \
+                       .order_by(ep.device)
+
+        data = pd.DataFrame(query.all())
+        data = data.set_index(['device', data.index])
         return data
 
 # ----------------------------------------------------------------------------------------------------------------------
