@@ -237,7 +237,7 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
 @app.route('/sensors/presence')
 def sensors_presence():
     now = datetime.now()
-    start_date = now - timedelta(days=4)
+    start_date = now - timedelta(days=14)
 
     on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date)
 
@@ -250,7 +250,7 @@ def sensors_presence():
 @app.route('/sensors/temperature')
 def sensors_temp():
     now = datetime.now()
-    start_date = now - timedelta(days=4)
+    start_date = now - timedelta(days=14)
     sensor_data = SensorData().temperature(start_date)
 
     return create_timeseries(sensor_data, sensor="Temperature", unit="°C", time_range=(start_date, now))
@@ -261,7 +261,7 @@ def sensors_temp():
 @app.route('/sensors/humidity')
 def sensors_humidity():
     now = datetime.now()
-    start_date = now - timedelta(days=4)
+    start_date = now - timedelta(days=14)
     sensor_data = SensorData().humidity(start_date)
 
     return create_timeseries(sensor_data, sensor="Humidity", unit="%RH", time_range=(start_date, now))
@@ -272,7 +272,7 @@ def sensors_humidity():
 @app.route('/sensors/pressure')
 def sensors_pressure():
     now = datetime.now()
-    start_date = now - timedelta(days=4)
+    start_date = now - timedelta(days=14)
     sensor_data = SensorData().pressure(start_date)
 
     return create_timeseries(sensor_data, sensor="Pressure", unit="hPa", time_range=(start_date, now))
@@ -283,7 +283,7 @@ def sensors_pressure():
 @app.route('/sensors/gas')
 def sensors_gas():
     now = datetime.now()
-    start_date = now - timedelta(days=4)
+    start_date = now - timedelta(days=14)
     sensor_data = SensorData().gas(start_date)
 
     return create_timeseries(sensor_data, sensor="Gas", sensor_key="amount", unit="VOC kOhm", time_range=(start_date, now))
