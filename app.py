@@ -76,7 +76,21 @@ def index():
 @app.route('/errors')
 def error_messages():
     data = Errors().errors()
-    return render_template("errors.html", data=data)
+
+    class ErrorTable(Table):
+        classes = ["error-table"]
+        timestamp = Col('Time')
+        errno = Col('Error Number')
+        message = Col('Error Message')
+
+    data_dict = dict()
+
+    for device in data.index.levels[0]:
+        data_dict[device] = ErrorTable(data.loc[device]
+                                           .sort_values(by='timestamp', ascending=False)
+                                           .to_dict(orient='records'))
+
+    return render_template("errors.html", data=data_dict)
 
 
 @app.route('/statistics/mode')
