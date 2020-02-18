@@ -1,0 +1,33 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+{{ js_resources|indent(4)|safe }}
+{{ css_resources|indent(4)|safe }}
+{% for plot_script in scripts %}
+{{ plot_script|indent(4)|safe }}
+{% endfor %}
+{% endblock %}
+
+{% block body %}
+<div id="content">
+  <h1>Databack package insertion delays (last {{timespan}})</h1>
+  <table id="data-table" class="table">
+    <thead class="thead-dark">
+    <tr>
+        <th>Device ID</th>
+        <th>Package Delay</th>
+    </tr>
+    </thead>
+  {% for device, figure in figures.items() %}
+  <tr>
+    <th scope="row"> {{device}}</th>
+    <td><div align="center">{{figure|safe}}</div></td>
+  </tr>
+  {% endfor %}
+  </table>
+</div>
+{% endblock %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+{% endblock script %}

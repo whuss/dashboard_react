@@ -13,11 +13,12 @@ from datetime import datetime, timedelta
 
 from data import Articles
 
-from db import session, Errors, Dashboard, SensorData, ModeStatistics, MouseData, PresenceDetectorStatistics
+from db import session, Errors, Dashboard, SensorData, ModeStatistics
+from db import MouseData, PresenceDetectorStatistics, DatabaseDelay
 
 import humanfriendly
 
-from plots import plot_histogram, plot_time_series, plot_on_off_cycles
+from plots import plot_histogram, plot_duration_histogram, plot_time_series, plot_on_off_cycles
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -73,6 +74,7 @@ def index():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 @app.route('/errors')
 def error_messages():
     data = Errors().errors()
@@ -92,6 +94,8 @@ def error_messages():
 
     return render_template("errors.html", data=data_dict)
 
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 @app.route('/statistics/mode')
 def statistics_mode():
@@ -101,11 +105,12 @@ def statistics_mode():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 @app.route('/statistics/mouse')
 def statistics_mouse():
     no_data = dict(stats="", plot_distance="", plot_speed="", plot_deviation="")
 
-    start_date = datetime.now() - timedelta(days=4)
+    start_date = datetime.now() - timedelta(days=14)
     mouse_data = MouseData().gesture_data(start_date)
 
     statistics_data = {}
@@ -155,6 +160,43 @@ def statistics_mouse():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
+@app.route('/statistics/database_delay')
+def statistics_database_delay():
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=1)
+    data = DatabaseDelay().package_delay(start_date)
+
+    figures = {}
+    scripts = []
+
+    # compute time range
+    x_range = min(data.delay), max(data.delay)
+
+    for device in data.index.levels[0]:
+        device_data = data.loc[device].delay
+
+        fig = plot_duration_histogram(data.delay.dropna(), time_scale="m",
+                x_axis_label="Package delay", y_axis_label="Amount",
+                plot_width=600, plot_height=400
+            )
+        script, div = components(fig)
+        figures[device] = div
+        scripts.append(script)
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    return render_template("statistics_database_delay.html",
+                           timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
+                           figures=figures,
+                           scripts=scripts,
+                           js_resources=js_resources,
+                           css_resources=css_resources)
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 @app.route('/statistics/switch_cycles')
 def statistics_switch_cycles():

@@ -1,15 +1,14 @@
 import pandas as pd
 import numpy as np
 from datetime import timedelta
-
 from bokeh.core.enums import Dimensions, StepMode
 from bokeh.transform import dodge
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource
-from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
+from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool, PrintfTickFormatter
+from bokeh.models.formatters import NumeralTickFormatter
 
 # ----------------------------------------------------------------------------------------------------------------------
-
 
 def plot_histogram(data, **kwargs):
     """Plot histogram a sequence of data values
@@ -49,6 +48,63 @@ def plot_histogram(data, **kwargs):
                  title=title, x_axis_label=x_axis_label, y_axis_label=y_axis_label)
     fig.toolbar.logo = None
     fig.toolbar_location = None
+
+    fig.quad(bottom=0, top=hist_df.hist_arr, left=hist_df.left, right=hist_df.right,
+             fill_color=fill_color, line_color=line_color)
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_duration_histogram(data, time_scale: str='s', **kwargs):
+    """Plot histogram a sequence of data values
+
+    Parameters:
+    -----------
+    data: iterable of numeric values
+
+    time_scale: one of "ms"-> milli seconds
+                       "s" -> seconds
+                       "m" -> minutes
+                       "h" -> hours
+                       "d" -> days
+
+    Optional parameters:
+    --------------------
+
+    plot_height: int (default=200)
+
+    plot_width: int (default=200)
+
+    title: str (default='')
+
+    x_axis_label: str (default='')
+
+    y_axis_label: str (default='')
+
+    fill_color: str (default='red')
+    line_color: str (default='black')
+    """
+    scaled_data = data.astype(f'timedelta64[{time_scale}]')
+
+    hist_arr, hist_edges = np.histogram(scaled_data)
+    hist_df = pd.DataFrame(dict(hist_arr=hist_arr, left=hist_edges[:-1], right=hist_edges[1:]))
+
+    plot_height = kwargs.pop('plot_height', 200)
+    plot_width = kwargs.pop('plot_width', 200)
+    title = kwargs.pop('title', '')
+    x_axis_label = kwargs.pop('x_axis_label', '')
+    y_axis_label = kwargs.pop('y_axis_label', '')
+    fill_color = kwargs.pop('fill_color', 'red')
+    line_color = kwargs.pop('line_color', 'black')
+
+    fig = figure(plot_height=plot_height, plot_width=plot_width,
+                 title=title, x_axis_label=x_axis_label, y_axis_label=y_axis_label)
+    fig.toolbar.logo = None
+    fig.toolbar_location = None
+
+    fig.xaxis[0].formatter = PrintfTickFormatter(format="%s" + time_scale)
+    fig.yaxis[0].formatter = NumeralTickFormatter(format='0,0')
 
     fig.quad(bottom=0, top=hist_df.hist_arr, left=hist_df.left, right=hist_df.right,
              fill_color=fill_color, line_color=line_color)
@@ -153,3 +209,8 @@ def plot_on_off_cycles(data, **kwargs):
              width=vbar_width, top='count', source=day_source,
              legend_label='day (7:00am - 9:00pm)', color="#fa9fb5", line_color="black")
     return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+def plot_database_delay(data, **kwargs):
+    pass

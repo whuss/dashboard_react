@@ -594,6 +594,64 @@ class MouseData(object):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class DatabaseDelay(object):
+    def __init__(self):
+        # ---- Device query ----
+        self.query_device = session.query(DeviceInfo.device)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def package_delay(self, since):
+        ep = ErrorPackage
+        query1 = session.query(ep.device, ep.create_dtm, ep.timestamp) \
+                        .filter(ep.timestamp >= since)
+        p = InstructionPackage
+        query2 = session.query(p.device, p.create_dtm, p.timestamp) \
+                        .filter(p.timestamp >= since)
+        p = LightingPackage
+        query3 = session.query(p.device, p.create_dtm, p.timestamp) \
+                        .filter(p.timestamp >= since)
+        p = MouseGesturePackage
+        query4 = session.query(p.device, p.create_dtm, p.timestamp) \
+                        .filter(p.timestamp >= since)
+        p = TemperaturePackage
+        query5 = session.query(p.device, p.create_dtm, p.timestamp) \
+                        .filter(p.timestamp >= since)
+        p = HumidityPackage
+        query6 = session.query(p.device, p.create_dtm, p.timestamp) \
+                        .filter(p.timestamp >= since)
+        p = PressurePackage
+        query7 = session.query(p.device, p.create_dtm, p.timestamp) \
+                        .filter(p.timestamp >= since)
+        p = GasPackage
+        query8 = session.query(p.device, p.create_dtm, p.timestamp) \
+                        .filter(p.timestamp >= since)
+        p = BrightnessPackage
+        query9 = session.query(p.device, p.create_dtm, p.timestamp) \
+                         .filter(p.timestamp >= since)
+        p = LoudnessPackage
+        query10 = session.query(p.device, p.create_dtm, p.timestamp) \
+                         .filter(p.timestamp >= since)
+
+        query = query1.union(query2) \
+                      .union(query3) \
+                      .union(query4) \
+                      .union(query5) \
+                      .union(query6) \
+                      .union(query7) \
+                      .union(query8) \
+                      .union(query9) \
+                      .union(query10) \
+
+        data = pd.DataFrame(query.all())
+        data = data.set_index(['device', data.index])
+        data = data.sort_index()
+        data['delay'] = data.create_dtm - data.timestamp
+        return data
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 def _timeseries(data, sensor: str):
     data = pd.DataFrame(data)
     data = data.set_index(['device', data.index])
