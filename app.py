@@ -174,9 +174,9 @@ def statistics_database_delay():
     x_range = min(data.delay), max(data.delay)
 
     for device in data.index.levels[0]:
-        device_data = data.loc[device].delay
+        device_data = data.loc[device].delay.dropna()
 
-        fig = plot_duration_histogram(data.delay.dropna(), time_scale="m",
+        fig = plot_duration_histogram(device_data, time_scale="m",
                 x_axis_label="Package delay", y_axis_label="Amount",
                 plot_width=600, plot_height=400
             )
