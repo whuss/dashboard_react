@@ -10,13 +10,13 @@
 
 {% block body %}
 <div id="content">
-  <h1>Database insertion delay (last {{timespan}})</h1>
+  <h1>Database insertion delay</h1>
   <span id="reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width:30%">
     <i class="fa fa-calendar"></i>&nbsp;
     <span></span> <i class="fa fa-caret-down"></i>
   </span>
-  <button type="button" class="btn btn-primary">Run Query</button>
-
+    <button id="run_query" type="button" class="btn btn-primary">Run Query</button>
+    <span>(Time intervall: {{timespan}})</span>
   <table id="data-table" class="table">
     <thead class="thead-dark">
     <tr>
@@ -38,19 +38,20 @@
 {% include 'includes/_data_table.html' %}
 <script type="text/javascript">
     $(function() {
-
-        var start = moment().startOf('day');
-        var end = moment();
+        var range_start = moment().startOf('day');
+        var range_end = moment();
 
         function cb(start, end) {
             $('#reportrange span').html(start.format('MMMM D, YYYY HH:mm') + ' - ' + end.format('MMMM D, YYYY HH:mm'));
+            range_start = start;
+            range_end = end;
         }
 
         $('#reportrange').daterangepicker({
             timePicker: true,
             timePicker24Hour: true,
-            startDate: start,
-            endDate: end,
+            startDate: range_start,
+            endDate: range_end,
             ranges: {
                'Today': [moment().startOf('day'), moment()],
                'Yesterday': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
@@ -59,8 +60,13 @@
             }
         }, cb);
 
-        cb(start, end);
+        cb(range_start, range_end);
 
+        $('#run_query').click(function() {
+            var start = range_start.format("YYYY:MM:DD HH:mm:ss");
+            var end = range_end.format("YYYY:MM:DD HH:mm:ss");
+            window.location="/statistics/database_delay?start=" + start + "&end=" + end;
+        });
     });
 </script>
 {% endblock script %}

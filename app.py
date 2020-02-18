@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 from flask_table import Table, Col
 
 
@@ -161,10 +161,26 @@ def statistics_mouse():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/statistics/database_delay')
+@app.route('/statistics/database_delay', methods=['GET'])
 def statistics_database_delay():
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=1)
+    start_str = request.args.get('start', default = "", type = str)
+    end_str = request.args.get('end', default = "", type = str)
+    from dateutil.parser import parse
+
+    if not end_str:
+        end_date = datetime.now()
+    else:
+        end_date = parse(end_str)
+
+    if not start_str:
+        start_date = end_date - timedelta(days=1)
+    else:
+        start_date = parse(start_str)
+
+    print(f"Date range: {start_str} -- {end_str}")
+    print("Parsed")
+    print(f"Date range: {start_date} -- {end_date}")
+
     data = DatabaseDelay().package_delay(start_date)
 
     figures = {}
@@ -461,6 +477,14 @@ Articles = Articles()
 @app.route('/articles')
 def articles():
     return render_template('articles.html', articles=Articles)
+
+@app.route('/test_post', methods=["GET"])
+def test_post():
+    start = request.args.get('start', default = "", type = str)
+    end = request.args.get('end', default = "", type = str)
+    print(f"Got data: {start} -- {end}")
+    return f"data: {start} -- {end}"
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
