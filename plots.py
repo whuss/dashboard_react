@@ -85,6 +85,12 @@ def plot_duration_histogram(data, time_scale: str='s', **kwargs):
     fill_color: str (default='red')
     line_color: str (default='black')
     """
+    time_format = dict(ms="milli seconds",
+                       s="seconds",
+                       m="minutes",
+                       h="hours",
+                       d="days")
+
     scaled_data = data.astype(f'timedelta64[{time_scale}]')
 
     hist_arr, hist_edges = np.histogram(scaled_data)
@@ -94,6 +100,7 @@ def plot_duration_histogram(data, time_scale: str='s', **kwargs):
     plot_width = kwargs.pop('plot_width', 200)
     title = kwargs.pop('title', '')
     x_axis_label = kwargs.pop('x_axis_label', '')
+    x_axis_label = f"{x_axis_label} ({time_format[time_scale]})"
     y_axis_label = kwargs.pop('y_axis_label', '')
     fill_color = kwargs.pop('fill_color', 'red')
     line_color = kwargs.pop('line_color', 'black')
@@ -103,7 +110,8 @@ def plot_duration_histogram(data, time_scale: str='s', **kwargs):
     fig.toolbar.logo = None
     fig.toolbar_location = None
 
-    fig.xaxis[0].formatter = PrintfTickFormatter(format="%s" + time_scale)
+    fig.xaxis[0].formatter = NumeralTickFormatter(format='0.[0]')
+    #PrintfTickFormatter(format="%.2f" + time_scale)
     fig.yaxis[0].formatter = NumeralTickFormatter(format='0,0')
 
     fig.quad(bottom=0, top=hist_df.hist_arr, left=hist_df.left, right=hist_df.right,
