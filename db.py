@@ -568,26 +568,22 @@ class MouseData(object):
         column_names = dict(gesture_distance="distance",
                             gesture_speed="speed",
                             gesture_deviation="deviation")
-        mgp = MouseGesturePackage
-        sq_gesture = session.query(mgp.device, mgp.timestamp, mgp.gesture_start, mgp.gesture_end,
-                                   mgp.gesture_distance, mgp.gesture_speed, mgp.gesture_deviation) \
-                            .filter(mgp.timestamp >= since) \
-                            .subquery()
 
-        query = self.query_device\
-                    .outerjoin(sq_gesture, DeviceInfo.device == sq_gesture.c.device) \
-                    .add_columns(sq_gesture.c.timestamp, sq_gesture.c.gesture_start,
-                                 sq_gesture.c.gesture_end, sq_gesture.c.gesture_distance,
-                                 sq_gesture.c.gesture_speed, sq_gesture.c.gesture_deviation) \
-                    .order_by(DeviceInfo.device)
+        sq_device = self.query_device.subquery()
+
+        mgp = MouseGesturePackage
+        query = session.query(mgp.device, mgp.timestamp, mgp.gesture_start, mgp.gesture_end,
+                              mgp.gesture_distance, mgp.gesture_speed, mgp.gesture_deviation) \
+                       .filter(mgp.timestamp >= since) \
+                       .outerjoin(sq_device, sq_device.c.device == mgp.device) \
+                       .order_by(mgp.device, mgp.timestamp)
 
         data = pd.DataFrame(query.all())
         data = data.set_index(['device', data.index])
 
-        devices = self.query_device.all()
+        devices = data.index.levels[0]
         data_dict = {}
         for device in devices:
-            device = device[0]
             df = data.loc[device]
             df = df.sort_values(by=['timestamp'])
             df = df.rename(columns=column_names)
