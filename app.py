@@ -321,7 +321,6 @@ def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range
         for sensor_id in sensor_ids:
             if not x_range:
                 x_range = (start_date, end_date)
-            print(f"{device}: {sensor_id}")
             data = device_data.loc[sensor_id]
             data = data.sort_values(by=['timestamp'])
 
@@ -331,7 +330,7 @@ def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range
             # Convert sensor name to shorter form
             sensor_name = sensor_id_dict.get(sensor_id, sensor_id)
 
-            fig = time_series_plot(timestamp, time_series,
+            fig = plot_time_series(timestamp, time_series,
                                    x_range=x_range,
                                    title=f"Sensor: {sensor_name}")
             x_range = fig.x_range
@@ -370,7 +369,7 @@ def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range
 @app.route('/sensors/brightness')
 def sensors_brightness():
     now = datetime.now()
-    start_date = now - timedelta(days=4)
+    start_date = now - timedelta(days=14)
     sensor_data = SensorData().brightness(start_date)
 
     return create_timeseries_brightness(sensor_data, sensor="Brightness", unit="lx", time_range=(start_date, now))

@@ -346,17 +346,14 @@ class SensorData(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     def temperature(self, since):
-        tp = TemperaturePackage
-        sq_temperature = session.query(tp.device, tp.temperature, tp.unit, tp.timestamp) \
-                                .filter(tp.timestamp >= since) \
-                                .subquery()
+        sq_device = self.query_device.subquery()
 
-        data = self.query_device \
-                   .outerjoin(sq_temperature, DeviceInfo.device == sq_temperature.c.device) \
-                   .add_columns(sq_temperature.c.temperature, sq_temperature.c.unit, sq_temperature.c.timestamp) \
-                   .order_by(DeviceInfo.device) \
-                   .order_by(sq_temperature.c.timestamp) \
-                   .all()
+        tp = TemperaturePackage
+        data = session.query(tp.device, tp.temperature, tp.unit, tp.timestamp) \
+                      .filter(tp.timestamp >= since) \
+                      .outerjoin(sq_device, sq_device.c.device == tp.device) \
+                      .order_by(tp.device, tp.timestamp) \
+                      .all()
 
         return _timeseries(data, 'temperature')
 
@@ -369,19 +366,14 @@ class SensorData(object):
         -----
         The PTL has 4 different brightness sensors. Which can be distinguied by column BrightnessBackage.source
         """
+        sq_device = self.query_device.subquery()
 
         bp = BrightnessPackage
-        sq_brightness = session.query(bp.device, bp.brightness, bp.unit, bp.timestamp, bp.source) \
-                               .filter(bp.timestamp >= since) \
-                               .subquery()
-
-        data = self.query_device \
-                   .outerjoin(sq_brightness, DeviceInfo.device == sq_brightness.c.device) \
-                   .add_columns(sq_brightness.c.brightness, sq_brightness.c.unit,
-                                sq_brightness.c.timestamp, sq_brightness.c.source) \
-                   .order_by(DeviceInfo.device) \
-                   .order_by(sq_brightness.c.timestamp) \
-                   .all()
+        data = session.query(bp.device, bp.brightness, bp.unit, bp.timestamp, bp.source) \
+                      .filter(bp.timestamp >= since) \
+                      .outerjoin(sq_device, sq_device.c.device == bp.device) \
+                      .order_by(bp.device, bp.timestamp) \
+                      .all()
 
         data = pd.DataFrame(data)
         data = data.set_index(['device', 'source', data.index])
@@ -390,51 +382,42 @@ class SensorData(object):
 # ------------------------------------------------------------------------------------------------------------------
 
     def humidity(self, since):
-        hp = HumidityPackage
-        sq_humidity = session.query(hp.device, hp.humidity, hp.unit, hp.timestamp) \
-                             .filter(hp.timestamp >= since) \
-                             .subquery()
+        sq_device = self.query_device.subquery()
 
-        data = self.query_device \
-                   .outerjoin(sq_humidity, DeviceInfo.device == sq_humidity.c.device) \
-                   .add_columns(sq_humidity.c.humidity, sq_humidity.c.unit, sq_humidity.c.timestamp) \
-                   .order_by(DeviceInfo.device) \
-                   .order_by(sq_humidity.c.timestamp) \
-                   .all()
+        hp = HumidityPackage
+        data = session.query(hp.device, hp.humidity, hp.unit, hp.timestamp) \
+                      .filter(hp.timestamp >= since) \
+                      .outerjoin(sq_device, sq_device.c.device == hp.device) \
+                      .order_by(hp.device, hp.timestamp) \
+                      .all()
 
         return _timeseries(data, 'humidity')
 
 # ------------------------------------------------------------------------------------------------------------------
 
     def pressure(self, since):
-        pp = PressurePackage
-        sq_pressure = session.query(pp.device, pp.pressure, pp.unit, pp.timestamp) \
-                             .filter(pp.timestamp >= since) \
-                             .subquery()
+        sq_device = self.query_device.subquery()
 
-        data = self.query_device \
-                   .outerjoin(sq_pressure, DeviceInfo.device == sq_pressure.c.device) \
-                   .add_columns(sq_pressure.c.pressure, sq_pressure.c.unit, sq_pressure.c.timestamp) \
-                   .order_by(DeviceInfo.device) \
-                   .order_by(sq_pressure.c.timestamp) \
-                   .all()
+        pp = PressurePackage
+        data = session.query(pp.device, pp.pressure, pp.unit, pp.timestamp) \
+                      .filter(pp.timestamp >= since) \
+                      .outerjoin(sq_device, sq_device.c.device == pp.device) \
+                      .order_by(pp.device, pp.timestamp) \
+                      .all()
 
         return _timeseries(data, 'pressure')
 
 # ------------------------------------------------------------------------------------------------------------------
 
     def gas(self, since):
-        gp = GasPackage
-        sq_gas = session.query(gp.device, gp.gas, gp.amount, gp.unit, gp.timestamp) \
-                        .filter(gp.timestamp >= since) \
-                        .subquery()
+        sq_device = self.query_device.subquery()
 
-        data = self.query_device \
-                   .outerjoin(sq_gas, DeviceInfo.device == sq_gas.c.device) \
-                   .add_columns(sq_gas.c.gas, sq_gas.c.unit, sq_gas.c.amount, sq_gas.c.timestamp) \
-                   .order_by(DeviceInfo.device) \
-                   .order_by(sq_gas.c.timestamp) \
-                   .all()
+        gp = GasPackage
+        data = session.query(gp.device, gp.gas, gp.amount, gp.unit, gp.timestamp) \
+                      .filter(gp.timestamp >= since) \
+                      .outerjoin(sq_device, sq_device.c.device == gp.device) \
+                      .order_by(gp.device, gp.timestamp) \
+                      .all()
 
         return _timeseries(data, 'amount')
 
@@ -491,8 +474,6 @@ class PresenceDetectorStatistics(object):
                     .filter(ip.instruction == "MODE") \
                     .filter(ip.target == "POWER") \
                     .filter(ip.value == "ON") \
-                    .filter(ip.device != "PTL_DEFAULT") \
-                    .filter(ip.device != "PTL_ES_001") \
                     .outerjoin(sq_device, sq_device.c.device == ip.device) \
                     .order_by(ip.device)
 
@@ -519,8 +500,6 @@ class Errors(object):
         sq_device = session.query(DeviceInfo.device).subquery()
 
         query = session.query(ep.device, ep.timestamp, ep.errno, ep.message) \
-                       .filter(ep.device != "PTL_DEFAULT") \
-                       .filter(ep.device != "PTL_ES_001") \
                        .outerjoin(sq_device, sq_device.c.device == ep.device) \
                        .order_by(ep.device)
 
