@@ -38,9 +38,11 @@
 {% include 'includes/_data_table.html' %}
 <script type="text/javascript">
     $(function() {
+        // Set initial time range for database query
         var range_start = moment().startOf('day');
         var range_end = moment();
 
+        // Callback for time range picker
         function cb(start, end) {
             $('#reportrange span').html(start.format('MMMM D, YYYY HH:mm') + ' - ' + end.format('MMMM D, YYYY HH:mm'));
             range_start = start;
@@ -53,6 +55,7 @@
             startDate: range_start,
             endDate: range_end,
             ranges: {
+               // Predefined time ranges
                'Today': [moment().startOf('day'), moment()],
                'Yesterday': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
                'Last 2 days': [moment().subtract(2, 'days').startOf('day'), moment()],
@@ -65,7 +68,9 @@
         $('#run_query').click(function() {
             var start = range_start.format("YYYY:MM:DD HH:mm:ss");
             var end = range_end.format("YYYY:MM:DD HH:mm:ss");
-            window.location="/statistics/database_delay?start=" + start + "&end=" + end;
+            var loc = window.location;
+            var currentURL = loc.protocol + '//' + loc.host + loc.pathname;
+            window.location = currentURL +"?start=" + start + "&end=" + end;
         });
     });
 </script>

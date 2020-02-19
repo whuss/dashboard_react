@@ -181,7 +181,9 @@ def statistics_database_delay():
     print("Parsed")
     print(f"Date range: {start_date} -- {end_date}")
 
-    data = DatabaseDelay().package_delay(start_date)
+    data = DatabaseDelay().package_delay(start_date, end_date)
+
+    print("Query finished")
 
     figures = {}
     scripts = []

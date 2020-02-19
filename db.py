@@ -601,37 +601,47 @@ class DatabaseDelay(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def package_delay(self, since):
-        ep = ErrorPackage
-        query1 = session.query(ep.device, ep.create_dtm, ep.timestamp) \
-                        .filter(ep.timestamp >= since)
+    def package_delay(self, start_date, end_date):
+        p = ErrorPackage
+        query1 = session.query(p.device, p.create_dtm, p.timestamp) \
+                        .filter(p.timestamp >= start_date) \
+                        .filter(p.timestamp <= end_date)
         p = InstructionPackage
         query2 = session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= since)
+                        .filter(p.timestamp >= start_date) \
+                        .filter(p.timestamp <= end_date)
         p = LightingPackage
         query3 = session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= since)
+                        .filter(p.timestamp >= start_date) \
+                        .filter(p.timestamp <= end_date)
         p = MouseGesturePackage
         query4 = session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= since)
+                        .filter(p.timestamp >= start_date) \
+                        .filter(p.timestamp <= end_date)
         p = TemperaturePackage
         query5 = session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= since)
+                        .filter(p.timestamp >= start_date) \
+                        .filter(p.timestamp <= end_date)
         p = HumidityPackage
         query6 = session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= since)
+                        .filter(p.timestamp >= start_date) \
+                        .filter(p.timestamp <= end_date)
         p = PressurePackage
         query7 = session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= since)
+                        .filter(p.timestamp >= start_date) \
+                        .filter(p.timestamp <= end_date)
         p = GasPackage
         query8 = session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= since)
+                        .filter(p.timestamp >= start_date) \
+                        .filter(p.timestamp <= end_date)
         p = BrightnessPackage
         query9 = session.query(p.device, p.create_dtm, p.timestamp) \
-                         .filter(p.timestamp >= since)
+                         .filter(p.timestamp >= start_date) \
+                         .filter(p.timestamp <= end_date)
         p = LoudnessPackage
         query10 = session.query(p.device, p.create_dtm, p.timestamp) \
-                         .filter(p.timestamp >= since)
+                         .filter(p.timestamp >= start_date) \
+                         .filter(p.timestamp <= end_date)
 
         query = query1.union(query2) \
                       .union(query3) \
