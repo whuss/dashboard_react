@@ -346,14 +346,17 @@ class SensorData(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     def temperature(self, since):
-        sq_device = self.query_device.subquery()
+        query_device = self.query_device
 
         tp = TemperaturePackage
-        data = session.query(tp.device, tp.temperature, tp.unit, tp.timestamp) \
-                      .filter(tp.timestamp >= since) \
-                      .outerjoin(sq_device, sq_device.c.device == tp.device) \
-                      .order_by(tp.device, tp.timestamp) \
-                      .all()
+        sq_temperature = session.query(tp.device, tp.temperature, tp.unit, tp.timestamp) \
+                                .filter(tp.timestamp >= since) \
+                                .order_by(tp.device, tp.timestamp) \
+                                .subquery()
+
+        data = query_device.outerjoin(sq_temperature, DeviceInfo.device == sq_temperature.c.device) \
+                          .add_columns(sq_temperature.c.temperature, sq_temperature.c.unit, sq_temperature.c.timestamp) \
+                          .all()
 
         return _timeseries(data, 'temperature')
 
@@ -401,7 +404,7 @@ class SensorData(object):
         pp = PressurePackage
         data = session.query(pp.device, pp.pressure, pp.unit, pp.timestamp) \
                       .filter(pp.timestamp >= since) \
-                      .outerjoin(sq_device, sq_device.c.device == pp.device) \
+                      .join(sq_device, sq_device.c.device == pp.device) \
                       .order_by(pp.device, pp.timestamp) \
                       .all()
 
@@ -569,14 +572,17 @@ class MouseData(object):
                             gesture_speed="speed",
                             gesture_deviation="deviation")
 
-        sq_device = self.query_device.subquery()
-
         mgp = MouseGesturePackage
-        query = session.query(mgp.device, mgp.timestamp, mgp.gesture_start, mgp.gesture_end,
-                              mgp.gesture_distance, mgp.gesture_speed, mgp.gesture_deviation) \
-                       .filter(mgp.timestamp >= since) \
-                       .outerjoin(sq_device, sq_device.c.device == mgp.device) \
-                       .order_by(mgp.device, mgp.timestamp)
+        sq_mouse = session.query(mgp.device, mgp.timestamp, mgp.gesture_start, mgp.gesture_end,
+                                 mgp.gesture_distance, mgp.gesture_speed, mgp.gesture_deviation) \
+                          .filter(mgp.timestamp >= since) \
+                          .subquery()
+
+        query = self.query_device \
+                    .outerjoin(sq_mouse, sq_mouse.c.device == DeviceInfo.device) \
+                    .add_columns(sq_mouse.c.timestamp, sq_mouse.c.gesture_start, sq_mouse.c.gesture_end,
+                                 sq_mouse.c.gesture_distance, sq_mouse.c.gesture_speed, sq_mouse.c.gesture_deviation) \
+                    .order_by(sq_mouse.c.device, sq_mouse.c.timestamp)
 
         data = pd.DataFrame(query.all())
         data = data.set_index(['device', data.index])
