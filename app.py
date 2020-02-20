@@ -93,6 +93,7 @@ def error_messages():
     class ErrorTable(Table):
         classes = ["error-table"]
         timestamp = Col('Time')
+        service = Col('Service')
         errno = Col('Error Number')
         message = PreCol('Error Message')
 
@@ -189,8 +190,7 @@ def statistics_database_delay():
         start_date = parse(start_str)
 
     print(f"Date range: {start_str} -- {end_str}")
-    print("Parsed")
-    print(f"Date range: {start_date} -- {end_date}")
+    print(f"Parsed Date range: {start_date} -- {end_date}")
 
     data = DatabaseDelay().package_delay(start_date, end_date)
 

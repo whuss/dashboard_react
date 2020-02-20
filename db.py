@@ -502,7 +502,7 @@ class Errors(object):
         ep = ErrorPackage
         sq_device = session.query(DeviceInfo.device).subquery()
 
-        query = session.query(ep.device, ep.timestamp, ep.errno, ep.message) \
+        query = session.query(ep.device, ep.service, ep.timestamp, ep.errno, ep.message) \
                        .outerjoin(sq_device, sq_device.c.device == ep.device) \
                        .order_by(ep.device)
 
