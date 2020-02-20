@@ -75,6 +75,17 @@ def index():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class PreCol(Col):
+    """Column class for Flask Table that wraps its content in a pre tag
+    """
+    def td_format(self, content):
+        return f'''<pre style="text-align: left; width: 75%; white-space: pre-line;">
+                       {content}
+                   </pre>'''
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 @app.route('/errors')
 def error_messages():
     data = Errors().errors()
@@ -83,7 +94,7 @@ def error_messages():
         classes = ["error-table"]
         timestamp = Col('Time')
         errno = Col('Error Number')
-        message = Col('Error Message')
+        message = PreCol('Error Message')
 
     data_dict = dict()
 
