@@ -66,8 +66,8 @@
         cb(range_start, range_end);
 
         $('#run_query').click(function() {
-            var start = range_start.format("YYYY:MM:DD HH:mm:ss");
-            var end = range_end.format("YYYY:MM:DD HH:mm:ss");
+            var start = range_start.format("YYYY-MM-DD HH:mm:ss");
+            var end = range_end.format("YYYY-MM-DD HH:mm:ss");
             var loc = window.location;
             var currentURL = loc.protocol + '//' + loc.host + loc.pathname;
             window.location = currentURL +"?start=" + start + "&end=" + end;
