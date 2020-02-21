@@ -1,5 +1,6 @@
 import sqlalchemy as db
 import pandas as pd
+import numpy as np
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -663,6 +664,9 @@ class DatabaseDelay(object):
         data = data.set_index(['device', data.index])
         data = data.sort_index()
         data['delay'] = data.create_dtm - data.timestamp
+        # sometime we get slightly negative values because the client and
+        # the db server are not time synced. This negative values are set to 0
+        data.delay = np.maximum(data.delay, np.timedelta64(0))
         return data
 
 # ----------------------------------------------------------------------------------------------------------------------
