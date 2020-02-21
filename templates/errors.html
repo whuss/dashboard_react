@@ -2,12 +2,12 @@
 
 {% block body %}
 <div id="content">
-  <h1>Mouse gesture statistics</h1>
+  <h1>{{messages}}</h1>
   <table id="data-table" class="table">
     <thead class="thead-dark">
     <tr>
         <th>Device ID</th>
-        <th>Error messages</th>
+        <th>{{messages}}</th>
     </tr>
     </thead>
   {% for device, error_table in data.items() %}

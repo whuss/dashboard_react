@@ -86,7 +86,7 @@ class PreCol(Col):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/errors')
+@app.route('/system/errors')
 def error_messages():
     data = Errors().errors()
 
@@ -104,7 +104,31 @@ def error_messages():
                                            .sort_values(by='timestamp', ascending=False)
                                            .to_dict(orient='records'))
 
-    return render_template("errors.html", data=data_dict)
+    return render_template("errors.html", data=data_dict, messages="Error messages")
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+@app.route('/system/logs')
+def log_messages():
+    data = Errors().logs()
+
+    class LogsTable(Table):
+        classes = ["error-table"]
+        timestamp = Col('Time')
+        filename = Col('Filename')
+        line_number = Col('Line Number')
+        log_level = Col('Log Level')
+        message = PreCol('Error Message')
+
+    data_dict = dict()
+
+    for device in data.index.levels[0]:
+        data_dict[device] = LogsTable(data.loc[device]
+                                          .sort_values(by='timestamp', ascending=False)
+                                          .to_dict(orient='records'))
+
+    return render_template("errors.html", data=data_dict, messages="Log messages")
 
 # ----------------------------------------------------------------------------------------------------------------------
 

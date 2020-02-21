@@ -33,6 +33,8 @@ device_info = metadata.tables['DeviceInfo']
 lighting_package = metadata.tables['LightingPackage']
 brightness_package = metadata.tables['BrightnessPackage']
 error_package = metadata.tables['ErrorPackage']
+version_package = metadata.tables['VersionPackage']
+logger_package = metadata.tables['LoggerPackage']
 gas_package = metadata.tables['GasPackage']
 gaze_zone_package = metadata.tables['GazeZonePackage']
 humidity_package = metadata.tables['HumidityPackage']
@@ -60,6 +62,39 @@ class ErrorPackage(Base):
     timestamp = db.Column('ix_data_dtm', key='timestamp')
     errno = db.Column('number_int', key="errno")
     message = db.Column('message_str', key="message")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class LoggerPackage(Base):
+    __tablename__ = 'LoggerPackage'
+    __table_args__ = dict(autoload=True)
+
+    id = db.Column('pk_logger_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    service = db.Column('service_sn', key='service')
+    source = db.Column('ix_source_sn', key='source')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    filename = db.Column('filename_str', key='filename')
+    line_number = db.Column('line_number_int', key='line_number')
+    log_level = db.Column('log_level_ind', key='log_level')
+    message = db.Column('message_str', key="message")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class VersionPackage(Base):
+    __tablename__ = 'VersionPackage'
+    __table_args__ = dict(autoload=True)
+
+    id = db.Column('pk_version_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    service = db.Column('service_sn', key='service')
+    source = db.Column('ix_source_sn', key='source')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    commit = db.Column('commit_sn', key="commit")
+    branch = db.Column('branch_sn', key="branch")
+    version_timestamp = db.Column('version_timestamp_dtm', key='version_timestamp')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -506,6 +541,19 @@ class Errors(object):
         query = session.query(ep.device, ep.service, ep.timestamp, ep.errno, ep.message) \
                        .outerjoin(sq_device, sq_device.c.device == ep.device) \
                        .order_by(ep.device)
+
+        data = pd.DataFrame(query.all())
+        data = data.set_index(['device', data.index])
+        return data
+
+    def logs(self):
+        lp = LoggerPackage
+
+        sq_device = session.query(DeviceInfo.device).subquery()
+
+        query = session.query(lp.device, lp.source, lp.timestamp, lp.filename, lp.line_number, lp.log_level, lp.message) \
+                       .outerjoin(sq_device, sq_device.c.device == lp.device) \
+                       .order_by(lp.device)
 
         data = pd.DataFrame(query.all())
         data = data.set_index(['device', data.index])
