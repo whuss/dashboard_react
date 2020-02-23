@@ -132,6 +132,28 @@ def log_messages():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+@app.route('/system/version')
+def version_messages():
+    data = Errors().version()
+
+    class VersionTable(Table):
+        classes = ["error-table"]
+        timestamp = Col('Time')
+        commit = Col('Commit')
+        branch = Col('branch')
+        version_timestamp = Col('Version Timestamp')
+
+    data_dict = dict()
+
+    for device in data.index.levels[0]:
+        data_dict[device] = VersionTable(data.loc[device]
+                                             .sort_values(by='timestamp', ascending=False)
+                                             .to_dict(orient='records'))
+
+    return render_template("errors.html", data=data_dict, messages="System start")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 @app.route('/statistics/mode')
 def statistics_mode():

@@ -546,6 +546,8 @@ class Errors(object):
         data = data.set_index(['device', data.index])
         return data
 
+    # ------------------------------------------------------------------------------------------------------------------
+
     def logs(self):
         lp = LoggerPackage
 
@@ -554,6 +556,21 @@ class Errors(object):
         query = session.query(lp.device, lp.source, lp.timestamp, lp.filename, lp.line_number, lp.log_level, lp.message) \
                        .outerjoin(sq_device, sq_device.c.device == lp.device) \
                        .order_by(lp.device)
+
+        data = pd.DataFrame(query.all())
+        data = data.set_index(['device', data.index])
+        return data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def version(self):
+        vp = VersionPackage
+
+        sq_device = session.query(DeviceInfo.device).subquery()
+
+        query = session.query(vp.device, vp.timestamp, vp.version_timestamp, vp.branch, vp.commit) \
+                       .outerjoin(sq_device, sq_device.c.device == vp.device) \
+                       .order_by(vp.device)
 
         data = pd.DataFrame(query.all())
         data = data.set_index(['device', data.index])
