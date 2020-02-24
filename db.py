@@ -563,7 +563,7 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def version(self):
+    def version(self, device_id=None):
         vp = VersionPackage
 
         sq_device = session.query(DeviceInfo.device).subquery()
@@ -571,6 +571,9 @@ class Errors(object):
         query = session.query(vp.device, vp.timestamp, vp.version_timestamp, vp.branch, vp.commit) \
                        .outerjoin(sq_device, sq_device.c.device == vp.device) \
                        .order_by(vp.device)
+
+        if device_id:
+            query = query.filter(vp.device == device_id)
 
         data = pd.DataFrame(query.all())
         data = data.set_index(['device', data.index])

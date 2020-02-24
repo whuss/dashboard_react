@@ -104,7 +104,7 @@ def error_messages():
                                            .sort_values(by='timestamp', ascending=False)
                                            .to_dict(orient='records'))
 
-    return render_template("errors.html", data=data_dict, messages="Error messages")
+    return render_template("errors.html", route='/system/errors', data=data_dict, messages="Error messages")
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -128,13 +128,15 @@ def log_messages():
                                           .sort_values(by='timestamp', ascending=False)
                                           .to_dict(orient='records'))
 
-    return render_template("errors.html", data=data_dict, messages="Log messages")
+    return render_template("errors.html", route='/system/logs', data=data_dict, messages="Log messages")
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-@app.route('/system/version')
+@app.route('/system/version', methods=['GET'])
 def version_messages():
-    data = Errors().version()
+    device_id = request.args.get('id', default = "", type = str)
+    print(f"Device id = {device_id}")
+    data = Errors().version(device_id=device_id)
 
     class VersionTable(Table):
         classes = ["error-table"]
@@ -150,7 +152,7 @@ def version_messages():
                                              .sort_values(by='timestamp', ascending=False)
                                              .to_dict(orient='records'))
 
-    return render_template("errors.html", data=data_dict, messages="System start")
+    return render_template("errors.html", route='/system/version', data=data_dict, messages="System start")
 
 # ----------------------------------------------------------------------------------------------------------------------
 
