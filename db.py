@@ -272,6 +272,12 @@ class Dashboard(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def devices(self):
+        devices = self.query_device.all()
+        return [device[0] for device in devices]
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def query_light(self, start_date):
         """number of lighting changes since start_date per PTL-device"""
         lp = LightingPackage
@@ -534,7 +540,7 @@ class PresenceDetectorStatistics(object):
 
 
 class Errors(object):
-    def errors(self):
+    def errors(self, device_id=None):
         ep = ErrorPackage
         sq_device = session.query(DeviceInfo.device).subquery()
 
@@ -542,13 +548,16 @@ class Errors(object):
                        .outerjoin(sq_device, sq_device.c.device == ep.device) \
                        .order_by(ep.device)
 
+        if device_id:
+            query = query.filter(ep.device == device_id)
+
         data = pd.DataFrame(query.all())
         data = data.set_index(['device', data.index])
         return data
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def logs(self):
+    def logs(self, device_id=None, since=None):
         lp = LoggerPackage
 
         sq_device = session.query(DeviceInfo.device).subquery()
@@ -556,6 +565,12 @@ class Errors(object):
         query = session.query(lp.device, lp.source, lp.timestamp, lp.filename, lp.line_number, lp.log_level, lp.message) \
                        .outerjoin(sq_device, sq_device.c.device == lp.device) \
                        .order_by(lp.device)
+
+        if since:
+            query = query.filter(lp.timestamp >= since)
+
+        if device_id:
+            query = query.filter(lp.device == device_id)
 
         data = pd.DataFrame(query.all())
         data = data.set_index(['device', data.index])

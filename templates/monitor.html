@@ -1,0 +1,55 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+{% endblock %}
+
+{% block body %}
+<div id="content">
+  <h1>Live Monitor</h1>
+  <div class="dropdown show">
+  <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownDevice" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Select device
+  </a>
+  <div id="dropdownMenu" class="dropdown-menu" aria-labelledby="dropdownDevice">
+    {% for device in devices %}
+    <a class="dropdown-item" href="#{{device}}">{{device}}</a>
+    {% endfor %}
+  </div>
+  <button id="monitorButton" type="button" class="btn btn-secondary" data-toggle="button" aria-pressed="false" autocomplete="off">Monitor device</button>
+</div>
+  <div id="terminal">
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+<script type="text/javascript">
+    $(function() {
+        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
+        $('#dropdownMenu a').click(function() {
+            var device = $(this).attr('href').substr(1);
+            $('#dropdownDevice').html(device);
+            $('#monitorButton').attr('class', 'btn btn-success');
+        });
+
+        $('#monitorButton').click(function() {
+            var device = $('#dropdownDevice').html();
+            $(this).attr('class', 'btn btn-danger');
+            console.log("monitor device " + device);
+            $.ajax({
+                method: 'POST',
+                url: {{ url_for('_monitor_device')|tojson }},
+                data: {
+                   device: device
+                }
+            }).done(addData);
+        });
+
+        function addData(data) {
+            $('#terminal').html(data.result);
+        }
+    });
+</script>
+{% endblock script %}

@@ -76,8 +76,7 @@ def index():
 
 
 class PreCol(Col):
-    """Column class for Flask Table that wraps its content in a pre tag
-    """
+    """Column class for Flask Table that wraps its content in a pre tag"""
     def td_format(self, content):
         return f'''<pre style="text-align: left; width: 75%; white-space: pre-line;">
                        {content}
@@ -86,9 +85,10 @@ class PreCol(Col):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/system/errors')
+@app.route('/system/errors', methods=['GET'])
 def error_messages():
-    data = Errors().errors()
+    device_id = request.args.get('id', default="", type=str)
+    data = Errors().errors(device_id=device_id)
 
     class ErrorTable(Table):
         classes = ["error-table"]
@@ -109,9 +109,10 @@ def error_messages():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-@app.route('/system/logs')
+@app.route('/system/logs', methods=['GET'])
 def log_messages():
-    data = Errors().logs()
+    device_id = request.args.get('id', default="", type=str)
+    data = Errors().logs(device_id=device_id)
 
     class LogsTable(Table):
         classes = ["error-table"]
@@ -132,10 +133,10 @@ def log_messages():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 @app.route('/system/version', methods=['GET'])
 def version_messages():
     device_id = request.args.get('id', default = "", type = str)
-    print(f"Device id = {device_id}")
     data = Errors().version(device_id=device_id)
 
     class VersionTable(Table):
@@ -156,11 +157,38 @@ def version_messages():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+@app.route('/_monitor_device', methods=['POST'])
+def _monitor_device():
+    device = ""
+    if request.method == 'POST':
+        device = request.form.get('device')
+    print(f"_monitor: {device}")
+
+    start_date = datetime.now() - timedelta(days=1)
+    logs = Errors().logs(device_id=device, since=start_date)
+
+    log_text = ""
+    #for log in logs:
+    #    #lp.filename, lp.line_number, lp.log_level, lp.message
+    #    log_text += log.message + "\n"
+    log_text = "\n".join(logs.message)
+
+    return jsonify(result=f"Start monitoring {device}\n<pre>{log_text}</pre>")
+
+@app.route('/monitor')
+def monitor():
+    devices = Dashboard().devices()
+    for device in devices:
+        print(device)
+    return render_template("monitor.html", devices=devices)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 @app.route('/statistics/mode')
 def statistics_mode():
     data = ModeStatistics().mode_counts()
-    labels=["Auto", "Off", "Manual", "Light Shower"]
+    labels = ["Auto", "Off", "Manual", "Light Shower"]
     return render_template('statistics_mode.html', data=data, labels=jsonify(labels))
 
 # ----------------------------------------------------------------------------------------------------------------------
