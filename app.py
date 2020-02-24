@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, jsonify, request
 from flask_table import Table, Col
 
@@ -157,6 +158,28 @@ def version_messages():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
+def format_logs(logs):
+    log_text = ""
+    for index, lp in logs.iterrows():
+        filename = os.path.basename(lp.filename)
+        header_no_format = f'({lp.timestamp}) {lp.log_level:<8} [{filename}:{lp.line_number}]: '
+        header = f'({lp.timestamp}) <span class="{lp.log_level}">{lp.log_level:<8}</span> [<span data-toggle="tooltip" title="{lp.filename}" >{filename}</span>:{lp.line_number}]: '
+        identation = len(header_no_format) * " "
+        message_lines = lp.message.split("\n")
+        formatted_message = header + message_lines[0] + "\n" + \
+            "\n".join([identation + line for line in message_lines[1:]])
+
+        if len(message_lines) > 1:
+            formatted_message += "\n"
+
+        log_text += formatted_message
+
+    return log_text
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 @app.route('/_monitor_device', methods=['POST'])
 def _monitor_device():
     device = ""
@@ -167,13 +190,12 @@ def _monitor_device():
     start_date = datetime.now() - timedelta(days=1)
     logs = Errors().logs(device_id=device, since=start_date)
 
-    log_text = ""
-    #for log in logs:
-    #    #lp.filename, lp.line_number, lp.log_level, lp.message
-    #    log_text += log.message + "\n"
-    log_text = "\n".join(logs.message)
+    log_text = format_logs(logs)
 
     return jsonify(result=f"Start monitoring {device}\n<pre>{log_text}</pre>")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 @app.route('/monitor')
 def monitor():

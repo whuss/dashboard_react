@@ -90,6 +90,35 @@
     color: white;
 }
 
+#terminal pre {
+	font-family: monospace;
+}
+
+.DEBUG {
+    font-weight: bold;
+    color: green;
+}
+
+.INFO {
+    font-weight: bold;
+    color: black;
+}
+
+.WARNING {
+    font-weight: bold;
+    color: orange;
+}
+
+.ERROR {
+    font-weight: bold;
+    color: red;
+}
+
+.CRITICAL {
+    font-weight: bold;
+    color: red;
+}
+
 .NORM {
     background-color: #d5d5d5;
 }
