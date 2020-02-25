@@ -61,7 +61,7 @@
     color: white;
 }
 
-#content table th a {
+#content table th[scope="row"] a {
     color: black;
 }
 

@@ -7,7 +7,7 @@
     <thead class="thead-dark">
     <tr>
         <th>Device ID</th>
-        <th><a href="/statistics/mode">Device Mode</a></th>
+        <th>Device Mode</th>
         <th>Device State</th>
         <th>Lighting Mode</th>
         <th>Since</th>
@@ -18,16 +18,16 @@
     </tr>
     </thead>
     <tbody>
-        {% for ptl in dashboard%}
+        {% for ptl in dashboard %}
         <tr>
             <th scope="row"> {{ptl.device}}</th>
             <td><div class="deviceMode {{'NORM' if ptl.mode == 'NORM' else 'FULL'}}" data-id="{{ptl.device}}" data-mode="{{ptl.mode}}">{{ptl.mode}}</div></td>
             <td><i class="fa fa-lightbulb-o {{'OFF' if ptl.mode == 'OFF' else 'ON'}}"></i></td>
-            <td>{{_str(ptl.mode)}}</td>
-            <td>{{_time_span(ptl.since)}}</td>
-            <td>{{_number(ptl.light_count)}}</td>
-            <td>{{_number(ptl.mouse_count)}}</td>
-            <td>{{ptl.last_update}}</td>
+            <td>{{ptl.mode|str}}</td>
+            <td>{{ptl.since|timespan}}</td>
+            <td>{{ptl.light_count|none}}</td>
+            <td>{{ptl.mouse_count|none}}</td>
+            <td>{{ptl.last_update|datetime}}</td>
             <td><i class="fa fa-heartbeat {{'HEALTHY' if ptl.mode else 'SICK'}}"></i></td>
         </tr>
         {% endfor %}

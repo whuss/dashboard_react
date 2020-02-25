@@ -255,8 +255,7 @@ class Dashboard(object):
 
         # ---- Info query ----
         self.query_info = session.query(DeviceInfo.device,
-                                        DeviceInfo.mode,
-                                        DeviceInfo.last_update)
+                                        DeviceInfo.mode)
 
         # ---- Mode query ----
         lp = LightingPackage
@@ -298,11 +297,21 @@ class Dashboard(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def query_last_connection(self, start_date):
+        tp = TemperaturePackage
+        last_connection = db.func.max(tp.timestamp).label('last_update')
+        return session.query(tp.device, last_connection) \
+                      .filter(tp.timestamp >= start_date) \
+                      .group_by(tp.device)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def query_dashboard(self, start_date):
         """database query for main information dashboard"""
         sq_mode = self.query_mode.subquery()
         sq_mouse = self.query_mouse(start_date).subquery()
         sq_light = self.query_light(start_date).subquery()
+        sq_last_connection = self.query_last_connection(start_date).subquery()
 
         since = db.func.timediff(db.func.now(), sq_mode.c.timestamp).label('since')
 
@@ -310,7 +319,12 @@ class Dashboard(object):
                    .outerjoin(sq_mode, DeviceInfo.device == sq_mode.c.device) \
                    .outerjoin(sq_mouse, DeviceInfo.device == sq_mouse.c.device) \
                    .outerjoin(sq_light, DeviceInfo.device == sq_light.c.device) \
-                   .add_columns(sq_mode.c.mode, sq_mouse.c.mouse_count, sq_light.columns.light_count, since) \
+                   .outerjoin(sq_last_connection, DeviceInfo.device == sq_last_connection.c.device) \
+                   .add_columns(sq_mode.c.mode,
+                                since,
+                                sq_light.columns.light_count,
+                                sq_mouse.c.mouse_count,
+                                sq_last_connection.c.last_update) \
                    .order_by(DeviceInfo.device)
     # ------------------------------------------------------------------------------------------------------------------
 

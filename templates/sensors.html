@@ -18,11 +18,11 @@
     {% for ptl in sensors%}
     <tr>
         <th scope="row"> {{_str(ptl.device)}}</th>
-        <td> {{_unit(ptl.temperature, ptl.temperature_unit)}}</td>
-        <td> {{_unit(ptl.humidity, ptl.humidity_unit)}}</td>
-        <td> {{_unit(ptl.pressure, ptl.pressure_unit)}}</td>
-        <td> {{ptl.gas}} {{_unit(ptl.gas_amount, ptl.gas_unit)}}</td>
-        <td> {{_unit(ptl.brightness, ptl.brightness_unit)}}</td>
+        <td> {{ptl.temperature|unit(unit=ptl.temperature_unit)}}</td>
+        <td> {{ptl.humidity|unit(unit=ptl.humidity_unit)}}</td>
+        <td> {{ptl.pressure|unit(unit=ptl.pressure_unit)}}</td>
+        <td> {{ptl.gas|str}} {{ptl.gas_amount|unit(unit=ptl.gas_unit)}}</td>
+        <td> {{ptl.brightness|unit(unit=ptl.brightness_unit)}}</td>
         <!--<td> {{_unit(ptl.loudness, ptl.loudness_unit)}}</td>-->
     </tr>
     {% endfor %}

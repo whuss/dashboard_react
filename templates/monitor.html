@@ -18,6 +18,7 @@
   <button id="logsButton" type="button" class="btn btn-secondary" data-toggle="button" aria-pressed="false" autocomplete="off">Show logs</button>
   <button id="monitorButton" type="button" class="btn btn-secondary" data-toggle="button" aria-pressed="false" autocomplete="off">Monitor device</button>
 </div>
+  <h3 id="terminal-title"></h3>
   <div id="terminal">
   </div>
 </div>
@@ -43,6 +44,7 @@
             var device = $('#dropdownDevice').html();
             $(this).attr('class', 'btn btn-danger');
             $('#monitorButton').attr('class', 'btn btn-success');
+            $('#terminal-title').text("Load logs for device " + device + " ..." );
             console.log("monitor device " + device);
             $.ajax({
                 method: 'POST',
@@ -54,13 +56,12 @@
             }).done(addData);
         });
 
-
-
         $('#monitorButton').click(function() {
             clearInterval(timer_callback);
             var device = $('#dropdownDevice').html();
             $(this).attr('class', 'btn btn-danger');
             $('#logsButton').attr('class', 'btn btn-success');
+            $('#terminal-title').text("Start monitoring device " + device + " ..." );
             console.log("monitor device " + device);
             timer_callback = setInterval(function monitor_device()
                                     {

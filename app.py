@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, jsonify, request
 from flask_table import Table, Col
-
+import babel
 
 from bokeh.embed import components
 from bokeh.layouts import column
@@ -24,6 +24,46 @@ from plots import plot_histogram, plot_duration_histogram, plot_time_series, plo
 # ----------------------------------------------------------------------------------------------------------------------
 
 app = Flask(__name__)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+@app.template_filter('datetime')
+def format_datetime(value, format='medium'):
+    if not value:
+        return ""
+    if format == 'full':
+        format="EEEE, d. MMMM y 'at' HH:mm"
+    elif format == 'medium':
+        format="dd.MM.y HH:mm"
+    return babel.dates.format_datetime(value, format)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+@app.template_filter('str')
+def _str(input):
+        return str(input) if input else ""
+
+@app.template_filter('timespan')
+def _time_span(input):
+    if input:
+        seconds = input.seconds
+        minutes = seconds // 60
+        seconds = seconds % 60
+        hours = minutes // 60
+        minutes = minutes % 60
+        return f"{hours:02}:{minutes:02}:{seconds:02}"
+        #return humanfriendly.format_timespan(input, max_units=2)
+    return ""
+
+@app.template_filter('none')
+def _number(input):
+    return input if input else ""
+
+@app.template_filter('unit')
+def _unit(input, unit='°C'):
+    if not input:
+        return ""
+    return f"{input:.2f} {unit}"
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -69,7 +109,7 @@ def utility_processor():
 @app.route('/')
 def index():
     dash = Dashboard()
-    start_date = datetime.now() - timedelta(days=7)
+    start_date = datetime.now() - timedelta(days=1)
     dashboard = dash.dashboard(start_date)
     return render_template('home.html', dashboard=dashboard)
 
@@ -199,14 +239,19 @@ def _monitor_device():
     if limit == True:
         num_lines = 35
     else:
-        num_lines = None
+        num_lines = 50000
 
     start_date = datetime.now() - timedelta(days=1)
     logs = Errors().logs(device_id=device, since=start_date, num_lines=num_lines)
 
     log_text = format_logs(logs)
 
-    return jsonify(result=f"Start monitoring {device}\n<pre>{log_text}</pre>")
+    if limit:
+        title = f"Start monitoring device {device} ..."
+    else:
+        title = f"Load logs for device {device} ..."
+
+    return jsonify(title=title, result=f"<pre>{log_text}</pre>")
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -317,7 +362,7 @@ def statistics_database_delay():
     for device in data.index.levels[0]:
         device_data = data.loc[device].delay.dropna()
 
-        fig = plot_duration_histogram(device_data, time_scale="m",
+        fig = plot_duration_histogram(device_data, time_scale="s",
                 x_axis_label="Package delay", y_axis_label="Amount",
                 plot_width=600, plot_height=400
             )
