@@ -15,6 +15,7 @@
     <a class="dropdown-item" href="#{{device}}">{{device}}</a>
     {% endfor %}
   </div>
+  <button id="logsButton" type="button" class="btn btn-secondary" data-toggle="button" aria-pressed="false" autocomplete="off">Show logs</button>
   <button id="monitorButton" type="button" class="btn btn-secondary" data-toggle="button" aria-pressed="false" autocomplete="off">Monitor device</button>
 </div>
   <div id="terminal">
@@ -28,24 +29,51 @@
     $(function() {
         $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 
+        var timer_callback = null;
+
         $('#dropdownMenu a').click(function() {
             var device = $(this).attr('href').substr(1);
             $('#dropdownDevice').html(device);
+            $('#logsButton').attr('class', 'btn btn-success');
             $('#monitorButton').attr('class', 'btn btn-success');
         });
 
-        $('#monitorButton').click(function() {
+        $('#logsButton').click(function() {
+            clearInterval(timer_callback);
             var device = $('#dropdownDevice').html();
             $(this).attr('class', 'btn btn-danger');
+            $('#monitorButton').attr('class', 'btn btn-success');
             console.log("monitor device " + device);
             $.ajax({
                 method: 'POST',
                 url: {{ url_for('_monitor_device')|tojson }},
                 data: {
-                   device: device
+                   device: device,
+                   limit: false
                 }
             }).done(addData);
         });
+
+
+
+        $('#monitorButton').click(function() {
+            clearInterval(timer_callback);
+            var device = $('#dropdownDevice').html();
+            $(this).attr('class', 'btn btn-danger');
+            $('#logsButton').attr('class', 'btn btn-success');
+            console.log("monitor device " + device);
+            timer_callback = setInterval(function monitor_device()
+                                    {
+                                      $.ajax({
+                                            method: 'POST',
+                                            url: {{ url_for('_monitor_device')|tojson }},
+                                            data: {
+                                              device: device,
+                                              limit: true,
+                                            }
+                                        }).done(addData);
+                                    }, 5000);
+            });
 
         function addData(data) {
             $('#terminal').html(data.result);

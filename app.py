@@ -163,8 +163,12 @@ def format_logs(logs):
     log_text = ""
     for index, lp in logs.iterrows():
         filename = os.path.basename(lp.filename)
-        header_no_format = f'({lp.timestamp}) {lp.log_level:<8} [{filename}:{lp.line_number}]: '
-        header = f'({lp.timestamp}) <span class="{lp.log_level}">{lp.log_level:<8}</span> [<span data-toggle="tooltip" title="{lp.filename}" >{filename}</span>:{lp.line_number}]: '
+        location = f"[{filename}:{lp.line_number}]:"
+        time = lp.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        header_no_format = f'({time}) {lp.log_level:<8} {location:>25} '
+        header = f'({time}) <span class="{lp.log_level}">{lp.log_level:<8}</span> ' \
+                 f'<span class="log-filename" data-toggle="tooltip" title="{lp.filename}:{lp.line_number}" >' \
+                 f'{location:>25}</span> '
         identation = len(header_no_format) * " "
         message_lines = lp.message.split("\n")
         formatted_message = header + message_lines[0] + "\n" + \
@@ -185,10 +189,20 @@ def _monitor_device():
     device = ""
     if request.method == 'POST':
         device = request.form.get('device')
-    print(f"_monitor: {device}")
+        limit = request.form.get('limit')
+        if limit == "true":
+            limit = True
+        else:
+            limit = False
+
+    print(f"_monitor: device={device}, limit={limit}")
+    if limit == True:
+        num_lines = 35
+    else:
+        num_lines = None
 
     start_date = datetime.now() - timedelta(days=1)
-    logs = Errors().logs(device_id=device, since=start_date)
+    logs = Errors().logs(device_id=device, since=start_date, num_lines=num_lines)
 
     log_text = format_logs(logs)
 

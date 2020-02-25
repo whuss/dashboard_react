@@ -94,6 +94,11 @@
 	font-family: monospace;
 }
 
+.log-filename {
+    color: #a5a5a5;
+    font-weight: bold;
+}
+
 .DEBUG {
     font-weight: bold;
     color: green;

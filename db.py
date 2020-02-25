@@ -557,7 +557,7 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def logs(self, device_id=None, since=None):
+    def logs(self, device_id=None, since=None, num_lines=None):
         lp = LoggerPackage
 
         sq_device = session.query(DeviceInfo.device).subquery()
@@ -572,7 +572,15 @@ class Errors(object):
         if device_id:
             query = query.filter(lp.device == device_id)
 
+            if num_lines:
+                query = query.order_by(lp.timestamp.desc()) \
+                             .slice(1, num_lines)
+
         data = pd.DataFrame(query.all())
+
+        if num_lines:
+            data = data.sort_values(by=['timestamp'])
+
         data = data.set_index(['device', data.index])
         return data
 
