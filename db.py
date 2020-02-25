@@ -778,6 +778,11 @@ class DatabaseDelay(object):
 
 
 def _timeseries(data, sensor: str):
+    expected_signal_interval = timedelta(minutes=10)
+
+    def lost_signal(x):
+        return (x > expected_signal_interval)
+
     data = pd.DataFrame(data)
     data = data.set_index(['device', data.index])
 
@@ -785,8 +790,18 @@ def _timeseries(data, sensor: str):
     data_dict = {}
     for device in devices:
         df = data.loc[device]
-        df = df.sort_values(by=['timestamp'])
-        data_dict[device] = df[['timestamp', sensor]].dropna()
+        df = df.sort_values(by=['timestamp']).dropna()
+
+        # add shifted timestamps as new column
+        timestamp_prev = np.asanyarray(df.timestamp.copy())
+        timestamp_prev[1:] = timestamp_prev[0:-1]
+        df['timestamp_prev'] = timestamp_prev
+
+        # compute time delay between consecutive rows
+        df['signal_delay'] = df.timestamp - df.timestamp_prev
+        df['lost_signal'] = df.signal_delay.apply(lost_signal)
+
+        data_dict[device] = df[['timestamp', 'lost_signal', sensor]].dropna()
 
     return data_dict
 

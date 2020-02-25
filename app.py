@@ -19,7 +19,8 @@ from db import MouseData, PresenceDetectorStatistics, DatabaseDelay
 
 import humanfriendly
 
-from plots import plot_histogram, plot_duration_histogram, plot_time_series, plot_on_off_cycles
+from plots import plot_histogram, plot_duration_histogram, plot_time_series
+from plots import plot_on_off_cycles, plot_lost_signal
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -434,9 +435,10 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
     plot_divs = {}
     x_range = (start_date, end_date)
     for device, data in sensor_data.items():
-        fig = plot_time_series(data.timestamp, data[[sensor_key]].iloc[:, 0], x_range=x_range, **kwargs)
+        fig = plot_time_series(data.timestamp, data[[sensor_key]].iloc[:, 0], lost_signal=data.lost_signal, x_range=x_range, **kwargs)
         if fig:
-            script, div = components(fig)
+            signal_fig = plot_lost_signal(data, fig.x_range)
+            script, div = components(column(fig, signal_fig))
         else:
             script, div = "", ""
         plot_scripts[device] = script

@@ -120,6 +120,13 @@ def plot_duration_histogram(data, time_scale: str='s', **kwargs):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+def plot_lost_signal(lost_signal, x_range):
+    x = lost_signal.timestamp
+    y = lost_signal.lost_signal
+
+    return plot_time_series(x, y, x_range, mode="step")
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 def plot_time_series(x, y, x_range, **kwargs):
     """Creates an interactive timeseries plot
