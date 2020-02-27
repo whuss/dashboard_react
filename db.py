@@ -571,7 +571,7 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def logs(self, device_id=None, since=None, num_lines=None):
+    def logs(self, device_id=None, since=None, until=None, num_lines=None):
         lp = LoggerPackage
 
         sq_device = session.query(DeviceInfo.device).subquery()
@@ -582,6 +582,9 @@ class Errors(object):
 
         if since:
             query = query.filter(lp.timestamp >= since)
+
+        if until:
+            query = query.filter(lp.timestamp <= until)
 
         if device_id:
             query = query.filter(lp.device == device_id)
@@ -801,7 +804,7 @@ def _timeseries(data, sensor: str):
         df['signal_delay'] = df.timestamp - df.timestamp_prev
         df['lost_signal'] = df.signal_delay.apply(lost_signal)
 
-        data_dict[device] = df[['timestamp', 'lost_signal', sensor]].dropna()
+        data_dict[device] = df[['timestamp', 'signal_delay', 'lost_signal', sensor]].dropna()
 
     return data_dict
 

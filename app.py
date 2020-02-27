@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, jsonify, request
-from flask_table import Table, Col
+from flask_table import Table, Col, LinkCol
 import babel
 
 from bokeh.embed import components
@@ -151,6 +151,24 @@ def error_messages():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
+@app.route('/logs/<device_id>/<timestamp>/')
+def show_logs(device_id, timestamp):
+
+
+    restart_time = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S.%f')
+    start_date = restart_time - timedelta(minutes=2)
+    end_date = restart_time + timedelta(minutes=2)
+    print(start_date)
+
+
+    logs = Errors().logs(device_id=device_id, since=start_date, until=end_date)
+    log_text = format_logs(logs)
+    return render_template("device_log.html", log_text=log_text, device=device_id)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 @app.route('/system/logs', methods=['GET'])
 def log_messages():
     device_id = request.args.get('id', default="", type=str)
@@ -183,7 +201,9 @@ def version_messages():
 
     class VersionTable(Table):
         classes = ["error-table"]
-        timestamp = Col('Time')
+        timestamp = LinkCol('Time', 'show_logs',
+                            url_kwargs=dict(device_id='device', timestamp='timestamp'),
+                            attr="timestamp")
         commit = Col('Commit')
         branch = Col('branch')
         version_timestamp = Col('Version Timestamp')
@@ -191,9 +211,10 @@ def version_messages():
     data_dict = dict()
 
     for device in data.index.levels[0]:
-        data_dict[device] = VersionTable(data.loc[device]
-                                             .sort_values(by='timestamp', ascending=False)
-                                             .to_dict(orient='records'))
+        device_data = data.loc[device] \
+                          .sort_values(by='timestamp', ascending=False)
+        device_data['device'] = device
+        data_dict[device] = VersionTable(device_data.to_dict(orient='records'))
 
     return render_template("errors.html", route='/system/version', data=data_dict, messages="System start")
 
@@ -427,7 +448,7 @@ def sensors():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[datetime, datetime], **kwargs):
+def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[datetime, datetime], signal_interval=True, **kwargs):
     # If no sensor_key is given, use the lower case sensor name
     sensor_key = kwargs.pop("sensor_key", sensor).lower()
     start_date, end_date = time_range
@@ -435,10 +456,13 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
     plot_divs = {}
     x_range = (start_date, end_date)
     for device, data in sensor_data.items():
-        fig = plot_time_series(data.timestamp, data[[sensor_key]].iloc[:, 0], lost_signal=data.lost_signal, x_range=x_range, **kwargs)
+        fig = plot_time_series(data.timestamp, data[[sensor_key]].iloc[:, 0], x_range=x_range, **kwargs)
         if fig:
-            signal_fig = plot_lost_signal(data, fig.x_range)
-            script, div = components(column(fig, signal_fig))
+            if signal_interval:
+                signal_fig = plot_lost_signal(data, fig.x_range)
+                script, div = components(column(fig, signal_fig))
+            else:
+                script, div = components(fig)
         else:
             script, div = "", ""
         plot_scripts[device] = script
@@ -467,11 +491,12 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
 @app.route('/sensors/presence')
 def sensors_presence():
     now = datetime.now()
-    start_date = now - timedelta(days=14)
+    start_date = now - timedelta(days=2)
 
     on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date)
 
-    return create_timeseries(on_off_data, sensor="Presence detected", sensor_key="value",
+    return create_timeseries(on_off_data, sensor="Presence detected", signal_interval=False,
+                             sensor_key="value",
                              unit="on", time_range=(start_date, now), mode="step")
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -480,7 +505,7 @@ def sensors_presence():
 @app.route('/sensors/temperature')
 def sensors_temp():
     now = datetime.now()
-    start_date = now - timedelta(days=14)
+    start_date = now - timedelta(days=2)
     sensor_data = SensorData().temperature(start_date)
 
     return create_timeseries(sensor_data, sensor="Temperature", unit="°C", time_range=(start_date, now))
@@ -491,7 +516,7 @@ def sensors_temp():
 @app.route('/sensors/humidity')
 def sensors_humidity():
     now = datetime.now()
-    start_date = now - timedelta(days=14)
+    start_date = now - timedelta(days=2)
     sensor_data = SensorData().humidity(start_date)
 
     return create_timeseries(sensor_data, sensor="Humidity", unit="%RH", time_range=(start_date, now))
@@ -502,7 +527,7 @@ def sensors_humidity():
 @app.route('/sensors/pressure')
 def sensors_pressure():
     now = datetime.now()
-    start_date = now - timedelta(days=14)
+    start_date = now - timedelta(days=2)
     sensor_data = SensorData().pressure(start_date)
 
     return create_timeseries(sensor_data, sensor="Pressure", unit="hPa", time_range=(start_date, now))
@@ -513,7 +538,7 @@ def sensors_pressure():
 @app.route('/sensors/gas')
 def sensors_gas():
     now = datetime.now()
-    start_date = now - timedelta(days=14)
+    start_date = now - timedelta(days=2)
     sensor_data = SensorData().gas(start_date)
 
     return create_timeseries(sensor_data, sensor="Gas", sensor_key="amount", unit="VOC kOhm", time_range=(start_date, now))
@@ -599,7 +624,7 @@ def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range
 @app.route('/sensors/brightness')
 def sensors_brightness():
     now = datetime.now()
-    start_date = now - timedelta(days=14)
+    start_date = now - timedelta(days=2)
     sensor_data = SensorData().brightness(start_date)
 
     return create_timeseries_brightness(sensor_data, sensor="Brightness", unit="lx", time_range=(start_date, now))

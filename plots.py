@@ -122,9 +122,15 @@ def plot_duration_histogram(data, time_scale: str='s', **kwargs):
 
 def plot_lost_signal(lost_signal, x_range):
     x = lost_signal.timestamp
-    y = lost_signal.lost_signal
+    y = lost_signal.signal_delay.astype(f'timedelta64[m]')
+    y = np.minimum(y, 10)
 
-    return plot_time_series(x, y, x_range, mode="step")
+    return plot_time_series(x, y, x_range,
+                            mode="line",
+                            title="Signal interval (m)",
+                            title_location="right",
+                            line_color="green",
+                            toolbar_location=None)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -153,7 +159,9 @@ def plot_time_series(x, y, x_range, **kwargs):
         figure_kwargs['title'] = kwargs['title']
         figure_kwargs['title_location'] = kwargs.get('title_location', "above")
 
-    fig = figure(plot_width=800, plot_height=180, x_range=x_range, x_axis_type='datetime', toolbar_location="right", **figure_kwargs)
+    figure_kwargs['toolbar_location'] = kwargs.get('toolbar_location', "right")
+
+    fig = figure(plot_width=800, plot_height=180, x_range=x_range, x_axis_type='datetime', **figure_kwargs)
     if "title" in kwargs:
         fig.title.text_font_style="italic"
         fig.title.offset=20
@@ -161,7 +169,10 @@ def plot_time_series(x, y, x_range, **kwargs):
     fig.tools = [WheelZoomTool(dimensions=Dimensions.width),
                  PanTool(dimensions=Dimensions.width),
                  ResetTool(),
-                 SaveTool()]
+                 SaveTool(),
+                 # TODO: add hover tool
+                 # HoverTool(mode='vline')
+    ]
     #fig.sizing_mode = 'scale_width'
     line_kwargs = dict()
     line_kwargs['line_color'] = kwargs.get('line_color', 'navy')

@@ -22,6 +22,10 @@
 /*                              CONTENT                                 */
 /* -------------------------------------------------------------------- */
 
+#content table tbody tr a {
+    color: grey;
+}
+
 .pandas_describe {
     font-size: 12px;
 }
@@ -57,7 +61,7 @@
     color: grey;
 }
 
-#content table tr a {
+#content table thead tr a {
     color: white;
 }
 
