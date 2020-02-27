@@ -182,7 +182,7 @@ def plot_time_series(x, y, x_range, **kwargs):
             x=x,
             line_width=1,
             y=y,
-            mode=StepMode.before,
+            mode=StepMode.after,
             **line_kwargs
         )
     else:
@@ -233,7 +233,7 @@ def plot_on_off_cycles(data, **kwargs):
              legend_label='night', line_color="black")
     fig.vbar(x=dodge('date', vbar_shift / 2, range=fig.x_range),
              width=vbar_width, top='count', source=day_source,
-             legend_label='day (7:00am - 9:00pm)', color="#fa9fb5", line_color="black")
+             legend_label='day (6:00am - 10:00pm)', color="#fa9fb5", line_color="black")
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
