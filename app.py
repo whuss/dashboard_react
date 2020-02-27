@@ -423,7 +423,7 @@ def sensors():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[datetime, datetime], signal_interval=True, **kwargs):
+def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[datetime, datetime], **kwargs):
     # If no sensor_key is given, use the lower case sensor name
     sensor_key = kwargs.pop("sensor_key", sensor).lower()
     start_date, end_date = time_range
@@ -431,13 +431,9 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
     plot_divs = {}
     x_range = (start_date, end_date)
     for device, data in sensor_data.items():
-        fig = plot_time_series(data.timestamp, data[[sensor_key]].iloc[:, 0], x_range=x_range, **kwargs)
-        if fig:
-            if signal_interval:
-                signal_fig = plot_lost_signal(data, fig.x_range)
-                script, div = components(column(fig, signal_fig))
-            else:
-                script, div = components(fig)
+        if not data.empty:
+            fig = plot_time_series(data.timestamp, data[[sensor_key]].iloc[:, 0], x_range=x_range, **kwargs)
+            script, div = components(fig)
         else:
             script, div = "", ""
         plot_scripts[device] = script
@@ -470,7 +466,7 @@ def sensors_presence():
 
     on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date)
 
-    return create_timeseries(on_off_data, sensor="Presence detected", signal_interval=False,
+    return create_timeseries(on_off_data, sensor="Presence detected",
                              sensor_key="value",
                              unit="on", time_range=(start_date, now), mode="step")
 
@@ -483,6 +479,7 @@ def sensors_temp():
     start_date = now - timedelta(days=2)
     sensor_data = SensorData().temperature(start_date)
 
+    print(sensor_data)
     return create_timeseries(sensor_data, sensor="Temperature", unit="°C", time_range=(start_date, now))
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -603,66 +600,6 @@ def sensors_brightness():
     sensor_data = SensorData().brightness(start_date)
 
     return create_timeseries_brightness(sensor_data, sensor="Brightness", unit="lx", time_range=(start_date, now))
-
-# ----------------------------------------------------------------------------------------------------------------------
-# Test routes
-# ----------------------------------------------------------------------------------------------------------------------
-
-# Declare your table
-class ItemTable(Table):
-    name = Col('Name')
-    description = Col('Description')
-
-# Get some objects
-class Item(object):
-    def __init__(self, name, description):
-        self.name = name
-        self.description = description
-items = [Item('Name1', 'Description1'),
-         Item('Name2', 'Description2'),
-         Item('Name3', 'Description3')]
-
-@app.route("/table_test")
-def table_test():
-
-    table = ItemTable(items)
-    return render_template("table.html", table=table)
-
-@app.route("/simple_chart")
-def chart():
-    legend = 'Monthly Data'
-    labels = ["January", "February", "March", "April", "May", "June", "July", "August"]
-    values = [10, 9, 8, 7, 6, 4, 7, 8]
-    return render_template('charts.html', values=values, labels=labels, legend=legend)
-
-
-@app.route("/pie_chart")
-def pie_chart():
-    legend = 'Monthly Data'
-    labels = ["January", "February", "March", "April", "May", "June", "July", "August"]
-    values = [10, 9, 8, 7, 6, 4, 7, 8]
-    return render_template('pie_charts.html', values=values, labels=labels, legend=legend)
-
-
-Articles = Articles()
-
-@app.route('/articles')
-def articles():
-    return render_template('articles.html', articles=Articles)
-
-@app.route('/test_post', methods=["GET"])
-def test_post():
-    start = request.args.get('start', default = "", type = str)
-    end = request.args.get('end', default = "", type = str)
-    print(f"Got data: {start} -- {end}")
-    return f"data: {start} -- {end}"
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-@app.route('/article/<string:id>/')
-def article(id):
-    return render_template('article.html', id=id)
 
 # ----------------------------------------------------------------------------------------------------------------------
 

@@ -107,6 +107,7 @@ def plot_duration_histogram(data, time_scale: str='s', **kwargs):
 
     fig = figure(plot_height=plot_height, plot_width=plot_width,
                  title=title, x_axis_label=x_axis_label, y_axis_label=y_axis_label)
+    fig.output_backend = "svg"
     fig.toolbar.logo = None
     fig.toolbar_location = None
 
@@ -145,7 +146,7 @@ def plot_time_series(x, y, x_range, **kwargs):
 
     line_color: str
         Color of the time series (default: 'navy')
-
+fig.output_backend = "svg"
     mode: "step" or "line
     """
     if len(x) == 0:
@@ -162,6 +163,7 @@ def plot_time_series(x, y, x_range, **kwargs):
     figure_kwargs['toolbar_location'] = kwargs.get('toolbar_location', "right")
 
     fig = figure(plot_width=800, plot_height=180, x_range=x_range, x_axis_type='datetime', **figure_kwargs)
+    fig.output_backend = "svg"
     if "title" in kwargs:
         fig.title.text_font_style="italic"
         fig.title.offset=20
@@ -173,7 +175,7 @@ def plot_time_series(x, y, x_range, **kwargs):
                  # TODO: add hover tool
                  # HoverTool(mode='vline')
     ]
-    #fig.sizing_mode = 'scale_width'
+    # fig.sizing_mode = 'scale_width'
     line_kwargs = dict()
     line_kwargs['line_color'] = kwargs.get('line_color', 'navy')
 
@@ -214,6 +216,7 @@ def plot_on_off_cycles(data, **kwargs):
 
     fig = figure(x_axis_type="datetime", x_range=x_range, plot_height=400, plot_width=1000,
                  title="On/Off Cycles", tools="")
+    fig.output_backend = "svg"
     fig.toolbar.logo = None
     fig.add_tools(HoverTool(
         tooltips=[
@@ -227,6 +230,7 @@ def plot_on_off_cycles(data, **kwargs):
         },
 
         mode='vline'))
+    fig.add_tools(SaveTool())
 
     fig.vbar(x=dodge('date', -vbar_shift / 2, range=fig.x_range),
              width=vbar_width, top='count', source=night_source,
@@ -234,9 +238,8 @@ def plot_on_off_cycles(data, **kwargs):
     fig.vbar(x=dodge('date', vbar_shift / 2, range=fig.x_range),
              width=vbar_width, top='count', source=day_source,
              legend_label='day (6:00am - 10:00pm)', color="#fa9fb5", line_color="black")
+    fig.legend.location = "top_left"
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-def plot_database_delay(data, **kwargs):
-    pass
