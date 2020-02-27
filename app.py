@@ -169,31 +169,6 @@ def show_logs(device_id, timestamp):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/system/logs', methods=['GET'])
-def log_messages():
-    device_id = request.args.get('id', default="", type=str)
-    data = Errors().logs(device_id=device_id)
-
-    class LogsTable(Table):
-        classes = ["error-table"]
-        timestamp = Col('Time')
-        filename = Col('Filename')
-        line_number = Col('Line Number')
-        log_level = Col('Log Level')
-        message = PreCol('Error Message')
-
-    data_dict = dict()
-
-    for device in data.index.levels[0]:
-        data_dict[device] = LogsTable(data.loc[device]
-                                          .sort_values(by='timestamp', ascending=False)
-                                          .to_dict(orient='records'))
-
-    return render_template("errors.html", route='/system/logs', data=data_dict, messages="Log messages")
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
 @app.route('/system/version', methods=['GET'])
 def version_messages():
     device_id = request.args.get('id', default = "", type = str)
