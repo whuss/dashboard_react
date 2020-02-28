@@ -1,0 +1,19 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+{{ js_resources|indent(4)|safe }}
+{{ css_resources|indent(4)|safe }}
+{{ plot_scripts|indent(4)|safe }}
+{% endblock %}
+
+{% block body %}
+<h1>Timeseries for sensor data of {{device}}</h1>
+{% include 'includes/_date_range.html' %}
+<div id="content">
+    <div align="center">{{ plot_divs|indent(4)|safe }}</div>
+</div>
+{% endblock body %}
+
+{% block script %}
+<script src={{ url_for('static', filename = 'js/date_range.js') }}></script>
+{% endblock script %}

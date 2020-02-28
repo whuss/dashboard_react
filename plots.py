@@ -135,6 +135,7 @@ def plot_lost_signal(lost_signal, x_range):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 def plot_time_series(x, y, x_range, **kwargs):
     """Creates an interactive timeseries plot
 
@@ -144,9 +145,16 @@ def plot_time_series(x, y, x_range, **kwargs):
     title: str
         Figure title
 
+    title_location: str
+        Location of title. One of: "above, "below", "left", "right" (default: "above")
+
+    x_axis_label: str
+
+    y_axis_label: str
+
     line_color: str
         Color of the time series (default: 'navy')
-fig.output_backend = "svg"
+
     mode: "step" or "line
     """
     if len(x) == 0:
@@ -165,8 +173,12 @@ fig.output_backend = "svg"
     fig = figure(plot_width=800, plot_height=180, x_range=x_range, x_axis_type='datetime', **figure_kwargs)
     fig.output_backend = "svg"
     if "title" in kwargs:
-        fig.title.text_font_style="italic"
-        fig.title.offset=20
+        #fig.title.text_font_style = "italic"
+        fig.title.offset = 20
+    if "x_axis_label" in kwargs:
+        fig.xaxis.axis_label = kwargs.pop("x_axis_label")
+    if "y_axis_label" in kwargs:
+        fig.yaxis.axis_label = kwargs.pop("y_axis_label")
     fig.toolbar.logo = None
     fig.tools = [WheelZoomTool(dimensions=Dimensions.width),
                  PanTool(dimensions=Dimensions.width),

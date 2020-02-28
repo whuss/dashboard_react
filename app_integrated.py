@@ -5,7 +5,7 @@ import numpy as np
 
 from flask import Flask, render_template, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.event import listens_for
+from flask_basicauth import BasicAuth
 from flask_table import Col, LinkCol, Table
 import babel
 
@@ -42,6 +42,12 @@ _db_url: str = f'mysql://{_user}:{_password}@{_host}/{_dbname}'
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = _db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['BASIC_AUTH_USERNAME'] = "ReproLight"
+app.config['BASIC_AUTH_PASSWORD'] = "infinity"
+app.config['BASIC_AUTH_FORCE'] = True
+
+basic_auth = BasicAuth(app)
+
 db = SQLAlchemy(app)
 db.Model.metadata.reflect(bind=db.engine)
 
@@ -242,16 +248,6 @@ class LoudnessPackage(db.Model):
     timestamp = db.Column('ix_data_dtm', key='timestamp')
     loudness = db.Column('loudness_dbl', key='loudness')
     unit = db.Column('unit_sn', key='unit')
-
-
-#class DeviceInfo(db.Model):
-#    __tablename__ = "DeviceInfo"
-#    __table_args__ = {'extend_existing': True}
-
-#    device = db.Column('uk_device_sn', key='device')
-#    mode = db.Column('device_mode_ind', key='mode')
-#    last_update = db.Column('last_update_dtm', key='last_update')
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 # DB Queries
@@ -1274,8 +1270,6 @@ def sensors():
 
     return render_template('sensors.html', sensors=sensor_data)
 
-
-
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -1315,6 +1309,7 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 @app.route('/sensors/device/<device>', methods=['GET'])
 def sensors_device(device):
     start_date, end_date = parse_date_range(request)
@@ -1328,25 +1323,52 @@ def sensors_device(device):
     #figures['on_off'] = fig
 
     sensor_data = sensor.temperature(start_date, end_date, device)[device]
-    fig = plot_time_series(sensor_data.timestamp, sensor_data.temperature, x_range=x_range)
+    fig = plot_time_series(sensor_data.timestamp,
+                           sensor_data.temperature,
+                           x_range=x_range,
+                           title="Temperature",
+                           y_axis_label="°C")
     x_range = fig.x_range
     figures['temperature'] = fig
 
     sensor_data = sensor.humidity(start_date, end_date, device)[device]
-    fig = plot_time_series(sensor_data.timestamp, sensor_data.humidity, x_range=x_range)
+    fig = plot_time_series(sensor_data.timestamp,
+                           sensor_data.humidity,
+                           x_range=x_range,
+                           title="Humidity",
+                           y_axis_label="%RH")
     figures['humidity'] = fig
 
     sensor_data = sensor.pressure(start_date, end_date, device)[device]
-    fig = plot_time_series(sensor_data.timestamp, sensor_data.pressure, x_range=x_range)
+    fig = plot_time_series(sensor_data.timestamp,
+                           sensor_data.pressure,
+                           x_range=x_range,
+                           title="Pressure",
+                           y_axis_label="hPa")
     figures['pressure'] = fig
 
-    #sensor_data = sensor.brightness(start_date, end_date, device)
+    sensor_data = sensor.brightness(start_date, end_date, device).loc[device]
+    figures_brightness = timeseries_plot_brightness(sensor_data,
+                                                    unit="lx",
+                                                    x_range=x_range)
 
-    #sensor_data = sensor.gas(start_date, end_date, device)[device]
-    #fig = plot_time_series(sensor_data.timestamp, sensor_data.gas, x_range=x_range)
-    #figures['gas'] = fig
+    for key, fig in figures_brightness.items():
+        figures[key] = fig
 
-    plot = column(figures['temperature'], figures['humidity'], figures['pressure'])
+    sensor_data = sensor.gas(start_date, end_date, device)[device]
+    fig = plot_time_series(sensor_data.timestamp,
+                           sensor_data.amount,
+                           x_range=x_range,
+                           title="Gas (VOC)",
+                           y_axis_label="kOhm")
+    figures['gas'] = fig
+
+    plot = column(*list(figures.values()))
+
+    #plot = column(figures['temperature'],
+    #              figures['humidity'],
+    #              figures['pressure'],
+    #              figures['gas'])
     plot_scripts, plot_divs = components(plot)
 
     # grab the static resources
@@ -1416,6 +1438,43 @@ def sensors_gas():
     sensor_data = SensorData().gas(start_date, end_date)
 
     return create_timeseries(sensor_data, sensor="Gas", sensor_key="amount", unit="VOC kOhm", time_range=(start_date, end_date))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def timeseries_plot_brightness(device_data, unit: str, x_range, **kwargs):
+    sensor_id_dict = {"brightness_r_h@BH1750": "RH",
+                      "brightness_r_v@BH1750": "RV",
+                      "brightness_l_h@BH1750": "LH",
+                      "brightness_l_v@BH1750": "LV"}
+    device_data = device_data.dropna()
+
+    # re-index the data set of each single device
+    # so that sensor_ids only contains items that are
+    # included in the data set of this particular device
+    device_data = device_data.set_index(device_data.index)
+    sensor_ids = device_data.index.levels[0]
+    figures = {}
+    # loop over all 4 brightness sensors
+    # if data for this sensor is available
+    for sensor_id in sensor_ids:
+        data = device_data.loc[sensor_id]
+        data = data.sort_values(by=['timestamp'])
+
+        time_series = data.brightness
+        timestamp = data.timestamp
+
+        # Convert sensor name to shorter form
+        sensor_name = sensor_id_dict.get(sensor_id, sensor_id)
+
+        fig = plot_time_series(timestamp, time_series,
+                               x_range=x_range,
+                               title=f"Brightness ({sensor_name})", y_axis_label=unit)
+        x_range = fig.x_range
+
+        figures[f'brightness_{sensor_name}'] = fig
+
+    return figures
 
 # ----------------------------------------------------------------------------------------------------------------------
 
