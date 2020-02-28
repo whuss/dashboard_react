@@ -486,7 +486,7 @@ class SensorData(object):
                   .filter(gp.timestamp <= until)
 
         if device:
-            query = query.filter(pp.device == device)
+            query = query.filter(gp.device == device)
 
         query = query.order_by(gp.device, gp.timestamp)
         data = query.all()
@@ -1315,6 +1315,59 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+@app.route('/sensors/device/<device>', methods=['GET'])
+def sensors_device(device):
+    start_date, end_date = parse_date_range(request)
+    x_range = (start_date, end_date)
+    figures = {}
+    sensor = SensorData()
+
+    #sensor_data = PresenceDetectorStatistics().on_off_timeseries(start_date, end_date, device)
+    #fig = plot_time_series(sensor_data.timestamp, sensor_data.value, x_range=x_range, mode="step")
+    #x_range = fig.x_range
+    #figures['on_off'] = fig
+
+    sensor_data = sensor.temperature(start_date, end_date, device)[device]
+    fig = plot_time_series(sensor_data.timestamp, sensor_data.temperature, x_range=x_range)
+    x_range = fig.x_range
+    figures['temperature'] = fig
+
+    sensor_data = sensor.humidity(start_date, end_date, device)[device]
+    fig = plot_time_series(sensor_data.timestamp, sensor_data.humidity, x_range=x_range)
+    figures['humidity'] = fig
+
+    sensor_data = sensor.pressure(start_date, end_date, device)[device]
+    fig = plot_time_series(sensor_data.timestamp, sensor_data.pressure, x_range=x_range)
+    figures['pressure'] = fig
+
+    #sensor_data = sensor.brightness(start_date, end_date, device)
+
+    #sensor_data = sensor.gas(start_date, end_date, device)[device]
+    #fig = plot_time_series(sensor_data.timestamp, sensor_data.gas, x_range=x_range)
+    #figures['gas'] = fig
+
+    plot = column(figures['temperature'], figures['humidity'], figures['pressure'])
+    plot_scripts, plot_divs = components(plot)
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    # render template
+    html = render_template(
+        'device_sensors_timeseries.html',
+        timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
+        device=device,
+        plot_scripts=plot_scripts,
+        plot_divs=plot_divs,
+        js_resources=js_resources,
+        css_resources=css_resources,
+    )
+
+    return encode_utf8(html)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 @app.route('/sensors/presence', methods=['GET'])
 def sensors_presence():
     start_date, end_date = parse_date_range(request)
@@ -1332,7 +1385,6 @@ def sensors_temp():
     start_date, end_date = parse_date_range(request)
     sensor_data = SensorData().temperature(start_date, end_date)
 
-    print(sensor_data)
     return create_timeseries(sensor_data, sensor="Temperature", unit="°C", time_range=(start_date, end_date))
 
 # ----------------------------------------------------------------------------------------------------------------------

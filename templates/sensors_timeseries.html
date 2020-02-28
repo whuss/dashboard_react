@@ -21,7 +21,7 @@
     </thead>
     {% for device, plot_div in plot_divs.items()%}
     <tr>
-        <th scope="row"> {{_str(device)}}</th>
+        <th scope="row"><a href={{url_for('sensors_device', device=device)}}>{{_str(device)}}</a></th>
         <td><div align="center">{{ plot_div|indent(4)|safe }}</div></td>
     </tr>
     {% endfor %}
