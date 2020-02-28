@@ -408,86 +408,88 @@ class SensorData(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def temperature(self, since, until):
-        query_device = self.query_device
-
+    def temperature(self, since, until, device=None):
         tp = TemperaturePackage
-        sq_temperature = db.session.query(tp.device, tp.temperature, tp.unit, tp.timestamp) \
-                                .filter(tp.timestamp >= since) \
-                                .filter(tp.timestamp <= until) \
-                                .order_by(tp.device, tp.timestamp) \
-                                .subquery()
+        query = db.session.query(tp.device, tp.temperature, tp.unit, tp.timestamp) \
+                  .filter(tp.timestamp >= since) \
+                  .filter(tp.timestamp <= until)
 
-        data = query_device.outerjoin(sq_temperature, DeviceInfo.device == sq_temperature.c.device) \
-                          .add_columns(sq_temperature.c.temperature, sq_temperature.c.unit, sq_temperature.c.timestamp) \
-                          .all()
+        if device:
+            query = query.filter(tp.device == device)
+
+        query = query.order_by(tp.device, tp.timestamp)
+        data = query.all()
 
         return _timeseries(data, 'temperature')
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def brightness(self, since):
+    def brightness(self, since, until, device=None):
         """ Return timeseries of Brightness package for all devices
 
         Note:
         -----
         The PTL has 4 different brightness sensors. Which can be distinguied by column BrightnessBackage.source
         """
-        sq_device = self.query_device.subquery()
-
         bp = BrightnessPackage
-        data = db.session.query(bp.device, bp.brightness, bp.unit, bp.timestamp, bp.source) \
-                      .filter(bp.timestamp >= since) \
-                      .outerjoin(sq_device, sq_device.c.device == bp.device) \
-                      .order_by(bp.device, bp.timestamp) \
-                      .all()
+        query = db.session.query(bp.device, bp.brightness, bp.unit, bp.timestamp, bp.source) \
+                          .filter(bp.timestamp >= since) \
+                          .filter(bp.timestamp <= until)
 
-        data = pd.DataFrame(data)
+        if device:
+            query = query.filter(bp.device == device)
+
+        query = query.order_by(bp.device, bp.timestamp)
+
+        data = pd.DataFrame(query.all())
         data = data.set_index(['device', 'source', data.index])
         return data
 
 # ------------------------------------------------------------------------------------------------------------------
 
-    def humidity(self, since, until):
-        sq_device = self.query_device.subquery()
-
+    def humidity(self, since, until, device=None):
         hp = HumidityPackage
-        data = db.session.query(hp.device, hp.humidity, hp.unit, hp.timestamp) \
-                      .filter(hp.timestamp >= since) \
-                      .filter(hp.timestamp <= until) \
-                      .outerjoin(sq_device, sq_device.c.device == hp.device) \
-                      .order_by(hp.device, hp.timestamp) \
-                      .all()
+        query = db.session.query(hp.device, hp.humidity, hp.unit, hp.timestamp) \
+                  .filter(hp.timestamp >= since) \
+                  .filter(hp.timestamp <= until)
+
+        if device:
+            query = query.filter(hp.device == device)
+
+        query = query.order_by(hp.device, hp.timestamp)
+        data = query.all()
 
         return _timeseries(data, 'humidity')
 
 # ------------------------------------------------------------------------------------------------------------------
 
-    def pressure(self, since, until):
-        sq_device = self.query_device.subquery()
-
+    def pressure(self, since, until, device=None):
         pp = PressurePackage
-        data = db.session.query(pp.device, pp.pressure, pp.unit, pp.timestamp) \
-                      .filter(pp.timestamp >= since) \
-                      .filter(pp.timestamp <= until) \
-                      .join(sq_device, sq_device.c.device == pp.device) \
-                      .order_by(pp.device, pp.timestamp) \
-                      .all()
+        query = db.session.query(pp.device, pp.pressure, pp.unit, pp.timestamp) \
+                  .filter(pp.timestamp >= since) \
+                  .filter(pp.timestamp <= until)
+
+        if device:
+            query = query.filter(pp.device == device)
+
+        query = query.order_by(pp.device, pp.timestamp)
+        data = query.all()
 
         return _timeseries(data, 'pressure')
 
 # ------------------------------------------------------------------------------------------------------------------
 
-    def gas(self, since, until):
-        sq_device = self.query_device.subquery()
-
+    def gas(self, since, until, device=None):
         gp = GasPackage
-        data = db.session.query(gp.device, gp.gas, gp.amount, gp.unit, gp.timestamp) \
-                      .filter(gp.timestamp >= since) \
-                      .filter(gp.timestamp <= until) \
-                      .outerjoin(sq_device, sq_device.c.device == gp.device) \
-                      .order_by(gp.device, gp.timestamp) \
-                      .all()
+        query = db.session.query(gp.device, gp.gas, gp.amount, gp.unit, gp.timestamp) \
+                  .filter(gp.timestamp >= since) \
+                  .filter(gp.timestamp <= until)
+
+        if device:
+            query = query.filter(pp.device == device)
+
+        query = query.order_by(gp.device, gp.timestamp)
+        data = query.all()
 
         return _timeseries(data, 'amount')
 
@@ -1441,13 +1443,12 @@ def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/sensors/brightness')
+@app.route('/sensors/brightness', methods=['GET'])
 def sensors_brightness():
-    now = datetime.now()
-    start_date = now - timedelta(days=2)
-    sensor_data = SensorData().brightness(start_date)
+    start_date, end_date = parse_date_range(request)
+    sensor_data = SensorData().brightness(start_date, end_date)
 
-    return create_timeseries_brightness(sensor_data, sensor="Brightness", unit="lx", time_range=(start_date, now))
+    return create_timeseries_brightness(sensor_data, sensor="Brightness", unit="lx", time_range=(start_date, end_date))
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Main
