@@ -571,7 +571,7 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def logs(self, device_id=None, since=None, until=None, num_lines=None):
+    def logs(self, device_id=None, since=None, until=None, num_lines=None, log_level="TRACE"):
         lp = LoggerPackage
 
         sq_device = session.query(DeviceInfo.device).subquery()
@@ -589,9 +589,25 @@ class Errors(object):
         if device_id:
             query = query.filter(lp.device == device_id)
 
-            if num_lines:
-                query = query.order_by(lp.timestamp.desc()) \
-                             .slice(1, num_lines)
+        if log_level != "TRACE":
+            if log_level == "DEBUG":
+                filter = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
+            elif log_level == "INFO":
+                filter = ["CRITICAL", "ERROR", "WARNING", "INFO"]
+            elif log_level == "WARNING":
+                filter = ["CRITICAL", "ERROR", "WARNING"]
+            elif log_level == "ERROR":
+                filter = ["CRITICAL", "ERROR"]
+            elif log_level == "CRITICAL":
+                filter = ["CRITICAL"]
+            else:
+                filter = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE"]
+
+            query = query.filter(lp.log_level.in_(filter))
+
+        if num_lines:
+            query = query.order_by(lp.timestamp.desc()) \
+                         .slice(1, num_lines)
 
         data = pd.DataFrame(query.all())
 

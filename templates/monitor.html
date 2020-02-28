@@ -17,6 +17,16 @@
   </div>
   <button id="logsButton" type="button" class="btn btn-secondary" data-toggle="button" aria-pressed="false" autocomplete="off">Show logs</button>
   <button id="monitorButton" type="button" class="btn btn-secondary" data-toggle="button" aria-pressed="false" autocomplete="off">Monitor device</button>
+
+  <span>Logging level:</span>
+  <select id="log-level">
+    <option value="TRACE">TRACE</option>
+    <option value="DEBUG">DEBUG</option>
+    <option value="INFO">INFO</option>
+    <option value="WARNING">WARNING</option>
+    <option value="ERROR">ERROR</option>
+    <option value="CRITICAL">CRITICAL</option>
+  </select>
 </div>
   <h3 id="terminal-title"></h3>
   <div id="terminal">
@@ -42,16 +52,19 @@
         $('#logsButton').click(function() {
             clearInterval(timer_callback);
             var device = $('#dropdownDevice').html();
+            var log_level = $('#log-level').val();
             $(this).attr('class', 'btn btn-danger');
             $('#monitorButton').attr('class', 'btn btn-success');
             $('#terminal-title').text("Load logs for device " + device + " ..." );
+            $('#terminal').html("loading...")
             console.log("monitor device " + device);
             $.ajax({
                 method: 'POST',
                 url: {{ url_for('_monitor_device')|tojson }},
                 data: {
                    device: device,
-                   limit: false
+                   limit: false,
+                   log_level: log_level
                 }
             }).done(addData);
         });
@@ -62,6 +75,7 @@
             $(this).attr('class', 'btn btn-danger');
             $('#logsButton').attr('class', 'btn btn-success');
             $('#terminal-title').text("Start monitoring device " + device + " ..." );
+            $('#terminal').html("loading...")
             console.log("monitor device " + device);
             timer_callback = setInterval(function monitor_device()
                                     {
@@ -71,6 +85,7 @@
                                             data: {
                                               device: device,
                                               limit: true,
+                                              log_level: $('#log-level').val()
                                             }
                                         }).done(addData);
                                     }, 5000);

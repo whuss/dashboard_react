@@ -103,6 +103,11 @@
     font-weight: bold;
 }
 
+.TRACE {
+    font-weight: bold;
+    color: #87AFFF;
+}
+
 .DEBUG {
     font-weight: bold;
     color: green;
@@ -125,7 +130,7 @@
 
 .CRITICAL {
     font-weight: bold;
-    color: red;
+    color: #AF0000;
 }
 
 .NORM {

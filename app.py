@@ -1,4 +1,5 @@
 import os
+import re
 from flask import Flask, render_template, jsonify, request
 from flask_table import Table, Col, LinkCol
 import babel
@@ -195,26 +196,40 @@ def version_messages():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+trace_re = re.compile("(.*) \[(.+):(\d+)\]")
+
+def format_logentry(lp):
+    if lp.log_level == "TRACE":
+        match = trace_re.match(lp.message)
+        if match:
+            lp.message = match.group(1)
+            lp.filename = match.group(2)
+            lp.line_number = int(match.group(3))
+
+    filename = os.path.basename(lp.filename)
+    location = f"[{filename}:{lp.line_number}]:"
+    time = lp.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    header_no_format = f'({time}) {lp.log_level:<8} {location:>25} '
+    header = f'({time}) <span class="{lp.log_level}">{lp.log_level:<8}</span> ' \
+                f'<span class="log-filename" data-toggle="tooltip" title="{lp.filename}:{lp.line_number}" >' \
+                f'{location:>25}</span> '
+    identation = len(header_no_format) * " "
+    message_lines = lp.message.split("\n")
+    formatted_message = header + message_lines[0] + "\n" + \
+        "\n".join([identation + line for line in message_lines[1:]])
+
+    if len(message_lines) > 1:
+        formatted_message += "\n"
+
+    return formatted_message
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 def format_logs(logs):
     log_text = ""
     for index, lp in logs.iterrows():
-        filename = os.path.basename(lp.filename)
-        location = f"[{filename}:{lp.line_number}]:"
-        time = lp.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-        header_no_format = f'({time}) {lp.log_level:<8} {location:>25} '
-        header = f'({time}) <span class="{lp.log_level}">{lp.log_level:<8}</span> ' \
-                 f'<span class="log-filename" data-toggle="tooltip" title="{lp.filename}:{lp.line_number}" >' \
-                 f'{location:>25}</span> '
-        identation = len(header_no_format) * " "
-        message_lines = lp.message.split("\n")
-        formatted_message = header + message_lines[0] + "\n" + \
-            "\n".join([identation + line for line in message_lines[1:]])
-
-        if len(message_lines) > 1:
-            formatted_message += "\n"
-
-        log_text += formatted_message
+        log_text += format_logentry(lp)
 
     return log_text
 
@@ -224,22 +239,25 @@ def format_logs(logs):
 @app.route('/_monitor_device', methods=['POST'])
 def _monitor_device():
     device = ""
+    limit = False
+    log_level = "TRACE"
     if request.method == 'POST':
         device = request.form.get('device')
         limit = request.form.get('limit')
+        log_level = request.form.get('log_level')
         if limit == "true":
             limit = True
         else:
             limit = False
 
-    print(f"_monitor: device={device}, limit={limit}")
+    print(f"_monitor: device={device}, limit={limit}, log_level={log_level}")
     if limit == True:
         num_lines = 35
     else:
         num_lines = 50000
 
     start_date = datetime.now() - timedelta(days=1)
-    logs = Errors().logs(device_id=device, since=start_date, num_lines=num_lines)
+    logs = Errors().logs(device_id=device, since=start_date, num_lines=num_lines, log_level=log_level)
 
     log_text = format_logs(logs)
 
