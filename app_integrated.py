@@ -5,9 +5,8 @@ import numpy as np
 
 from flask import Flask, render_template, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Table
 from sqlalchemy.event import listens_for
-from flask_table import Col, LinkCol # Table
+from flask_table import Col, LinkCol, Table
 import babel
 
 from bokeh.embed import components
@@ -50,84 +49,77 @@ db.Model.metadata.reflect(bind=db.engine)
 # Define DB Model
 # ----------------------------------------------------------------------------------------------------------------------
 
-@listens_for(Table, "column_reflect")
-def column_reflect(inspector, table, column_info):
-    print(column_info)
-    # set column.key = "attr_<lower_case_name>"
-    column_info['key'] = "attr_%s" % column_info['name'].lower()
-
-
-class DeviceInfo(db.Model):
-    __table__ = db.Model.metadata.tables['DeviceInfo']
-    __table_args__ = dict(autoload=True)
-
-    device = __table__.c.uk_device_sn
-    mode = __table__.c.device_mode_ind
-    last_update = __table__.c.last_update_dtm
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
 class ErrorPackage(db.Model):
-    __table__ = db.Model.metadata.tables['ErrorPackage']
-    __table_args__ = dict(autoload=True)
+    __tablename__ = 'ErrorPackage'
+    __table_args__ = dict(extend_existing=True)
 
-    id = __table__.c.pk_error_package_id
-    device = __table__.c.ix_device_sn
-    service = __table__.c.service_sn
-    source = __table__.c.ix_source_sn
-    timestamp = __table__.c.ix_data_dtm
-    errno = __table__.c.number_int
-    message = __table__.c.message_str
+    id = db.Column('pk_error_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    service = db.Column('service_sn', key='service')
+    source = db.Column('ix_source_sn', key='source')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    errno = db.Column('number_int', key="errno")
+    message = db.Column('message_str', key="message")
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class LoggerPackage(db.Model):
-    __table__ = db.Model.metadata.tables['LoggerPackage']
-    __table_args__ = dict(autoload=True)
+    __tablename__ = 'LoggerPackage'
+    __table_args__ = dict(extend_existing=True)
 
-    id = __table__.c.pk_logger_package_id
-    device = __table__.c.ix_device_sn
-    service = __table__.c.service_sn
-    source = __table__.c.ix_source_sn
-    timestamp = __table__.c.ix_data_dtm
-    filename = __table__.c.filename_str
-    line_number = __table__.c.line_number_int
-    log_level = __table__.c.log_level_ind
-    message = __table__.c.message_str
+    id = db.Column('pk_logger_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    service = db.Column('service_sn', key='service')
+    source = db.Column('ix_source_sn', key='source')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    filename = db.Column('filename_str', key='filename')
+    line_number = db.Column('line_number_int', key='line_number')
+    log_level = db.Column('log_level_ind', key='log_level')
+    message = db.Column('message_str', key="message")
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class VersionPackage(db.Model):
-    __table__ = db.Model.metadata.tables['VersionPackage']
-    __table_args__ = dict(autoload=True)
+    __tablename__ = 'VersionPackage'
+    __table_args__ = dict(extend_existing=True)
 
-    id = __table__.c.pk_version_package
-    device = __table__.c.ix_device_sn
-    service = __table__.c.service_sn
-    source = __table__.c.ix_source_sn
-    timestamp = __table__.c.ix_data_dtm
-    commit = __table__.c.commit_sn
-    branch = __table__.c.branch_sn
-    version_timestamp = __table__.c.version_timestamp_dtm
+    id = db.Column('pk_version_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    service = db.Column('service_sn', key='service')
+    source = db.Column('ix_source_sn', key='source')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    commit = db.Column('commit_sn', key="commit")
+    branch = db.Column('branch_sn', key="branch")
+    version_timestamp = db.Column('version_timestamp_dtm', key='version_timestamp')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class DeviceInfo(db.Model):
+    __tablename__ = 'DeviceInfo'
+    __table_args__ = dict(extend_existing=True)
+
+    device = db.Column('uk_device_sn', key='device')
+    mode = db.Column('device_mode_ind', key='mode')
+    last_update = db.Column('last_update_dtm', key='last_update')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class InstructionPackage(db.Model):
-    __table__ = db.Model.metadata.tables['InstructionPackage']
-    __table_args__ = dict(autoload=True)
+    __tablename__ = 'InstructionPackage'
+    __table_args__ = dict(extend_existing=True)
 
-    id = __table__.c.pk_instruction_package_id
-    device = __table__.c.ix_device_sn
-    service = __table__.c.service_sn
-    source = __table__.c.ix_source_sn
-    timestamp = __table__.c.ix_data_dtm
-    instruction = __table__.c.instruction_ind
-    target = __table__.c.target_ind
-    value = __table__.c.value_jsn
+    id = db.Column('pk_instruction_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    service = db.Column('service_sn', key='service')
+    source = db.Column('ix_source_sn', key='source')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    instruction = db.Column('instruction_ind', key='instruction')
+    target = db.Column('target_ind', key='target')
+    value = db.Column('value_jsn', key='value')
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -144,112 +136,122 @@ class InstructionPackage(db.Model):
 
 
 class LightingPackage(db.Model):
-    __table__ = db.Model.metadata.tables['LightingPackage']
-    __table_args__ = dict(autoload=True)
+    __tablename__ = 'LightingPackage'
+    __table_args__ = dict(extend_existing=True)
 
-    id = __table__.c.pk_lighting_package_id
-    device = __table__.c.ix_device_sn
-    timestamp = __table__.c.ix_data_dtm
-    mode = __table__.c.ix_mode_ind
+    id = db.Column('pk_lighting_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    mode = db.Column('ix_mode_ind', key='mode')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class MouseGesturePackage(db.Model):
-    __table__ = db.Model.metadata.tables['MouseGesturePackage']
-    __table_args__ = dict(autoload=True)
+    __tablename__ = 'MouseGesturePackage'
+    __table_args__ = dict(extend_existing=True)
 
-    id = __table__.c.pk_mouse_gesture_package_id
-    device = __table__.c.ix_device_sn
-    timestamp = __table__.c.ix_data_dtm
-    gesture_start = __table__.c.gesture_start_dtm
-    gesture_end = __table__.c.gesture_end_dtm
-    event_count = __table__.c.event_count_int
-    gesture_distance = __table__.c.gesture_distance_dbl
-    gesture_speed = __table__.c.gesture_speed_dbl
-    gesture_deviation = __table__.c.gesture_deviation_dbl
+    id = db.Column('pk_mouse_gesture_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    gesture_start = db.Column('gesture_start_dtm', key='gesture_start')
+    gesture_end = db.Column('gesture_end_dtm', key='gesture_end')
+    event_count = db.Column('event_count_int', key='event_count')
+    gesture_distance = db.Column('gesture_distance_dbl', key='gesture_distance')
+    gesture_speed = db.Column('gesture_speed_dbl', key='gesture_speed')
+    gesture_deviation = db.Column('gesture_deviation_dbl', key='gesture_deviation')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class TemperaturePackage(db.Model):
-    __table__ = db.Model.metadata.tables['TemperaturePackage']
-    __table_args__ = dict(autoload=True)
+    __tablename__ = 'TemperaturePackage'
+    __table_args__ = dict(extend_existing=True)
 
-    id = __table__.c.pk_temperature_package_id
-    device = __table__.c.ix_device_sn
-    timestamp = __table__.c.ix_data_dtm
-    temperature = __table__.c.temperature_dbl
-    unit = __table__.c.unit_sn
+    id = db.Column('pk_temperature_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    temperature = db.Column('temperature_dbl', key='temperature')
+    unit = db.Column('unit_sn', key='unit')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class HumidityPackage(db.Model):
-    __table__ = db.Model.metadata.tables['HumidityPackage']
-    __table_args__ = dict(autoload=True)
+    __tablename__ = 'HumidityPackage'
+    __table_args__ = dict(extend_existing=True)
 
-    id = __table__.c.pk_humidity_package_id
-    device = __table__.c.ix_device_sn
-    timestamp = __table__.c.ix_data_dtm
-    humidity = __table__.c.humidity_dbl
-    unit = __table__.c.unit_sn
+    id = db.Column('pk_humidity_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    humidity = db.Column('humidity_dbl', key='humidity')
+    unit = db.Column('unit_sn', key='unit')
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class PressurePackage(db.Model):
-    __table__ = db.Model.metadata.tables['PressurePackage']
-    __table_args__ = dict(autoload=True)
+    __tablename__ = 'PressurePackage'
+    __table_args__ = dict(extend_existing=True)
 
-    id = __table__.c.pk_pressure_package_id
-    device = __table__.c.ix_device_sn
-    timestamp = __table__.c.ix_data_dtm
-    pressure = __table__.c.pressure_dbl
-    unit = __table__.c.unit_sn
+    id = db.Column('pk_pressure_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    pressure = db.Column('pressure_dbl', key='pressure')
+    unit = db.Column('unit_sn', key='unit')
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class GasPackage(db.Model):
-    __table__ = db.Model.metadata.tables['GasPackage']
-    __table_args__ = dict(autoload=True)
+    __tablename__ = 'GasPackage'
+    __table_args__ = dict(extend_existing=True)
 
-    id = __table__.c.pk_gas_package_id
-    device = __table__.c.ix_device_sn
-    timestamp = __table__.c.ix_data_dtm
-    gas = __table__.c.gas_ind
-    amount = __table__.c.amount_dbl
-    unit = __table__.c.unit_sn
+    id = db.Column('pk_gas_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    gas = db.Column('gas_ind', key='gas')
+    amount = db.Column('amount_dbl', key='amount')
+    unit = db.Column('unit_sn', key='unit')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class BrightnessPackage(db.Model):
-    __table__ = db.Model.metadata.tables['BrightnessPackage']
-    __table_args__ = dict(autoload=True)
+    __tablename__ = 'BrightnessPackage'
+    __table_args__ = dict(extend_existing=True)
 
-    id = __table__.c.pk_brightness_package
-    device = __table__.c.ix_device_sn
-    timestamp = __table__.c.ix_data_dtm
-    brightness = __table__.c.brightness_int
-    source = __table__.c.ix_source_sn
-    unit = __table__.c.unit_sn
+    id = db.Column('pk_brightness_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    brightness = db.Column('brightness_int', key='brightness')
+    source = db.Column('ix_source_sn', key='source')
+    unit = db.Column('unit_sn', key='unit')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class LoudnessPackage(db.Model):
-    __table__ = db.Model.metadata.tables['LoudnessPackage']
-    __table_args__ = dict(autoload=True)
+    __tablename__ = 'LoudnessPackage'
+    __table_args__ = dict(extend_existing=True)
 
-    id = __table__.c.pk_loudness_package_id
-    device = __table__.c.ix_device_sn
-    timestamp = __table__.c.ix_data_dtm
-    loudness = __table__.c.loudness_dbl
-    unit = __table__.c.unit_sn
+    id = db.Column('pk_loudness_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    loudness = db.Column('loudness_dbl', key='loudness')
+    unit = db.Column('unit_sn', key='unit')
+
+
+#class DeviceInfo(db.Model):
+#    __tablename__ = "DeviceInfo"
+#    __table_args__ = {'extend_existing': True}
+
+#    device = db.Column('uk_device_sn', key='device')
+#    mode = db.Column('device_mode_ind', key='mode')
+#    last_update = db.Column('last_update_dtm', key='last_update')
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # DB Queries
@@ -943,6 +945,510 @@ def index():
     start_date = datetime.now() - timedelta(days=1)
     dashboard = dash.dashboard(start_date)
     return render_template('home.html', dashboard=dashboard)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PreCol(Col):
+    """Column class for Flask Table that wraps its content in a pre tag"""
+    def td_format(self, content):
+        return f'''<pre style="text-align: left; width: 75%; white-space: pre-line;">
+                       {content}
+                   </pre>'''
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/system/errors', methods=['GET'])
+def error_messages():
+    device_id = request.args.get('id', default="", type=str)
+    data = Errors().errors(device_id=device_id)
+
+    class ErrorTable(Table):
+        classes = ["error-table"]
+        timestamp = Col('Time')
+        service = Col('Service')
+        errno = Col('Error Number')
+        message = PreCol('Error Message')
+
+    data_dict = dict()
+
+    for device in data.index.levels[0]:
+        data_dict[device] = ErrorTable(data.loc[device]
+                                           .sort_values(by='timestamp', ascending=False)
+                                           .to_dict(orient='records'))
+
+    return render_template("errors.html", route='/system/errors', data=data_dict, messages="Error messages")
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/logs/<device_id>/<timestamp>/')
+def show_logs(device_id, timestamp):
+
+
+    restart_time = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S.%f')
+    start_date = restart_time - timedelta(minutes=2)
+    end_date = restart_time + timedelta(minutes=2)
+    print(start_date)
+
+
+    logs = Errors().logs(device_id=device_id, since=start_date, until=end_date)
+    log_text = format_logs(logs)
+    return render_template("device_log.html", log_text=log_text, device=device_id)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/system/version', methods=['GET'])
+def version_messages():
+    device_id = request.args.get('id', default = "", type = str)
+    data = Errors().version(device_id=device_id)
+
+    class VersionTable(Table):
+        classes = ["error-table"]
+        timestamp = LinkCol('Time', 'show_logs',
+                            url_kwargs=dict(device_id='device', timestamp='timestamp'),
+                            attr="timestamp")
+        commit = Col('Commit')
+        branch = Col('branch')
+        version_timestamp = Col('Version Timestamp')
+
+    data_dict = dict()
+
+    for device in data.index.levels[0]:
+        device_data = data.loc[device] \
+                          .sort_values(by='timestamp', ascending=False)
+        device_data['device'] = device
+        data_dict[device] = VersionTable(device_data.to_dict(orient='records'))
+
+    return render_template("errors.html", route='/system/version', data=data_dict, messages="System start")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+trace_re = re.compile("(.*) \[(.+):(\d+)\]")
+
+def format_logentry(lp):
+    if lp.log_level == "TRACE":
+        match = trace_re.match(lp.message)
+        if match:
+            lp.message = match.group(1)
+            lp.filename = match.group(2)
+            lp.line_number = int(match.group(3))
+
+    filename = os.path.basename(lp.filename)
+    location = f"[{filename}:{lp.line_number}]:"
+    time = lp.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    header_no_format = f'({time}) {lp.log_level:<8} {location:>25} '
+    header = f'({time}) <span class="{lp.log_level}">{lp.log_level:<8}</span> ' \
+                f'<span class="log-filename" data-toggle="tooltip" title="{lp.filename}:{lp.line_number}" >' \
+                f'{location:>25}</span> '
+    identation = len(header_no_format) * " "
+    message_lines = lp.message.split("\n")
+    formatted_message = header + message_lines[0] + "\n" + \
+        "\n".join([identation + line for line in message_lines[1:]])
+
+    if len(message_lines) > 1:
+        formatted_message += "\n"
+
+    return formatted_message
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def format_logs(logs):
+    log_text = ""
+    for index, lp in logs.iterrows():
+        log_text += format_logentry(lp)
+
+    return log_text
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/_monitor_device', methods=['POST'])
+def _monitor_device():
+    device = ""
+    limit = False
+    log_level = "TRACE"
+    if request.method == 'POST':
+        device = request.form.get('device')
+        limit = request.form.get('limit')
+        log_level = request.form.get('log_level')
+        if limit == "true":
+            limit = True
+        else:
+            limit = False
+
+    print(f"_monitor: device={device}, limit={limit}, log_level={log_level}")
+    if limit == True:
+        num_lines = 35
+    else:
+        num_lines = 50000
+
+    start_date = datetime.now() - timedelta(days=1)
+    logs = Errors().logs(device_id=device, since=start_date, num_lines=num_lines, log_level=log_level)
+
+    log_text = format_logs(logs)
+
+    if limit:
+        title = f"Start monitoring device {device} ..."
+    else:
+        title = f"Load logs for device {device} ..."
+
+    return jsonify(title=title, result=f"<pre>{log_text}</pre>")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/monitor')
+def monitor():
+    devices = Dashboard().devices()
+    for device in devices:
+        print(device)
+    return render_template("monitor.html", devices=devices)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/statistics/mode')
+def statistics_mode():
+    data = ModeStatistics().mode_counts()
+    labels = ["Auto", "Off", "Manual", "Light Shower"]
+    return render_template('statistics_mode.html', data=data, labels=jsonify(labels))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/statistics/mouse')
+def statistics_mouse():
+    no_data = dict(stats="", plot_distance="", plot_speed="", plot_deviation="")
+
+    start_date = datetime.now() - timedelta(days=14)
+    mouse_data = MouseData().gesture_data(start_date)
+
+    statistics_data = {}
+    scripts = []
+    for device, data in mouse_data.items():
+        if data.count()[0] > 0:
+            fig_distance = plot_histogram(data.distance.dropna(),
+                x_axis_label="Mouse distance", y_axis_label="Amount",
+                plot_width=300, plot_height=400
+            )
+            script, div_distance = components(fig_distance)
+            scripts.append(script)
+
+            fig_speed = plot_histogram(data.speed.dropna(),
+                x_axis_label="Mouse speed", y_axis_label="Amount",
+                plot_width=300, plot_height=400, fill_color='blue'
+            )
+            script, div_speed = components(fig_speed)
+            scripts.append(script)
+
+            fig_deviation = plot_histogram(data.deviation.dropna(),
+                x_axis_label="Gesture deviation", y_axis_label="Amount",
+                plot_width=300, plot_height=400, fill_color='orange'
+            )
+            script, div_deviation = components(fig_deviation)
+            scripts.append(script)
+
+
+            stats = data.describe().to_html()
+            statistics_data[device] = dict(stats=stats,
+                                      plot_distance=div_distance,
+                                      plot_speed=div_speed,
+                                      plot_deviation=div_deviation)
+
+        else:
+            statistics_data[device] = no_data
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    return render_template("statistics_mouse.html",
+                           data=statistics_data,
+                           scripts=scripts,
+                           js_resources=js_resources,
+                           css_resources=css_resources)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/statistics/database_delay', methods=['GET'])
+def statistics_database_delay():
+    start_str = request.args.get('start', default = "", type = str)
+    end_str = request.args.get('end', default = "", type = str)
+    from dateutil.parser import parse
+
+    if not end_str:
+        end_date = datetime.now()
+    else:
+        end_date = parse(end_str)
+
+    if not start_str:
+        start_date = end_date - timedelta(days=1)
+    else:
+        start_date = parse(start_str)
+
+    print(f"Date range: {start_str} -- {end_str}")
+    print(f"Parsed Date range: {start_date} -- {end_date}")
+
+    data = DatabaseDelay().package_delay(start_date, end_date)
+
+    print("Query finished")
+
+    figures = {}
+    scripts = []
+
+    # compute time range
+    x_range = min(data.delay), max(data.delay)
+
+    for device in data.index.levels[0]:
+        device_data = data.loc[device].delay.dropna()
+
+        fig = plot_duration_histogram(device_data, time_scale="s",
+                x_axis_label="Package delay", y_axis_label="Amount",
+                plot_width=600, plot_height=400
+            )
+        script, div = components(fig)
+        figures[device] = div
+        scripts.append(script)
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    return render_template("statistics_database_delay.html",
+                           timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
+                           figures=figures,
+                           scripts=scripts,
+                           js_resources=js_resources,
+                           css_resources=css_resources)
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+@app.route('/statistics/switch_cycles')
+def statistics_switch_cycles():
+    data = PresenceDetectorStatistics().on_off_cycle_count()
+
+    figures = {}
+    scripts = []
+
+    # compute time range
+    dates = data.reset_index().date
+    x_range = min(dates), max(dates)
+
+    for device in data.index.levels[0]:
+        device_data = data.loc[device].reset_index()
+        fig = plot_on_off_cycles(device_data, x_range=x_range)
+        script, div = components(fig)
+        figures[device] = div
+        scripts.append(script)
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    return render_template("statistics_on_off.html",
+                           figures=figures,
+                           scripts=scripts,
+                           js_resources=js_resources,
+                           css_resources=css_resources)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/sensors')
+def sensors():
+    sensor_data = SensorData().current_sensor_data()
+
+    return render_template('sensors.html', sensors=sensor_data)
+
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[datetime, datetime], **kwargs):
+    # If no sensor_key is given, use the lower case sensor name
+    sensor_key = kwargs.pop("sensor_key", sensor).lower()
+    start_date, end_date = time_range
+    plot_scripts = {}
+    plot_divs = {}
+    x_range = (start_date, end_date)
+    for device, data in sensor_data.items():
+        if not data.empty:
+            fig = plot_time_series(data.timestamp, data[[sensor_key]].iloc[:, 0], x_range=x_range, **kwargs)
+            script, div = components(fig)
+        else:
+            script, div = "", ""
+        plot_scripts[device] = script
+        plot_divs[device] = div
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    # render template
+    html = render_template(
+        'sensors_timeseries.html',
+        timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
+        sensor=sensor,
+        unit=unit,
+        plot_scripts=plot_scripts,
+        plot_divs=plot_divs,
+        js_resources=js_resources,
+        css_resources=css_resources,
+    )
+
+    return encode_utf8(html)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+@app.route('/sensors/presence')
+def sensors_presence():
+    now = datetime.now()
+    start_date = now - timedelta(days=2)
+
+    on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date)
+
+    return create_timeseries(on_off_data, sensor="Presence detected",
+                             sensor_key="value",
+                             unit="on", time_range=(start_date, now), mode="step")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/sensors/temperature')
+def sensors_temp():
+    now = datetime.now()
+    start_date = now - timedelta(days=2)
+    sensor_data = SensorData().temperature(start_date)
+
+    print(sensor_data)
+    return create_timeseries(sensor_data, sensor="Temperature", unit="°C", time_range=(start_date, now))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/sensors/humidity')
+def sensors_humidity():
+    now = datetime.now()
+    start_date = now - timedelta(days=2)
+    sensor_data = SensorData().humidity(start_date)
+
+    return create_timeseries(sensor_data, sensor="Humidity", unit="%RH", time_range=(start_date, now))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/sensors/pressure')
+def sensors_pressure():
+    now = datetime.now()
+    start_date = now - timedelta(days=2)
+    sensor_data = SensorData().pressure(start_date)
+
+    return create_timeseries(sensor_data, sensor="Pressure", unit="hPa", time_range=(start_date, now))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/sensors/gas')
+def sensors_gas():
+    now = datetime.now()
+    start_date = now - timedelta(days=2)
+    sensor_data = SensorData().gas(start_date)
+
+    return create_timeseries(sensor_data, sensor="Gas", sensor_key="amount", unit="VOC kOhm", time_range=(start_date, now))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range: Tuple[datetime, datetime], **kwargs):
+    sensor_id_dict = {"brightness_r_h@BH1750": "RH",
+                          "brightness_r_v@BH1750": "RV",
+                          "brightness_l_h@BH1750": "LH",
+                          "brightness_l_v@BH1750": "LV"}
+
+    # If no sensor_key is given, use the lower case sensor name
+    sensor_key = kwargs.get("sensor_key", sensor).lower()
+    start_date, end_date = time_range
+    plot_scripts = {}
+    plot_divs = {}
+
+    # loop over all devices
+    devices = sensor_data.index.levels[0]
+    for device in devices:
+        device_data = sensor_data.loc[device].dropna()
+        script, div = "", ""
+
+        # re-index the data set of each single device
+        # so that sensor_ids only contains items that are
+        # included in the data set of this particular device
+        device_data = device_data.set_index(device_data.index)
+        sensor_ids = device_data.index.levels[0]
+        figures = []
+        x_range = None
+        # loop over all 4 brightness sensors
+        # if data for this sensor is available
+        for sensor_id in sensor_ids:
+            if not x_range:
+                x_range = (start_date, end_date)
+            data = device_data.loc[sensor_id]
+            data = data.sort_values(by=['timestamp'])
+
+            time_series = data[[sensor_key]].iloc[:, 0]
+            timestamp = data.timestamp
+
+            # Convert sensor name to shorter form
+            sensor_name = sensor_id_dict.get(sensor_id, sensor_id)
+
+            fig = plot_time_series(timestamp, time_series,
+                                   x_range=x_range,
+                                   title=f"Sensor: {sensor_name}")
+            x_range = fig.x_range
+
+            figures.append(fig)
+
+        plot = column(*figures)
+        _script, _div = components(plot)
+        script += _script
+        div += _div
+
+        plot_scripts[device] = script
+        plot_divs[device] = div
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    # render template
+    html = render_template(
+        'sensors_timeseries.html',
+        timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
+        sensor=sensor,
+        unit=unit,
+        plot_scripts=plot_scripts,
+        plot_divs=plot_divs,
+        js_resources=js_resources,
+        css_resources=css_resources,
+    )
+
+    return encode_utf8(html)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/sensors/brightness')
+def sensors_brightness():
+    now = datetime.now()
+    start_date = now - timedelta(days=2)
+    sensor_data = SensorData().brightness(start_date)
+
+    return create_timeseries_brightness(sensor_data, sensor="Brightness", unit="lx", time_range=(start_date, now))
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Main
