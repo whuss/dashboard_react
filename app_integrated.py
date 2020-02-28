@@ -1282,7 +1282,11 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
     x_range = (start_date, end_date)
     for device, data in sensor_data.items():
         if not data.empty:
-            fig = plot_time_series(data.timestamp, data[[sensor_key]].iloc[:, 0], x_range=x_range, **kwargs)
+            fig = plot_time_series(data.timestamp,
+                                   data[[sensor_key]].iloc[:, 0],
+                                   x_range=x_range,
+                                   y_axis_label=unit,
+                                   **kwargs)
             script, div = components(fig)
         else:
             script, div = "", ""
@@ -1390,6 +1394,7 @@ def sensors_device(device):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 @app.route('/sensors/presence', methods=['GET'])
 def sensors_presence():
     start_date, end_date = parse_date_range(request)
@@ -1397,7 +1402,7 @@ def sensors_presence():
 
     return create_timeseries(on_off_data, sensor="Presence detected",
                              sensor_key="value",
-                             unit="on", time_range=(start_date, end_date), mode="step")
+                             unit="off=0, on=1", time_range=(start_date, end_date), mode="step")
 
 # ----------------------------------------------------------------------------------------------------------------------
 
