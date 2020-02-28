@@ -1,0 +1,15 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+{% endblock %}
+
+{% block body %}
+<div id="content">
+<h1>Log for device {{device}} at time of restart</h1>
+<div id="terminal">
+    <pre>{{log_text|safe}}</pre>
+</div>
+{% endblock %}
+
+{% block script %}
+{% endblock script %}

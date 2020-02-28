@@ -11,8 +11,6 @@
         <th>Device State</th>
         <th>Lighting Mode</th>
         <th>Since</th>
-        <th>Lighting Changes</th>
-        <th>Mouse Movements</th>
         <th>Last Connection</th>
         <th>Health Status</th>
     </tr>
@@ -25,8 +23,6 @@
             <td><i class="fa fa-lightbulb-o {{'OFF' if ptl.mode == 'OFF' else 'ON'}}"></i></td>
             <td>{{ptl.mode|str}}</td>
             <td>{{ptl.since|timespan}}</td>
-            <td>{{ptl.light_count|none}}</td>
-            <td>{{ptl.mouse_count|none}}</td>
             <td>{{ptl.last_update|datetime}}</td>
             <td><i class="fa fa-heartbeat {{'HEALTHY' if ptl.mode else 'SICK'}}"></i></td>
         </tr>

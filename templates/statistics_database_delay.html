@@ -11,12 +11,7 @@
 {% block body %}
 <div id="content">
   <h1>Database insertion delay</h1>
-  <span id="reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width:30%">
-    <i class="fa fa-calendar"></i>&nbsp;
-    <span></span> <i class="fa fa-caret-down"></i>
-  </span>
-    <button id="run_query" type="button" class="btn btn-primary">Run Query</button>
-    <span>(Time intervall: {{timespan}})</span>
+  {% include 'includes/_date_range.html' %}
   <table id="data-table" class="table">
     <thead class="thead-dark">
     <tr>
@@ -36,42 +31,5 @@
 
 {% block script %}
 {% include 'includes/_data_table.html' %}
-<script type="text/javascript">
-    $(function() {
-        // Set initial time range for database query
-        var range_start = moment().startOf('day');
-        var range_end = moment();
-
-        // Callback for time range picker
-        function cb(start, end) {
-            $('#reportrange span').html(start.format('MMMM D, YYYY HH:mm') + ' - ' + end.format('MMMM D, YYYY HH:mm'));
-            range_start = start;
-            range_end = end;
-        }
-
-        $('#reportrange').daterangepicker({
-            timePicker: true,
-            timePicker24Hour: true,
-            startDate: range_start,
-            endDate: range_end,
-            ranges: {
-               // Predefined time ranges
-               'Today': [moment().startOf('day'), moment()],
-               'Yesterday': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
-               'Last 2 days': [moment().subtract(2, 'days').startOf('day'), moment()],
-               'Last week': [moment().subtract(6, 'days').startOf('day'), moment()]
-            }
-        }, cb);
-
-        cb(range_start, range_end);
-
-        $('#run_query').click(function() {
-            var start = range_start.format("YYYY-MM-DD HH:mm:ss");
-            var end = range_end.format("YYYY-MM-DD HH:mm:ss");
-            var loc = window.location;
-            var currentURL = loc.protocol + '//' + loc.host + loc.pathname;
-            window.location = currentURL +"?start=" + start + "&end=" + end;
-        });
-    });
-</script>
+<script src={{ url_for('static', filename = 'js/date_range.js') }}></script>
 {% endblock script %}

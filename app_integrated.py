@@ -309,31 +309,28 @@ class Dashboard(object):
 
     def query_last_connection(self, start_date):
         tp = TemperaturePackage
-        last_connection = db.func.max(tp.timestamp).label('last_update')
-        return db.session.query(tp.device, last_connection) \
-                      .filter(tp.timestamp >= start_date) \
-                      .group_by(tp.device)
+        last_connection = db.func.max(tp.id).label('last_index')
+        last_index = db.session.query(tp.device, last_connection) \
+                       .group_by(tp.device) \
+                       .subquery()
+
+        return db.session.query(tp.device, tp.id, tp.timestamp.label('last_update')) \
+                 .join(last_index, tp.id == last_index.c.last_index)
 
     # ------------------------------------------------------------------------------------------------------------------
 
     def query_dashboard(self, start_date):
         """database query for main information dashboard"""
         sq_mode = self.query_mode.subquery()
-        sq_mouse = self.query_mouse(start_date).subquery()
-        sq_light = self.query_light(start_date).subquery()
         sq_last_connection = self.query_last_connection(start_date).subquery()
 
         since = db.func.timediff(db.func.now(), sq_mode.c.timestamp).label('since')
 
         return self.query_info \
                    .outerjoin(sq_mode, DeviceInfo.device == sq_mode.c.device) \
-                   .outerjoin(sq_mouse, DeviceInfo.device == sq_mouse.c.device) \
-                   .outerjoin(sq_light, DeviceInfo.device == sq_light.c.device) \
                    .outerjoin(sq_last_connection, DeviceInfo.device == sq_last_connection.c.device) \
                    .add_columns(sq_mode.c.mode,
                                 since,
-                                sq_light.columns.light_count,
-                                sq_mouse.c.mouse_count,
                                 sq_last_connection.c.last_update) \
                    .order_by(DeviceInfo.device)
     # ------------------------------------------------------------------------------------------------------------------
@@ -411,12 +408,13 @@ class SensorData(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def temperature(self, since):
+    def temperature(self, since, until):
         query_device = self.query_device
 
         tp = TemperaturePackage
         sq_temperature = db.session.query(tp.device, tp.temperature, tp.unit, tp.timestamp) \
                                 .filter(tp.timestamp >= since) \
+                                .filter(tp.timestamp <= until) \
                                 .order_by(tp.device, tp.timestamp) \
                                 .subquery()
 
@@ -450,12 +448,13 @@ class SensorData(object):
 
 # ------------------------------------------------------------------------------------------------------------------
 
-    def humidity(self, since):
+    def humidity(self, since, until):
         sq_device = self.query_device.subquery()
 
         hp = HumidityPackage
         data = db.session.query(hp.device, hp.humidity, hp.unit, hp.timestamp) \
                       .filter(hp.timestamp >= since) \
+                      .filter(hp.timestamp <= until) \
                       .outerjoin(sq_device, sq_device.c.device == hp.device) \
                       .order_by(hp.device, hp.timestamp) \
                       .all()
@@ -464,12 +463,13 @@ class SensorData(object):
 
 # ------------------------------------------------------------------------------------------------------------------
 
-    def pressure(self, since):
+    def pressure(self, since, until):
         sq_device = self.query_device.subquery()
 
         pp = PressurePackage
         data = db.session.query(pp.device, pp.pressure, pp.unit, pp.timestamp) \
                       .filter(pp.timestamp >= since) \
+                      .filter(pp.timestamp <= until) \
                       .join(sq_device, sq_device.c.device == pp.device) \
                       .order_by(pp.device, pp.timestamp) \
                       .all()
@@ -478,12 +478,13 @@ class SensorData(object):
 
 # ------------------------------------------------------------------------------------------------------------------
 
-    def gas(self, since):
+    def gas(self, since, until):
         sq_device = self.query_device.subquery()
 
         gp = GasPackage
         data = db.session.query(gp.device, gp.gas, gp.amount, gp.unit, gp.timestamp) \
                       .filter(gp.timestamp >= since) \
+                      .filter(gp.timestamp <= until) \
                       .outerjoin(sq_device, sq_device.c.device == gp.device) \
                       .order_by(gp.device, gp.timestamp) \
                       .all()
@@ -504,7 +505,7 @@ class PresenceDetectorStatistics(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def on_off_timeseries(self, since):
+    def on_off_timeseries(self, since, until):
         sq_device = self.query_device.subquery()
         ip = InstructionPackage
         sq_on_off = db.session.query(ip.device, ip.service, ip.source, ip.timestamp, ip.instruction, ip.target, ip.value) \
@@ -512,6 +513,7 @@ class PresenceDetectorStatistics(object):
                        .filter(ip.instruction == "MODE") \
                        .filter(ip.target == "POWER") \
                        .filter(ip.timestamp >= since) \
+                       .filter(ip.timestamp <= until) \
                        .subquery()
 
         query = self.query_device \
@@ -1175,9 +1177,7 @@ def statistics_mouse():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-
-@app.route('/statistics/database_delay', methods=['GET'])
-def statistics_database_delay():
+def parse_date_range(request):
     start_str = request.args.get('start', default = "", type = str)
     end_str = request.args.get('end', default = "", type = str)
     from dateutil.parser import parse
@@ -1194,7 +1194,12 @@ def statistics_database_delay():
 
     print(f"Date range: {start_str} -- {end_str}")
     print(f"Parsed Date range: {start_date} -- {end_date}")
+    return (start_date, end_date)
 
+
+@app.route('/statistics/database_delay', methods=['GET'])
+def statistics_database_delay():
+    start_date, end_date = parse_date_range(request)
     data = DatabaseDelay().package_delay(start_date, end_date)
 
     print("Query finished")
@@ -1308,61 +1313,55 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-@app.route('/sensors/presence')
+@app.route('/sensors/presence', methods=['GET'])
 def sensors_presence():
-    now = datetime.now()
-    start_date = now - timedelta(days=2)
-
-    on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date)
+    start_date, end_date = parse_date_range(request)
+    on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date, end_date)
 
     return create_timeseries(on_off_data, sensor="Presence detected",
                              sensor_key="value",
-                             unit="on", time_range=(start_date, now), mode="step")
+                             unit="on", time_range=(start_date, end_date), mode="step")
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/sensors/temperature')
+@app.route('/sensors/temperature', methods=['GET'])
 def sensors_temp():
-    now = datetime.now()
-    start_date = now - timedelta(days=2)
-    sensor_data = SensorData().temperature(start_date)
+    start_date, end_date = parse_date_range(request)
+    sensor_data = SensorData().temperature(start_date, end_date)
 
     print(sensor_data)
-    return create_timeseries(sensor_data, sensor="Temperature", unit="°C", time_range=(start_date, now))
+    return create_timeseries(sensor_data, sensor="Temperature", unit="°C", time_range=(start_date, end_date))
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/sensors/humidity')
+@app.route('/sensors/humidity', methods=['GET'])
 def sensors_humidity():
-    now = datetime.now()
-    start_date = now - timedelta(days=2)
-    sensor_data = SensorData().humidity(start_date)
+    start_date, end_date = parse_date_range(request)
+    sensor_data = SensorData().humidity(start_date, end_date)
 
-    return create_timeseries(sensor_data, sensor="Humidity", unit="%RH", time_range=(start_date, now))
+    return create_timeseries(sensor_data, sensor="Humidity", unit="%RH", time_range=(start_date, end_date))
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/sensors/pressure')
+@app.route('/sensors/pressure', methods=['GET'])
 def sensors_pressure():
-    now = datetime.now()
-    start_date = now - timedelta(days=2)
-    sensor_data = SensorData().pressure(start_date)
+    start_date, end_date = parse_date_range(request)
+    sensor_data = SensorData().pressure(start_date, end_date)
 
-    return create_timeseries(sensor_data, sensor="Pressure", unit="hPa", time_range=(start_date, now))
+    return create_timeseries(sensor_data, sensor="Pressure", unit="hPa", time_range=(start_date, end_date))
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/sensors/gas')
+@app.route('/sensors/gas', methods=['GET'])
 def sensors_gas():
-    now = datetime.now()
-    start_date = now - timedelta(days=2)
-    sensor_data = SensorData().gas(start_date)
+    start_date, end_date = parse_date_range(request)
+    sensor_data = SensorData().gas(start_date, end_date)
 
-    return create_timeseries(sensor_data, sensor="Gas", sensor_key="amount", unit="VOC kOhm", time_range=(start_date, now))
+    return create_timeseries(sensor_data, sensor="Gas", sensor_key="amount", unit="VOC kOhm", time_range=(start_date, end_date))
 
 # ----------------------------------------------------------------------------------------------------------------------
 
