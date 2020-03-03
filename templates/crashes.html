@@ -1,0 +1,35 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+<div id="content">
+  <h1>{{messages}}</h1>
+  <table id="data-table" class="table">
+    <thead class="thead-dark">
+    <tr>
+        <th>Device ID</th>
+        <th>Total crash number</th>
+    </tr>
+    </thead>
+  {% for device, rows in data.items() %}
+  <tr>
+    <th scope="row"> <a href="{{url_for('crash_for_device', device=device)}}">{{device}}</a></th>
+    <td>{{rows.total_number_of_crashes}}</td>
+  </tr>
+  {% endfor %}
+  </table>
+</div>
+{% endblock %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+<script>
+    $(document).ready( function () {
+        $('.error-table').DataTable({
+            "paging": true,
+            "info": false,
+            "order": [[ 0, "desc" ]],
+            stateSave: false,
+        });
+    } );
+</script>
+{% endblock script %}

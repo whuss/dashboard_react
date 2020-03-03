@@ -1,0 +1,22 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+<div id="content">
+  <h1>Crashes for {{device}}</h1>
+  {{table|safe}}
+</div>
+{% endblock %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+<script>
+    $(document).ready( function () {
+        $('.error-table').DataTable({
+            "paging": true,
+            "info": false,
+            "order": [[ 0, "desc" ]],
+            stateSave: false,
+        });
+    } );
+</script>
+{% endblock script %}

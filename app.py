@@ -96,6 +96,7 @@ class VersionPackage(db.Model):
     service = db.Column('service_sn', key='service')
     source = db.Column('ix_source_sn', key='source')
     timestamp = db.Column('ix_data_dtm', key='timestamp')
+    ip = db.Column('ip_sn', key='ip')
     commit = db.Column('commit_sn', key="commit")
     branch = db.Column('branch_sn', key="branch")
     version_timestamp = db.Column('version_timestamp_dtm', key='version_timestamp')
@@ -581,6 +582,21 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def crashes(self, device=None):
+        lp = LoggerPackage
+        query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename, lp.line_number, lp.log_level, lp.message) \
+                          .filter(lp.log_level == "CRITICAL")
+
+        if device:
+            query = query.filter(lp.device == device)
+
+        data = pd.DataFrame(query.all())
+
+        data = data.set_index(['device', data.index])
+        return data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def logs(self, device_id=None, since=None, until=None, num_lines=None, log_level="TRACE"):
         lp = LoggerPackage
 
@@ -634,7 +650,7 @@ class Errors(object):
 
         sq_device = db.session.query(DeviceInfo.device).subquery()
 
-        query = db.session.query(vp.device, vp.timestamp, vp.version_timestamp, vp.branch, vp.commit) \
+        query = db.session.query(vp.device, vp.timestamp, vp.version_timestamp, vp.branch, vp.commit, vp.ip) \
                        .outerjoin(sq_device, sq_device.c.device == vp.device) \
                        .order_by(vp.device)
 
@@ -959,44 +975,59 @@ class PreCol(Col):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/system/errors', methods=['GET'])
-def error_messages():
-    device_id = request.args.get('id', default="", type=str)
-    data = Errors().errors(device_id=device_id)
+@app.route('/system/crashes/<device>')
+def crash_for_device(device):
+    data = Errors().crashes(device=device)
+    device_data = data.reset_index()
 
-    class ErrorTable(Table):
+    device_data['formatted_message'] = device_data.apply(format_logentry, axis=1)
+
+    class CrashTable(Table):
         classes = ["error-table"]
-        timestamp = Col('Time')
-        service = Col('Service')
-        errno = Col('Error Number')
-        message = PreCol('Error Message')
+        timestamp = LinkCol('Time', 'show_logs',
+                            url_kwargs=dict(device='device', timestamp='timestamp'),
+                            attr="timestamp")
+        formatted_message = PreCol('Error message')
+
+    table = CrashTable(device_data.to_dict(orient='records'))
+
+    return render_template("crashes_device.html", device=device, table=table)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/system/crashes')
+def crashes():
+    data = Errors().crashes()
 
     data_dict = dict()
 
     for device in data.index.levels[0]:
-        data_dict[device] = ErrorTable(data.loc[device]
-                                           .sort_values(by='timestamp', ascending=False)
-                                           .to_dict(orient='records'))
+        device_data = data.loc[device]
+        data_dict[device] = dict(total_number_of_crashes=len(device_data))
 
-    return render_template("errors.html", route='/system/errors', data=data_dict, messages="Error messages")
+    return render_template("crashes.html", route='/system/crashes', data=data_dict, messages="Crash statistics")
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/logs/<device_id>/<timestamp>/')
-def show_logs(device_id, timestamp):
-
-
+def _logs(device_id, timestamp, before=2*60, after=2*60):
     restart_time = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S.%f')
-    start_date = restart_time - timedelta(minutes=2)
-    end_date = restart_time + timedelta(minutes=2)
-    print(start_date)
-
+    start_date = restart_time - timedelta(seconds=before)
+    end_date = restart_time + timedelta(seconds=after)
 
     logs = Errors().logs(device_id=device_id, since=start_date, until=end_date)
     log_text = format_logs(logs)
-    return render_template("device_log.html", log_text=log_text, device=device_id)
+    return log_text
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/logs/<device>/<timestamp>/')
+def show_logs(device, timestamp):
+    log_text = _logs(device, timestamp)
+    return render_template("device_log.html", log_text=log_text, device=device)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1009,8 +1040,9 @@ def version_messages():
     class VersionTable(Table):
         classes = ["error-table"]
         timestamp = LinkCol('Time', 'show_logs',
-                            url_kwargs=dict(device_id='device', timestamp='timestamp'),
+                            url_kwargs=dict(device='device', timestamp='timestamp'),
                             attr="timestamp")
+        ip = Col('IP Address')
         commit = Col('Commit')
         branch = Col('branch')
         version_timestamp = Col('Version Timestamp')
