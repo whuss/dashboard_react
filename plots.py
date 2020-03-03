@@ -255,3 +255,38 @@ def plot_on_off_cycles(data, **kwargs):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
+def plot_crashes(data, **kwargs):
+    dates = list(data.date)
+    if 'x_range' in kwargs:
+        x_range = kwargs['x_range']
+    else:
+        x_range = (min(dates) - timedelta(days=1), max(dates) + timedelta(days=1))
+
+    crash_source = ColumnDataSource(data)
+
+    vbar_width = timedelta(days=1) / 2
+    vbar_shift = vbar_width.total_seconds() * 1000
+
+    fig = figure(x_axis_type="datetime", x_range=x_range, plot_height=200, plot_width=800,
+                 title="Crashes per day", tools="")
+    fig.output_backend = "svg"
+    fig.toolbar.logo = None
+    fig.add_tools(HoverTool(
+        tooltips=[
+            ('date', '@date{%F}'),
+            ('crashes', '@count{%d}')
+        ],
+        formatters={
+            'date': 'datetime',
+            'count': 'printf'
+        },
+
+        mode='vline'))
+    fig.add_tools(SaveTool())
+
+    fig.vbar(x='date',
+             width=vbar_width, top='count', source=crash_source)
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------

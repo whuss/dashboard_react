@@ -1,5 +1,13 @@
 {% extends 'layout.html' %}
 
+{% block head %}
+{{ js_resources|indent(4)|safe }}
+{{ css_resources|indent(4)|safe }}
+{% for plot_script in scripts %}
+{{ plot_script|indent(4)|safe }}
+{% endfor %}
+{% endblock %}
+
 {% block body %}
 <div id="content">
   <h1>{{messages}}</h1>
@@ -8,12 +16,14 @@
     <tr>
         <th>Device ID</th>
         <th>Total crash number</th>
+        <th>Crashes per day</th>
     </tr>
     </thead>
   {% for device, rows in data.items() %}
   <tr>
     <th scope="row"> <a href="{{url_for('crash_for_device', device=device)}}">{{device}}</a></th>
     <td>{{rows.total_number_of_crashes}}</td>
+    <td><div align="center">{{rows.plot|safe}}</div></td>
   </tr>
   {% endfor %}
   </table>

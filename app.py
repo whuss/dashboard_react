@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 import humanfriendly
 
 from plots import plot_histogram, plot_duration_histogram, plot_time_series
-from plots import plot_on_off_cycles, plot_lost_signal
+from plots import plot_on_off_cycles, plot_lost_signal, plot_crashes
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Configuration
@@ -1000,14 +1000,41 @@ def crash_for_device(device):
 def crashes():
     data = Errors().crashes()
 
+    crash_histogram = data.reset_index()
+    crash_histogram = crash_histogram.drop(columns=['source', 'filename', 'line_number', 'log_level', 'message'])
+    crash_histogram['date'] = crash_histogram.timestamp.apply(lambda x: x.date())
+    crash_histogram = crash_histogram.drop(columns=['timestamp'])
+    crash_histogram = crash_histogram.groupby(['device', 'date']).count()
+    crash_histogram = crash_histogram.rename(columns=dict(level_1="count"))
+    crash_histogram = crash_histogram.reset_index()
+    crash_histogram = crash_histogram.set_index(['device', crash_histogram.index])
+
+    # compute time range
+    dates = crash_histogram.reset_index().date
+    x_range = min(dates), max(dates)
+
+    scripts = []
     data_dict = dict()
 
     for device in data.index.levels[0]:
         device_data = data.loc[device]
-        data_dict[device] = dict(total_number_of_crashes=len(device_data))
+        histogram_data = crash_histogram.loc[device]
+        fig = plot_crashes(histogram_data, x_range=x_range)
+        script, div = components(fig)
+        data_dict[device] = dict(total_number_of_crashes=len(device_data), plot=div)
+        scripts.append(script)
 
-    return render_template("crashes.html", route='/system/crashes', data=data_dict, messages="Crash statistics")
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
 
+    return render_template("crashes.html",
+                           route='/system/crashes',
+                           data=data_dict,
+                           messages="Crash statistics",
+                           scripts=scripts,
+                           js_resources=js_resources,
+                           css_resources=css_resources)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
