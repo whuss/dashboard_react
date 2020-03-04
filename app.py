@@ -1144,6 +1144,8 @@ def version_messages():
 trace_re = re.compile("(.*) \[(.+):(\d+)\]")
 
 def format_logentry(lp):
+    # This is obsolete, and only needed for old log entries
+    # Trace log entries get correctly formatted since commit a30b3b5e2afc1b5a7c5790e0f53596cf8c9f80d4
     if lp.log_level == "TRACE":
         match = trace_re.match(lp.message)
         if match:
@@ -1154,8 +1156,14 @@ def format_logentry(lp):
     filename = os.path.basename(lp.filename)
     location = f"[{filename}:{lp.line_number}]:"
     time = lp.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+    if filename == "watchdog.py" and lp.log_level == "INFO":
+        log_level_class = "WATCHDOG_INFO"
+    else:
+        log_level_class = lp.log_level
+
     header_no_format = f'({time}) {lp.log_level:<8} {location:>25} '
-    header = f'({time}) <span class="{lp.log_level}">{lp.log_level:<8}</span> ' \
+    header = f'({time}) <span class="{log_level_class}">{lp.log_level:<8}</span> ' \
                 f'<span class="log-filename" data-toggle="tooltip" title="{lp.filename}:{lp.line_number}" >' \
                 f'{location:>25}</span> '
     identation = len(header_no_format) * " "
