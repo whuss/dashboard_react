@@ -1,5 +1,7 @@
 #! /bin/bash
+ROOT_DIR=$(dirname "$0")
+cd $ROOT_DIR
 
 source ~/.virtualenvs/infinity/bin/activate
 
-~/projects/dashboard/db_size.py
+./db_size.py
