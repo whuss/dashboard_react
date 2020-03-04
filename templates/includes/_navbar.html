@@ -27,7 +27,6 @@
                         <a class="dropdown-item" href=/statistics/mode>Mode</a>
                         <a class="dropdown-item" href=/statistics/mouse>Mouse gestures</a>
                         <a class="dropdown-item" href=/statistics/switch_cycles>On/Off Cycles</a>
-                        <a class="dropdown-item" href=/statistics/database_delay>Database Delay</a>
                     </div>
                 </li>
                 <li class="nav-item dropdown">
@@ -35,10 +34,15 @@
                     <div class="dropdown-menu">
                         <a class="dropdown-item" href=/system/crashes>Stability</a>
                         <a class="dropdown-item" href=/system/version>Restarts</a>
+                        <a class="dropdown-item" href="/monitor">Logs</a>
                     </div>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/monitor">Monitor</a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" role="button" data-toggle="dropdown">Database</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href=/statistics/database_delay>Delay</a>
+                        <a class="dropdown-item" href=/database/size>Size</a>
+                    </div>
                 </li>
             </ul>
         </div>

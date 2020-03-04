@@ -312,3 +312,32 @@ def plot_crashes(data, **kwargs):
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+def plot_database_size(data):
+    x_range = (min(data.date) - timedelta(days=1), max(data.date) + timedelta(days=1))
+    data_source = ColumnDataSource(data)
+
+    fig = figure(x_axis_type="datetime", plot_height=300, plot_width=800, x_range=x_range, tools="",
+                 y_axis_label="Database Size (MB)")
+    fig.output_backend = "svg"
+    fig.toolbar.logo = None
+
+    vbar_width = timedelta(days=1) / 2
+
+    hover_tool = HoverTool(tooltips=[('date', '@date{%F}'),
+                                     ('size', '@size_in_mb{%d}MB')],
+                           formatters={'date': 'datetime',
+                                       'size_in_mb': 'printf'},
+                           mode='vline')
+    fig.add_tools(hover_tool)
+    fig.add_tools(SaveTool())
+
+    fig.vbar(x='date',
+             width=vbar_width,
+             top='size_in_mb',
+             color='#8c8c8c',
+             source=data_source,
+             name="db_size")
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------

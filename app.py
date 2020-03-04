@@ -22,6 +22,7 @@ import humanfriendly
 
 from plots import plot_histogram, plot_duration_histogram, plot_time_series
 from plots import plot_on_off_cycles, plot_lost_signal, plot_crashes
+from plots import plot_database_size
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Configuration
@@ -54,6 +55,18 @@ db.Model.metadata.reflect(bind=db.engine)
 # ----------------------------------------------------------------------------------------------------------------------
 # Define DB Model
 # ----------------------------------------------------------------------------------------------------------------------
+
+
+class DbSizePackage(db.Model):
+    __tablename__ = 'DbSizePackage'
+    __table_args__ = dict(extend_existing=True)
+
+    id = db.Column('pk_db_size_package_id', db.Integer, key='id', primary_key=True)
+    date = db.Column('ix_data_dtm', key='date')
+    size_in_mb = db.Column('size_in_mb', key='size_in_mb')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 class ErrorPackage(db.Model):
     __tablename__ = 'ErrorPackage'
@@ -766,6 +779,13 @@ class DatabaseDelay(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def size(self):
+        dp = DbSizePackage
+        query = db.session.query(dp.date, dp.size_in_mb)
+        return pd.DataFrame(query.all())
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def package_delay(self, start_date, end_date):
         p = ErrorPackage
         query1 = db.session.query(p.device, p.create_dtm, p.timestamp) \
@@ -1288,6 +1308,8 @@ def parse_date_range(request):
     print(f"Parsed Date range: {start_date} -- {end_date}")
     return (start_date, end_date)
 
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 @app.route('/statistics/database_delay', methods=['GET'])
 def statistics_database_delay():
@@ -1324,8 +1346,28 @@ def statistics_database_delay():
                            js_resources=js_resources,
                            css_resources=css_resources)
 
+# ----------------------------------------------------------------------------------------------------------------------
+
+@app.route('/database/size')
+def database_size():
+    data = DatabaseDelay().size()
+
+    fig = plot_database_size(data)
+
+    script, div = components(fig)
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    return render_template("database_size.html",
+                           figure=div,
+                           script=script,
+                           js_resources=js_resources,
+                           css_resources=css_resources)
 
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 @app.route('/statistics/switch_cycles')
 def statistics_switch_cycles():
