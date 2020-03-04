@@ -576,6 +576,8 @@ class Errors(object):
         if device_id:
             query = query.filter(ep.device == device_id)
 
+        query = query.filter(ep.device != "PTL_DEFAULT")
+
         data = pd.DataFrame(query.all())
         data = data.set_index(['device', data.index])
         return data
@@ -589,6 +591,8 @@ class Errors(object):
 
         if device:
             query = query.filter(lp.device == device)
+
+        query = query.filter(lp.device != "PTL_DEFAULT")
 
         data = pd.DataFrame(query.all())
 
@@ -605,6 +609,8 @@ class Errors(object):
         query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename, lp.line_number, lp.log_level, lp.message) \
                        .outerjoin(sq_device, sq_device.c.device == lp.device) \
                        .order_by(lp.device)
+
+        query = query.filter(lp.device != "PTL_DEFAULT")
 
         if since:
             query = query.filter(lp.timestamp >= since)
@@ -653,6 +659,8 @@ class Errors(object):
         query = db.session.query(vp.device, vp.timestamp, vp.version_timestamp, vp.branch, vp.commit, vp.ip) \
                        .outerjoin(sq_device, sq_device.c.device == vp.device) \
                        .order_by(vp.device)
+
+        query = query.filter(vp.device != "PTL_DEFAULT")
 
         if device_id:
             query = query.filter(vp.device == device_id)
@@ -998,30 +1006,58 @@ def crash_for_device(device):
 
 @app.route('/system/crashes')
 def crashes():
-    data = Errors().crashes()
-
-    crash_histogram = data.reset_index()
+    crash_data = Errors().crashes()
+    crash_histogram = crash_data.reset_index()
     crash_histogram = crash_histogram.drop(columns=['source', 'filename', 'line_number', 'log_level', 'message'])
     crash_histogram['date'] = crash_histogram.timestamp.apply(lambda x: x.date())
     crash_histogram = crash_histogram.drop(columns=['timestamp'])
     crash_histogram = crash_histogram.groupby(['device', 'date']).count()
-    crash_histogram = crash_histogram.rename(columns=dict(level_1="count"))
+    crash_histogram = crash_histogram.rename(columns=dict(level_1="crash_count"))
     crash_histogram = crash_histogram.reset_index()
-    crash_histogram = crash_histogram.set_index(['device', crash_histogram.index])
+    crash_histogram = crash_histogram.set_index(['device', 'date'])
+
+    version_data = Errors().version()
+    version_histogram = version_data.reset_index()
+    version_histogram = version_histogram.drop(columns=['version_timestamp', 'branch', 'commit', 'ip'])
+    version_histogram['date'] = version_histogram.timestamp.apply(lambda x: x.date())
+    version_histogram = version_histogram.drop(columns=['timestamp'])
+    version_histogram = version_histogram.groupby(['device', 'date']).count()
+    version_histogram = version_histogram.rename(columns=dict(level_1="restart_count"))
+    version_histogram = version_histogram.reset_index()
+    version_histogram = version_histogram.set_index(['device', 'date'])
+
+    combined_histogram = pd.merge(crash_histogram, version_histogram,
+                                  left_index=True, right_index=True, how="outer") \
+                           .fillna(value=0)
+
+    combined_histogram.crash_count = combined_histogram.crash_count.astype('int')
+    combined_histogram.restart_count = combined_histogram.restart_count.astype('int')
 
     # compute time range
-    dates = crash_histogram.reset_index().date
+    dates = combined_histogram.reset_index().date
     x_range = min(dates), max(dates)
+
+    # combute range of y_axis
+    y_range = 0, max(max(version_histogram.restart_count), max(crash_histogram.crash_count))
 
     scripts = []
     data_dict = dict()
 
-    for device in data.index.levels[0]:
-        device_data = data.loc[device]
-        histogram_data = crash_histogram.loc[device]
-        fig = plot_crashes(histogram_data, x_range=x_range)
+    for device in combined_histogram.index.levels[0]:
+        histogram_data = combined_histogram.loc[device].reset_index()
+        fig = plot_crashes(histogram_data, x_range=x_range, y_range=y_range)
         script, div = components(fig)
-        data_dict[device] = dict(total_number_of_crashes=len(device_data), plot=div)
+        try:
+            total_number_of_crashes = len(crash_data.loc[device])
+        except KeyError:
+            total_number_of_crashes = 0
+        try:
+            total_number_of_restarts = len(version_data.loc[device])
+        except KeyError:
+            total_number_of_restarts = 0
+        data_dict[device] = dict(total_number_of_crashes=total_number_of_crashes,
+                                 total_number_of_restarts=total_number_of_restarts,
+                                 plot=div)
         scripts.append(script)
 
     # grab the static resources
@@ -1031,7 +1067,6 @@ def crashes():
     return render_template("crashes.html",
                            route='/system/crashes',
                            data=data_dict,
-                           messages="Crash statistics",
                            scripts=scripts,
                            js_resources=js_resources,
                            css_resources=css_resources)

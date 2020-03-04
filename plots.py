@@ -260,33 +260,55 @@ def plot_crashes(data, **kwargs):
     dates = list(data.date)
     if 'x_range' in kwargs:
         x_range = kwargs['x_range']
+        x_range = x_range[0] - timedelta(days=1), x_range[1] + timedelta(days=1)
     else:
         x_range = (min(dates) - timedelta(days=1), max(dates) + timedelta(days=1))
 
-    crash_source = ColumnDataSource(data)
+    y_range = kwargs.get('y_range', None)
 
-    vbar_width = timedelta(days=1) / 2
+    data_source = ColumnDataSource(data)
+
+    vbar_width = timedelta(days=1) / 2.5
     vbar_shift = vbar_width.total_seconds() * 1000
 
-    fig = figure(x_axis_type="datetime", x_range=x_range, plot_height=200, plot_width=800,
-                 title="Crashes per day", tools="")
+    fig = figure(x_axis_type="datetime", x_range=x_range, y_range=y_range, plot_height=200, plot_width=800,
+                 title="Crashes/Restarts per day", tools="")
     fig.output_backend = "svg"
     fig.toolbar.logo = None
-    fig.add_tools(HoverTool(
-        tooltips=[
-            ('date', '@date{%F}'),
-            ('crashes', '@count{%d}')
-        ],
-        formatters={
-            'date': 'datetime',
-            'count': 'printf'
-        },
 
-        mode='vline'))
+    crash_hover_tool = HoverTool(names=['crashes'],
+                                 tooltips=[('date', '@date{%F}'),
+                                           ('crashes', '@crash_count{%d}')],
+                                 formatters={'date': 'datetime',
+                                             'crash_count': 'printf'},
+                                 mode='vline')
+
+    restart_hover_tool = HoverTool(names=['restarts'],
+                                   tooltips=[('date', '@date{%F}'),
+                                             ('restarts', '@restart_count{%d}')],
+                                   formatters={'date': 'datetime',
+                                               'restart_count': 'printf'},
+                                   mode='vline')
+
+    fig.add_tools(crash_hover_tool)
+    fig.add_tools(restart_hover_tool)
     fig.add_tools(SaveTool())
 
-    fig.vbar(x='date',
-             width=vbar_width, top='count', source=crash_source)
+    fig.vbar(x=dodge('date', -vbar_shift / 2, range=fig.x_range),
+             width=vbar_width,
+             top='restart_count',
+             color='#478c06',
+             source=data_source,
+             name="restarts",
+             legend_label="restarts")
+    fig.vbar(x=dodge('date', +vbar_shift / 2, range=fig.x_range),
+             width=vbar_width,
+             top='crash_count',
+             color="#ff3d06",
+             source=data_source,
+             name="crashes",
+             legend_label="crashes")
+    fig.legend.location = "top_left"
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
