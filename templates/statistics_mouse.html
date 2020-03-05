@@ -11,6 +11,7 @@
 {% block body %}
 <div id="content">
   <h1>Mouse gesture statistics</h1>
+  {% include 'includes/_date_range.html' %}
   <table id="data-table" class="table">
     <thead class="thead-dark">
     <tr>
@@ -36,4 +37,5 @@
 
 {% block script %}
 {% include 'includes/_data_table.html' %}
+<script src={{ url_for('static', filename = 'js/date_range.js') }}></script>
 {% endblock script %}

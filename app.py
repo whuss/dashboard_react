@@ -63,7 +63,8 @@ class DbSizePackage(db.Model):
 
     id = db.Column('pk_db_size_package_id', db.Integer, key='id', primary_key=True)
     date = db.Column('ix_data_dtm', key='date')
-    size_in_mb = db.Column('size_in_mb', key='size_in_mb')
+    data_size_in_mb = db.Column('data_size_in_mb', key='data_size_in_mb')
+    index_size_in_mb = db.Column('index_size_in_mb', key='index_size_in_mb')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -557,6 +558,7 @@ class PresenceDetectorStatistics(object):
                     .filter(ip.instruction == "MODE") \
                     .filter(ip.target == "POWER") \
                     .filter(ip.value == "ON") \
+                    .filter(ip.device != "PTL_DEFAULT") \
                     .outerjoin(sq_device, sq_device.c.device == ip.device) \
                     .order_by(ip.device)
 
@@ -739,7 +741,7 @@ class MouseData(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def gesture_data(self, since):
+    def gesture_data(self, since, until):
         column_names = dict(gesture_distance="distance",
                             gesture_speed="speed",
                             gesture_deviation="deviation")
@@ -748,6 +750,7 @@ class MouseData(object):
         sq_mouse = db.session.query(mgp.device, mgp.timestamp, mgp.gesture_start, mgp.gesture_end,
                                  mgp.gesture_distance, mgp.gesture_speed, mgp.gesture_deviation) \
                           .filter(mgp.timestamp >= since) \
+                          .filter(mgp.timestamp <= until) \
                           .subquery()
 
         query = self.query_device \
@@ -781,8 +784,12 @@ class DatabaseDelay(object):
 
     def size(self):
         dp = DbSizePackage
-        query = db.session.query(dp.date, dp.size_in_mb)
-        return pd.DataFrame(query.all())
+        query = db.session.query(dp.date, dp.data_size_in_mb, dp.index_size_in_mb)
+        data = pd.DataFrame(query.all())
+
+        data['total_size'] = data.data_size_in_mb + data.index_size_in_mb
+
+        return data
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -1243,12 +1250,12 @@ def statistics_mode():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/statistics/mouse')
+@app.route('/statistics/mouse', methods=['GET'])
 def statistics_mouse():
+    start_date, end_date = parse_date_range(request)
     no_data = dict(stats="", plot_distance="", plot_speed="", plot_deviation="")
 
-    start_date = datetime.now() - timedelta(days=14)
-    mouse_data = MouseData().gesture_data(start_date)
+    mouse_data = MouseData().gesture_data(start_date, end_date)
 
     statistics_data = {}
     scripts = []
@@ -1290,6 +1297,7 @@ def statistics_mouse():
     css_resources = INLINE.render_css()
 
     return render_template("statistics_mouse.html",
+                           timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
                            data=statistics_data,
                            scripts=scripts,
                            js_resources=js_resources,
@@ -1386,7 +1394,7 @@ def statistics_switch_cycles():
 
     # compute time range
     dates = data.reset_index().date
-    x_range = min(dates), max(dates)
+    x_range = min(dates) - timedelta(days=1), max(dates) + timedelta(days=1)
 
     for device in data.index.levels[0]:
         device_data = data.loc[device].reset_index()

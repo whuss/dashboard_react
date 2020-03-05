@@ -325,17 +325,28 @@ def plot_database_size(data):
     vbar_width = timedelta(days=1) / 2
 
     hover_tool = HoverTool(tooltips=[('date', '@date{%F}'),
-                                     ('size', '@size_in_mb{%d}MB')],
+                                     ('data_size', '@data_size_in_mb{%d}MB'),
+                                     ('index_size', '@index_size_in_mb{%d}MB'),
+                                     ('total_size', '@total_size{%d}MB')],
                            formatters={'date': 'datetime',
-                                       'size_in_mb': 'printf'},
-                           mode='vline')
+                                       'data_size_in_mb': 'printf',
+                                       'index_size_in_mb': 'printf',
+                                       'total_size': 'printf',
+                                      })
     fig.add_tools(hover_tool)
     fig.add_tools(SaveTool())
 
     fig.vbar(x='date',
              width=vbar_width,
-             top='size_in_mb',
+             top='data_size_in_mb',
              color='#8c8c8c',
+             source=data_source,
+             name="db_size")
+    fig.vbar(x='date',
+             width=vbar_width,
+             bottom='data_size_in_mb',
+             top='total_size',
+             color='#c8c8c8',
              source=data_source,
              name="db_size")
     return fig
