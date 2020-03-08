@@ -5,11 +5,65 @@
 
 {% block body %}
 <div id="content">
-<h1>Log for device {{device}} at time of restart</h1>
+<h1>Show logs</h1>
+<div class="btn-group">
+    <div class="dropdown show">Device:
+        <div class="btn-group">
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            <span class="caret">{{request.view_args.device}}</span>
+        </button>
+            <ul class="dropdown-menu" role="menu>
+            {% for device in devices %}
+            <li><a class="dropdown-item" href="{{url_for_self(device=device)}}">{{device}}</a></li>
+            {% endfor %}
+            </ul>
+        </div>
+        Logging level:
+        <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownLogLevel" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        {{request.view_args.log_level}}
+        </a>
+        <div class="btn-group">
+        <div id="dropdownMenu2" class="dropdown-menu" aria-labelledby="dropdownLogLevel">
+            <a class="dropdown-item" href="{{url_for_self(log_level='TRACE')}}">TRACE</a>
+            <a class="dropdown-item" href="{{url_for_self(log_level='DEBUG')}}">DEBUG</a>
+            <a class="dropdown-item" href="{{url_for_self(log_level='INFO')}}">INFO</a>
+            <a class="dropdown-item" href="{{url_for_self(log_level='WARNING')}}">WARNING</a>
+            <a class="dropdown-item" href="{{url_for_self(log_level='ERROR')}}">ERROR</a>
+            <a class="dropdown-item" href="{{url_for_self(log_level='CRITICAL')}}">CRITICAL</a>
+        </div>
+        </div>
+        At time:
+        <span id="reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+        <i class="fa fa-calendar"></i>&nbsp;
+        <span>{{request.view_args.timestamp}}</span> <i class="fa fa-caret-down"></i>
+        </span>
+
+    </div>
+</div>
 <div id="terminal">
     <pre>{{log_text|safe}}</pre>
 </div>
 {% endblock %}
 
 {% block script %}
+<script>
+$(function() {
+    var timestamp = "{{request.view_args.timestamp }}";
+
+    function cb(start, end) {
+        $('#reportrange span').html(start.format('MMMM D, YYYY HH:mm'));
+    }
+
+    $('#reportrange').daterangepicker({
+        singleDatePicker: true,
+        timePicker: true,
+        timePicker24Hour: true,
+        showDropdowns: true,
+        minYear: 1901,
+        maxYear: parseInt(moment().format('YYYY'), 10)
+    }, cb);
+
+    cb(start, end);
+});
+</script>
 {% endblock script %}

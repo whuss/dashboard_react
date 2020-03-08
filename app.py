@@ -3,7 +3,7 @@ import re
 import pandas as pd
 import numpy as np
 
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_basicauth import BasicAuth
 from flask_table import Col, LinkCol, Table
@@ -28,6 +28,7 @@ from plots import plot_database_size
 # Configuration
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 _host: str = "83.175.125.85"
 #_host: str = "localhost"
 _user: str = "infinity"
@@ -39,6 +40,7 @@ _db_url: str = f'mysql://{_user}:{_password}@{_host}/{_dbname}'
 # ----------------------------------------------------------------------------------------------------------------------
 # Setup
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = _db_url
@@ -985,7 +987,18 @@ def utility_processor():
                 _number=_number,
                 _unit=_unit)
 
-# ----------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------<
+
+
+def url_for_self(**args):
+    return url_for(request.endpoint, **dict(request.view_args, **args))
+
+# ----------------------------------------------------------------------------------------------------------------------<
+
+
+app.jinja_env.globals['url_for_self'] = url_for_self
+
+# ----------------------------------------------------------------------------------------------------------------------<
 # Routes
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1101,22 +1114,26 @@ def crashes():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def _logs(device_id, timestamp, before=2*60, after=2*60):
-    restart_time = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S.%f')
+def _logs(device_id, timestamp, log_level="TRACE", before=2*60, after=2*60):
+    try:
+        restart_time = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S.%f')
+    except ValueError:
+        restart_time = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
     start_date = restart_time - timedelta(seconds=before)
     end_date = restart_time + timedelta(seconds=after)
 
-    logs = Errors().logs(device_id=device_id, since=start_date, until=end_date)
+    logs = Errors().logs(device_id=device_id, log_level=log_level, since=start_date, until=end_date)
     log_text = format_logs(logs)
     return log_text
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-
-@app.route('/logs/<device>/<timestamp>/')
-def show_logs(device, timestamp):
-    log_text = _logs(device, timestamp)
-    return render_template("device_log.html", log_text=log_text, device=device)
+@app.route('/logs/<device>/<timestamp>')
+@app.route('/logs/<device>/<timestamp>/<log_level>')
+def show_logs(device, timestamp, log_level="TRACE"):
+    log_text = _logs(device, timestamp, log_level)
+    devices = Dashboard().devices()
+    return render_template("device_log.html", devices=devices, log_text=log_text, device=device)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1438,7 +1455,7 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
                                    data[[sensor_key]].iloc[:, 0],
                                    x_range=x_range,
                                    y_axis_label=unit,
-                                   **kwargs)
+                                   mode='step')
             script, div = components(fig)
         else:
             script, div = "", ""
