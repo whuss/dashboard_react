@@ -618,6 +618,21 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def crash_at_time(self, device, time):
+        lp = LoggerPackage
+        query = db.session.query(lp.device, lp.id, lp.log_level, lp.timestamp) \
+                          .filter(lp.log_level == "CRITICAL") \
+                          .filter(lp.device == device) \
+                          .filter(lp.timestamp <= time) \
+                          .filter(lp.timestamp >= time - timedelta(minutes=5))
+
+        data = pd.DataFrame(query.all())
+
+        # A crash happened if the query returned something
+        return not data.empty
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def logs(self, device_id=None, since=None, until=None, num_lines=None, log_level="TRACE"):
         lp = LoggerPackage
 
@@ -663,12 +678,13 @@ class Errors(object):
         if num_lines:
             data = data.sort_values(by=['timestamp'])
 
-        data = data.set_index(['device', data.index])
+        if not data.empty:
+            data = data.set_index(['device', data.index])
         return data
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def version(self, device_id=None):
+    def version(self, device_id=None, check_crashes=True):
         vp = VersionPackage
 
         sq_device = db.session.query(DeviceInfo.device).subquery()
@@ -683,6 +699,10 @@ class Errors(object):
             query = query.filter(vp.device == device_id)
 
         data = pd.DataFrame(query.all())
+
+        if check_crashes:
+            data['crash'] = data.apply(lambda row: self.crash_at_time(row['device'], row['timestamp']), axis=1)
+
         data = data.set_index(['device', data.index])
         return data
 
@@ -920,6 +940,13 @@ def _str(input):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+@app.template_filter('or_else')
+def _or_else(input, else_input):
+        return str(input) if input else str(else_input)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 @app.template_filter('timespan')
 def _time_span(input):
     if input:
@@ -1019,6 +1046,14 @@ class PreCol(Col):
         return f'''<pre style="text-align: left; width: 75%; white-space: pre-line;">
                        {content}
                    </pre>'''
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class CrashCol(Col):
+    def td_format(self, content):
+        c = 'SICK' if content else 'HEALTHY'
+        return f'''<i class="fa fa-heartbeat {c}"></i>'''
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1123,7 +1158,10 @@ def _logs(device_id, timestamp, log_level="TRACE", before=2*60, after=2*60):
     end_date = restart_time + timedelta(seconds=after)
 
     logs = Errors().logs(device_id=device_id, log_level=log_level, since=start_date, until=end_date)
-    log_text = format_logs(logs)
+    if not logs.empty:
+        log_text = format_logs(logs)
+    else:
+        log_text = "No logs available."
     return log_text
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -1141,7 +1179,8 @@ def show_logs(device, timestamp, log_level="TRACE"):
 @app.route('/system/version', methods=['GET'])
 def version_messages():
     device_id = request.args.get('id', default = "", type = str)
-    data = Errors().version(device_id=device_id)
+    errors = Errors()
+    data = errors.version(device_id=device_id)
 
     class VersionTable(Table):
         classes = ["error-table"]
@@ -1152,6 +1191,7 @@ def version_messages():
         commit = Col('Commit')
         branch = Col('branch')
         version_timestamp = Col('Version Timestamp')
+        crash = CrashCol('Crash')
 
     data_dict = dict()
 
