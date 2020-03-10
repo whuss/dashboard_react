@@ -3,10 +3,13 @@
 {% block head %}
 {% endblock %}
 
-{% block body %}
-<div id="content">
-    <h1>Show logs</h1>
-    <ul class="container-fluid toolbar">
+{% block page_title %}
+<h1>Show logs</h1>
+{% endblock %}
+
+{% block page_navigation %}
+<div class="container-fluid">
+    <div class="container-fluid toolbar">
         <span class="label">Device:</span>
         <div class="btn-group">
             <button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown">
@@ -52,15 +55,7 @@
                 <a class="dropdown-item" href="{{url_for_self(duration=24*60)}}">1 day</a>
             </div>
         </div>
-        <div class="float-right">
-            <a href="{{url_for_self(page=get_current_page()-1)}}" type="button" class="btn btn-light">
-                Previous Page
-            </a>
-            <span>{{get_current_page()}}</span>
-            <a href="{{url_for_self(page=get_current_page()+1)}}" type="button" class="btn btn-light">
-                Next Page
-            </a>
-        </div>
+        {% include 'includes/_pagination.html' %}
         <!--<div class="float-right">
             <nav>
                 <ul class="pagination">
@@ -82,8 +77,14 @@
         </div>-->
     </div>
 </div>
+{% endblock %}
+
+{% block body %}
 <div id="terminal">
     <pre>{{log_text|safe}}</pre>
+</div>
+<div class="container-fluid toolbar">
+    {% include 'includes/_pagination.html' %}
 </div>
 {% endblock %}
 

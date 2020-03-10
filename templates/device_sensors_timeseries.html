@@ -6,9 +6,16 @@
 {{ plot_scripts|indent(4)|safe }}
 {% endblock %}
 
-{% block body %}
+{% block page_title %}
 <h1>Timeseries for sensor data of {{device}}</h1>
+{% endblock %}
+
+{% block page_navigation %}
 {% include 'includes/_date_range.html' %}
+{% endblock %}
+
+
+{% block body %}
 <div id="content">
     <div align="center">{{ plot_divs|indent(4)|safe }}</div>
 </div>

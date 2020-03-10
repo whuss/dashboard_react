@@ -22,6 +22,12 @@
 /*                              CONTENT                                 */
 /* -------------------------------------------------------------------- */
 
+#titlebar {
+    background: white;
+    padding: 10px;
+    z-index: -1;
+}
+
 .site-header {
     background: linear-gradient(
         rgba(68, 54, 54, 0.85),

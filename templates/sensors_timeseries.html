@@ -8,9 +8,16 @@
 {% endfor %}
 {% endblock %}
 
-{% block body %}
+{% block page_title %}
 <h1>Timeseries for {{sensor}} data</h1>
+{% endblock %}
+
+{% block page_navigation %}
 {% include 'includes/_date_range.html' %}
+{% endblock%}
+
+
+{% block body %}
 <div id="content">
 <table id="data-table" class="table">
     <thead class="thead-dark">

@@ -1,8 +1,11 @@
 {% extends 'layout.html' %}
 
+{% block page_title %}
+<h1>Crashes for {{device}}</h1>
+{% endblock %}
+
 {% block body %}
 <div id="content">
-  <h1>Crashes for {{device}}</h1>
   {{table|safe}}
 </div>
 {% endblock %}

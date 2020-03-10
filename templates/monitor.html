@@ -3,10 +3,12 @@
 {% block head %}
 {% endblock %}
 
-{% block body %}
-<div id="content">
-  <h1>Live Monitor</h1>
-  <div class="dropdown show">
+{% block page_title %}
+<h1>Live Monitor</h1>
+{% endblock %}
+
+{% block page_navigation %}
+<div class="dropdown show">
   <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownDevice" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
     Select device
   </a>
@@ -28,6 +30,10 @@
     <option value="CRITICAL">CRITICAL</option>
   </select>
 </div>
+{% endblock %}
+
+{% block body %}
+<div id="content">
   <h3 id="terminal-title"></h3>
   <div id="terminal">
   </div>
