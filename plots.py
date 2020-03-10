@@ -4,9 +4,11 @@ from datetime import timedelta
 from bokeh.core.enums import Dimensions, StepMode
 from bokeh.transform import dodge
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource
+from bokeh.models import ColumnDataSource, OpenURL, TapTool
 from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool, PrintfTickFormatter
 from bokeh.models.formatters import NumeralTickFormatter
+
+from flask import url_for
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -171,7 +173,7 @@ def plot_time_series(x, y, x_range, **kwargs):
     figure_kwargs['toolbar_location'] = kwargs.get('toolbar_location', "right")
 
     fig = figure(plot_width=800, plot_height=180, x_range=x_range, x_axis_type='datetime', **figure_kwargs)
-    fig.output_backend = "svg"
+    fig.output_backend = "webgl"
     if "title" in kwargs:
         #fig.title.text_font_style = "italic"
         fig.title.offset = 20
@@ -256,7 +258,7 @@ def plot_on_off_cycles(data, **kwargs):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def plot_crashes(data, **kwargs):
+def plot_crashes(data, device="PTL_DEFAULT", **kwargs):
     dates = list(data.date)
     if 'x_range' in kwargs:
         x_range = kwargs['x_range']
@@ -272,7 +274,7 @@ def plot_crashes(data, **kwargs):
     vbar_shift = vbar_width.total_seconds() * 1000
 
     fig = figure(x_axis_type="datetime", x_range=x_range, y_range=y_range, plot_height=200, plot_width=800,
-                 title="Crashes/Restarts per day", tools="")
+                 title="Crashes/Restarts per day", tools="tap")
     fig.output_backend = "svg"
     fig.toolbar.logo = None
 
@@ -309,6 +311,12 @@ def plot_crashes(data, **kwargs):
              name="crashes",
              legend_label="crashes")
     fig.legend.location = "top_left"
+
+    url = url_for("show_logs", device=device, timestamp="TIMESTAMP", duration=24*60, log_level="CRITICAL")
+    url = url.replace("TIMESTAMP", "@end_of_day")
+    taptool = fig.select(type=TapTool)[0]
+    print(taptool)
+    taptool.callback = OpenURL(url=url, same_tab=True)
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------

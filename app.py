@@ -1088,12 +1088,13 @@ def crash_for_device(device):
     device_data = data.reset_index()
 
     device_data['formatted_message'] = device_data.apply(format_logentry, axis=1)
+    device_data['duration'] = 5
 
     class CrashTable(Table):
         classes = ["error-table"]
         timestamp = LinkCol('Time', 'show_logs',
-                            url_kwargs=dict(device='device', timestamp='timestamp'),
-                            attr="timestamp")
+                            url_kwargs=dict(device='device', timestamp='timestamp', duration='duration'),
+                            attr='timestamp')
         formatted_message = PreCol('Error message')
 
     table = CrashTable(device_data.to_dict(orient='records'))
@@ -1132,6 +1133,13 @@ def crashes():
     combined_histogram.crash_count = combined_histogram.crash_count.astype('int')
     combined_histogram.restart_count = combined_histogram.restart_count.astype('int')
 
+    # compute string of the end of the day for url creation
+    def end_of_day(row):
+        date = row.name[1]
+        return (date + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
+
+    combined_histogram['end_of_day'] = combined_histogram.apply(end_of_day, axis=1)
+
     # compute time range
     dates = combined_histogram.reset_index().date
     x_range = min(dates), max(dates)
@@ -1144,7 +1152,7 @@ def crashes():
 
     for device in combined_histogram.index.levels[0]:
         histogram_data = combined_histogram.loc[device].reset_index()
-        fig = plot_crashes(histogram_data, x_range=x_range, y_range=y_range)
+        fig = plot_crashes(histogram_data, x_range=x_range, y_range=y_range, device=device)
         script, div = components(fig)
         try:
             total_number_of_crashes = len(crash_data.loc[device])
@@ -1213,7 +1221,7 @@ def version_messages():
         classes = ["error-table"]
         timestamp = LinkCol('Time', 'show_logs',
                             url_kwargs=dict(device='device', timestamp='timestamp', duration='duration'),
-                            attr="timestamp")
+                            attr='timestamp')
         ip = Col('IP Address')
         commit = Col('Commit')
         branch = Col('branch')
