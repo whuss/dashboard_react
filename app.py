@@ -1144,7 +1144,7 @@ def error_statistics():
 
     for device in error_histogram.index.levels[0]:
         histogram_data = error_histogram.loc[device].reset_index()
-        fig = plot_errors(histogram_data, x_range=x_range, y_range=y_range, device=device)
+        fig = plot_errors(histogram_data, x_range=x_range, device=device)
         script, div = components(fig)
         try:
             total_number_of_errors = len(error_data.loc[device])
