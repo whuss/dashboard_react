@@ -22,12 +22,19 @@
 /*                              CONTENT                                 */
 /* -------------------------------------------------------------------- */
 
+#reportrange {
+    background: #fff;
+    cursor: pointer;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    width: 100%;
+}
 
 .toolbar {
     padding-top:4px;
     padding-bottom:4px;
     margin:3px;
-    background-color:rgb(240, 240, 240);
+    background-color:rgb(250, 150, 30);
 }
 
 .toolbar .label {
