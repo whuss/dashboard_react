@@ -937,7 +937,7 @@ def format_datetime(value, format='medium'):
     if format == 'full':
         format="EEEE, d. MMMM y 'at' HH:mm"
     elif format == 'medium':
-        format="dd.MM.y HH:mm"
+        format="y-MM-dd HH:mm"
     return babel.dates.format_datetime(value, format)
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -1137,14 +1137,14 @@ def error_statistics():
     x_range = min(dates), max(dates)
 
     # combute range of y_axis
-    y_range = 0, max(error_histogram.error_count)
+    y_range = 1, max(error_histogram.error_count)
 
     scripts = []
     data_dict = dict()
 
     for device in error_histogram.index.levels[0]:
         histogram_data = error_histogram.loc[device].reset_index()
-        fig = plot_errors(histogram_data, x_range=x_range, device=device)
+        fig = plot_errors(histogram_data, x_range=x_range, y_range=y_range, device=device)
         script, div = components(fig)
         try:
             total_number_of_errors = len(error_data.loc[device])
@@ -1263,12 +1263,11 @@ def _logs(device_id, timestamp, log_level="TRACE", before=2, after=2, page=None)
 
 @app.route('/logs/<device>', methods=['GET'])
 @app.route('/logs/<device>/<int:duration>', methods=['GET'])
-@app.route('/logs/<device>/<int:duration>/<timestamp>', methods=['GET'])
-@app.route('/logs/<device>/<int:duration>/<timestamp>/<log_level>', methods=['GET'])
-@app.route('/logs/<device>/<int:duration>/<timestamp>/<log_level>', methods=['GET'])
-def show_logs(device, duration = 5, timestamp = None, log_level="TRACE"):
+@app.route('/logs/<device>/<int:duration>/<log_level>', methods=['GET'])
+@app.route('/logs/<device>/<int:duration>/<log_level>/<timestamp>/', methods=['GET'])
+def show_logs(device, duration=5, timestamp=None, log_level="TRACE"):
     try:
-        page = int(request.args.get('page', default = 1, type = int))
+        page = int(request.args.get('page', default=1, type=int))
     except ValueError:
         print(f"get value page={page} is not an integer")
         page = 1

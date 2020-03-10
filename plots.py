@@ -336,7 +336,9 @@ def plot_errors(data, device="PTL_DEFAULT", **kwargs):
     vbar_width = timedelta(days=1) / 2.5
     vbar_shift = vbar_width.total_seconds() * 1000
 
-    fig = figure(x_axis_type="datetime", x_range=x_range, y_range=y_range, plot_height=200, plot_width=800,
+    fig = figure(x_axis_type="datetime", x_range=x_range,
+                 y_axis_type="log", y_range=y_range,
+                 plot_height=200, plot_width=800,
                  title="Errors per day", tools="tap")
     fig.output_backend = "svg"
     fig.toolbar.logo = None
@@ -352,20 +354,23 @@ def plot_errors(data, device="PTL_DEFAULT", **kwargs):
 
     fig.vbar(x='date',
              width=vbar_width,
+             bottom=0.01,
              top='error_count',
              color='#478c06',
              source=data_source,
-             name="restarts",
+             name="errors",
              legend_label="errors")
     fig.legend.location = "top_left"
 
     url = url_for("show_logs", device=device, timestamp="TIMESTAMP", duration=24*60, log_level="ERROR")
     url = url.replace("TIMESTAMP", "@end_of_day")
     taptool = fig.select(type=TapTool)[0]
-    taptool.callback = OpenURL(url=url, same_tab=True)
+    taptool.callback = OpenURL(url=url, same_tab=False)
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+
 def plot_database_size(data):
     x_range = (min(data.date) - timedelta(days=1), max(data.date) + timedelta(days=1))
     data_source = ColumnDataSource(data)
