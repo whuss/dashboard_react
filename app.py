@@ -24,6 +24,8 @@ from plots import plot_histogram, plot_duration_histogram, plot_time_series
 from plots import plot_on_off_cycles, plot_lost_signal, plot_crashes
 from plots import plot_database_size
 
+import utils
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Configuration
 # ----------------------------------------------------------------------------------------------------------------------
@@ -924,6 +926,9 @@ def dataframe_from_query(query):
 def format_datetime(value, format='medium'):
     if not value:
         return ""
+    if isinstance(value, str):
+        value = utils.parse_date(value)
+
     if format == 'full':
         format="EEEE, d. MMMM y 'at' HH:mm"
     elif format == 'medium':
@@ -974,6 +979,25 @@ def _unit(input, unit='°C'):
     if not input:
         return ""
     return f"{input:.2f} {unit}"
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.template_filter('format_duration')
+def _format_duration(input):
+    try:
+        minutes = int(input)
+        if minutes < 60:
+            return f"{minutes} minutes"
+        elif minutes % 60 == 0 and minutes // 60 < 24:
+            return f"{minutes // 60} hours"
+        elif minutes == 60*24:
+            return f"1 day"
+        else:
+            return humanfriendly.format_timespan(timedelta(minutes=minutes), max_units=2)
+    except ValueError:
+        # input is not an integer
+        return str(minutes)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1149,13 +1173,10 @@ def crashes():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def _logs(device_id, timestamp, log_level="TRACE", before=2*60, after=2*60):
-    try:
-        restart_time = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S.%f')
-    except ValueError:
-        restart_time = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
-    start_date = restart_time - timedelta(seconds=before)
-    end_date = restart_time + timedelta(seconds=after)
+def _logs(device_id, timestamp, log_level="TRACE", before=2, after=2):
+    restart_time = utils.parse_date(timestamp)
+    start_date = restart_time - timedelta(minutes=before)
+    end_date = restart_time + timedelta(minutes=after)
 
     logs = Errors().logs(device_id=device_id, log_level=log_level, since=start_date, until=end_date)
     if not logs.empty:
@@ -1166,10 +1187,15 @@ def _logs(device_id, timestamp, log_level="TRACE", before=2*60, after=2*60):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-@app.route('/logs/<device>/<timestamp>')
-@app.route('/logs/<device>/<timestamp>/<log_level>')
-def show_logs(device, timestamp, log_level="TRACE"):
-    log_text = _logs(device, timestamp, log_level)
+
+@app.route('/logs/<device>')
+@app.route('/logs/<device>/<int:duration>')
+@app.route('/logs/<device>/<int:duration>/<timestamp>')
+@app.route('/logs/<device>/<int:duration>/<timestamp>/<log_level>')
+def show_logs(device, duration = 5, timestamp = None, log_level="TRACE"):
+    if not timestamp:
+        timestamp = datetime.now()
+    log_text = _logs(device, timestamp, log_level, before=duration-2, after=2)
     devices = Dashboard().devices()
     return render_template("device_log.html", devices=devices, log_text=log_text, device=device)
 
@@ -1181,11 +1207,12 @@ def version_messages():
     device_id = request.args.get('id', default = "", type = str)
     errors = Errors()
     data = errors.version(device_id=device_id)
+    data['duration'] = 5
 
     class VersionTable(Table):
         classes = ["error-table"]
         timestamp = LinkCol('Time', 'show_logs',
-                            url_kwargs=dict(device='device', timestamp='timestamp'),
+                            url_kwargs=dict(device='device', timestamp='timestamp', duration='duration'),
                             attr="timestamp")
         ip = Col('IP Address')
         commit = Col('Commit')

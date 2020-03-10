@@ -22,6 +22,18 @@
 /*                              CONTENT                                 */
 /* -------------------------------------------------------------------- */
 
+
+.toolbar {
+    padding-top:4px;
+    padding-bottom:4px;
+    margin:3px;
+    background-color:rgb(240, 240, 240);
+}
+
+.toolbar .label {
+    padding-left:1em;
+}
+
 #content table tbody tr a {
     color: grey;
 }

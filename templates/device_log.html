@@ -6,7 +6,8 @@
 {% block body %}
 <div id="content">
 <h1>Show logs</h1>
-<span>Device:</span>
+<div class="container-fluid toolbar">
+<span class="label">Device:</span class="label">
 <div class="btn-group">
     <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">{{request.view_args.device}}</button>
     <div class="dropdown-menu">
@@ -15,7 +16,7 @@
         {% endfor %}
     </div>
 </div>
-<span>Logging level:</span>
+<span class="label">Logging level:</span class="label">
 <div class="btn-group">
     <button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown">
         <span class="{{request.view_args.log_level|or_else("TRACE")}}">{{request.view_args.log_level|or_else("TRACE")}}</span>
@@ -32,8 +33,23 @@
         <span>At time:</span>
         <span id="reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
         <i class="fa fa-calendar"></i>&nbsp;
-        <span>{{request.view_args.timestamp}}</span> <i class="fa fa-caret-down"></i>
+        <span>{{request.view_args.timestamp|datetime}}</span> <i class="fa fa-caret-down"></i>
         </span>
+<span class="label">Duration:</span>
+<div class="btn-group">
+    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+       {{request.view_args.duration|or_else(5)|format_duration}}
+    </button>
+    <div class="dropdown-menu">
+        <a class="dropdown-item" href="{{url_for_self(duration=5)}}">5 minutes</a>
+        <a class="dropdown-item" href="{{url_for_self(duration=10)}}">10 minutes</a>
+        <a class="dropdown-item" href="{{url_for_self(duration=30)}}">30 minutes</a>
+        <a class="dropdown-item" href="{{url_for_self(duration=60)}}">1 hour</a>
+        <a class="dropdown-item" href="{{url_for_self(duration=12*60)}}">12 hours</a>
+        <a class="dropdown-item" href="{{url_for_self(duration=24*60)}}">1 day</a>
+    </div>
+</div>
+</div>
 </div>
 <div id="terminal">
     <pre>{{log_text|safe}}</pre>
@@ -46,7 +62,8 @@ $(function() {
     var timestamp = "{{request.view_args.timestamp }}";
 
     function cb(start, end) {
-        $('#reportrange span').html(start.format('MMMM D, YYYY HH:mm'));
+        $('#reportrange span').html(start.format('YYYY-MM-DD HH:mm:ss'));
+        window.location = "{{url_for_self(timestamp=None)}}" + "/" + start.format('YYYY-MM-DD HH:mm:ss');
     }
 
     $('#reportrange').daterangepicker({
@@ -54,8 +71,8 @@ $(function() {
         timePicker: true,
         timePicker24Hour: true,
         showDropdowns: true,
-        minYear: 1901,
-        maxYear: parseInt(moment().format('YYYY'), 10)
+        minYear: 2020,
+        maxYear: 2022,
     }, cb);
 
     cb(start, end);
