@@ -315,12 +315,57 @@ def plot_crashes(data, device="PTL_DEFAULT", **kwargs):
     url = url_for("show_logs", device=device, timestamp="TIMESTAMP", duration=24*60, log_level="CRITICAL")
     url = url.replace("TIMESTAMP", "@end_of_day")
     taptool = fig.select(type=TapTool)[0]
-    print(taptool)
     taptool.callback = OpenURL(url=url, same_tab=True)
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
+def plot_errors(data, device="PTL_DEFAULT", **kwargs):
+    dates = list(data.date)
+    if 'x_range' in kwargs:
+        x_range = kwargs['x_range']
+        x_range = x_range[0] - timedelta(days=1), x_range[1] + timedelta(days=1)
+    else:
+        x_range = (min(dates) - timedelta(days=1), max(dates) + timedelta(days=1))
+
+    y_range = kwargs.get('y_range', None)
+
+    data_source = ColumnDataSource(data)
+
+    vbar_width = timedelta(days=1) / 2.5
+    vbar_shift = vbar_width.total_seconds() * 1000
+
+    fig = figure(x_axis_type="datetime", x_range=x_range, y_range=y_range, plot_height=200, plot_width=800,
+                 title="Errors per day", tools="tap")
+    fig.output_backend = "svg"
+    fig.toolbar.logo = None
+
+    error_hover_tool = HoverTool(names=['errors'],
+                                 tooltips=[('date', '@date{%F}'),
+                                           ('errors', '@error_count{%d}')],
+                                 formatters={'date': 'datetime',
+                                             'error_count': 'printf'},
+                                 mode='vline')
+
+    fig.add_tools(error_hover_tool)
+
+    fig.vbar(x='date',
+             width=vbar_width,
+             top='error_count',
+             color='#478c06',
+             source=data_source,
+             name="restarts",
+             legend_label="errors")
+    fig.legend.location = "top_left"
+
+    url = url_for("show_logs", device=device, timestamp="TIMESTAMP", duration=24*60, log_level="ERROR")
+    url = url.replace("TIMESTAMP", "@end_of_day")
+    taptool = fig.select(type=TapTool)[0]
+    taptool.callback = OpenURL(url=url, same_tab=True)
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
 def plot_database_size(data):
     x_range = (min(data.date) - timedelta(days=1), max(data.date) + timedelta(days=1))
     data_source = ColumnDataSource(data)

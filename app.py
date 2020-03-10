@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 import humanfriendly
 
 from plots import plot_histogram, plot_duration_histogram, plot_time_series
-from plots import plot_on_off_cycles, plot_lost_signal, plot_crashes
+from plots import plot_on_off_cycles, plot_lost_signal, plot_crashes, plot_errors
 from plots import plot_database_size
 
 import utils
@@ -584,29 +584,27 @@ class PresenceDetectorStatistics(object):
 
 
 class Errors(object):
-    def errors(self, device_id=None):
-        ep = ErrorPackage
-        sq_device = db.session.query(DeviceInfo.device).subquery()
+    def crashes(self, device=None):
+        lp = LoggerPackage
+        query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename, lp.line_number, lp.log_level, lp.message) \
+                          .filter(lp.log_level == "CRITICAL")
 
-        query = db.session.query(ep.device, ep.service, ep.timestamp, ep.errno, ep.message) \
-                       .outerjoin(sq_device, sq_device.c.device == ep.device) \
-                       .order_by(ep.device)
+        if device:
+            query = query.filter(lp.device == device)
 
-        if device_id:
-            query = query.filter(ep.device == device_id)
-
-        query = query.filter(ep.device != "PTL_DEFAULT")
+        query = query.filter(lp.device != "PTL_DEFAULT")
 
         data = pd.DataFrame(query.all())
+
         data = data.set_index(['device', data.index])
         return data
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def crashes(self, device=None):
+    def errors(self, device=None):
         lp = LoggerPackage
         query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename, lp.line_number, lp.log_level, lp.message) \
-                          .filter(lp.log_level == "CRITICAL")
+                          .filter(lp.log_level == "ERROR")
 
         if device:
             query = query.filter(lp.device == device)
@@ -635,7 +633,8 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def logs(self, device_id=None, since=None, until=None, num_lines=None, log_level="TRACE"):
+    def logs(self, device_id=None, since=None, until=None, num_lines=None, log_level="TRACE", page=None):
+        MAX_LOG_ITEMS_PER_PAGE=50
         lp = LoggerPackage
 
         sq_device = db.session.query(DeviceInfo.device).subquery()
@@ -675,7 +674,13 @@ class Errors(object):
             query = query.order_by(lp.timestamp.desc()) \
                          .slice(1, num_lines)
 
-        data = pd.DataFrame(query.all())
+        if page is not None:
+            print(f"Pageinate: page={page}")
+            data = query.paginate(page, MAX_LOG_ITEMS_PER_PAGE, False).items
+        else:
+            data = query.all()
+
+        data = pd.DataFrame(data)
 
         if num_lines:
             data = data.sort_values(by=['timestamp'])
@@ -1011,6 +1016,9 @@ def _format_duration(input):
 
 @app.context_processor
 def utility_processor():
+    def _get_current_page():
+        return request.args.get('page', default = 1, type=int)
+
     def _str(input):
         return str(input) if input else ""
 
@@ -1036,7 +1044,8 @@ def utility_processor():
     return dict(_str=_str,
                 _time_span=_time_span,
                 _number=_number,
-                _unit=_unit)
+                _unit=_unit,
+                get_current_page=_get_current_page)
 
 # ----------------------------------------------------------------------------------------------------------------------<
 
@@ -1100,6 +1109,62 @@ def crash_for_device(device):
     table = CrashTable(device_data.to_dict(orient='records'))
 
     return render_template("crashes_device.html", device=device, table=table)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/system/errors')
+def error_statistics():
+    error_data = Errors().errors()
+    error_histogram = error_data.reset_index()
+    error_histogram = error_histogram.drop(columns=['source', 'filename', 'line_number', 'log_level', 'message'])
+    error_histogram['date'] = error_histogram.timestamp.apply(lambda x: x.date())
+    error_histogram = error_histogram.drop(columns=['timestamp'])
+    error_histogram = error_histogram.groupby(['device', 'date']).count()
+    error_histogram = error_histogram.rename(columns=dict(level_1="error_count"))
+    error_histogram = error_histogram.reset_index()
+    error_histogram = error_histogram.set_index(['device', 'date'])
+
+    # compute string of the end of the day for url creation
+    def end_of_day(row):
+        date = row.name[1]
+        return (date + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
+
+    error_histogram['end_of_day'] = error_histogram.apply(end_of_day, axis=1)
+
+    # compute time range
+    dates = error_histogram.reset_index().date
+    x_range = min(dates), max(dates)
+
+    # combute range of y_axis
+    y_range = 0, max(error_histogram.error_count)
+
+    scripts = []
+    data_dict = dict()
+
+    for device in error_histogram.index.levels[0]:
+        histogram_data = error_histogram.loc[device].reset_index()
+        fig = plot_errors(histogram_data, x_range=x_range, y_range=y_range, device=device)
+        script, div = components(fig)
+        try:
+            total_number_of_errors = len(error_data.loc[device])
+        except KeyError:
+            total_number_of_errors = 0
+        data_dict[device] = dict(total_number_of_errors=total_number_of_errors,
+                                 plot=div)
+        scripts.append(script)
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    return render_template("error_statistics.html",
+                           route='/system/errors',
+                           data=data_dict,
+                           scripts=scripts,
+                           js_resources=js_resources,
+                           css_resources=css_resources)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1181,12 +1246,12 @@ def crashes():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def _logs(device_id, timestamp, log_level="TRACE", before=2, after=2):
+def _logs(device_id, timestamp, log_level="TRACE", before=2, after=2, page=None):
     restart_time = utils.parse_date(timestamp)
     start_date = restart_time - timedelta(minutes=before)
     end_date = restart_time + timedelta(minutes=after)
 
-    logs = Errors().logs(device_id=device_id, log_level=log_level, since=start_date, until=end_date)
+    logs = Errors().logs(device_id=device_id, log_level=log_level, since=start_date, until=end_date, page=page)
     if not logs.empty:
         log_text = format_logs(logs)
     else:
@@ -1196,14 +1261,20 @@ def _logs(device_id, timestamp, log_level="TRACE", before=2, after=2):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/logs/<device>')
-@app.route('/logs/<device>/<int:duration>')
-@app.route('/logs/<device>/<int:duration>/<timestamp>')
-@app.route('/logs/<device>/<int:duration>/<timestamp>/<log_level>')
+@app.route('/logs/<device>', methods=['GET'])
+@app.route('/logs/<device>/<int:duration>', methods=['GET'])
+@app.route('/logs/<device>/<int:duration>/<timestamp>', methods=['GET'])
+@app.route('/logs/<device>/<int:duration>/<timestamp>/<log_level>', methods=['GET'])
+@app.route('/logs/<device>/<int:duration>/<timestamp>/<log_level>', methods=['GET'])
 def show_logs(device, duration = 5, timestamp = None, log_level="TRACE"):
+    try:
+        page = int(request.args.get('page', default = 1, type = int))
+    except ValueError:
+        print(f"get value page={page} is not an integer")
+        page = 1
     if not timestamp:
         timestamp = datetime.now()
-    log_text = _logs(device, timestamp, log_level, before=duration-2, after=2)
+    log_text = _logs(device, timestamp, log_level, before=duration-2, after=2, page=page)
     devices = Dashboard().devices()
     return render_template("device_log.html", devices=devices, log_text=log_text, device=device)
 
