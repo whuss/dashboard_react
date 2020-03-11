@@ -11,8 +11,8 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between toolbar">
         <div>
-            <span class="label">Device:</span>
-            <div class="btn-group">
+            <div class="btn-group" style="align-items: center;">
+                <span class="label">Device:</span>
                 <button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown">
                     {{request.view_args.device}}
                 </button>
@@ -22,8 +22,8 @@
                     {% endfor %}
                 </div>
             </div>
-            <span class="label">Logging&nbsp;level:</span>
-            <div class="btn-group">
+            <div class="btn-group" style="align-items: center;">
+                <span class="label">Logging&nbsp;level:</span>
                 <button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown">
                     <span class="{{request.view_args.log_level|or_else("TRACE")}}">{{request.view_args.log_level|or_else("TRACE")}}</span>
                 </button>
@@ -37,11 +37,13 @@
                 </div>
             </div>
 
+            <div class="btn-group" style="align-items: center;">
             <span class="label">At&nbsp;time:</span>
             <input type="text" name="datetime" onkeydown="change_date(this)" value="{{request.view_args.timestamp|datetime}}">
+            </div>
 
-            <span class="label">Duration:</span>
-            <div class="btn-group">
+            <div class="btn-group" style="align-items: center;">
+                <span class="label">Duration:</span>
                 <button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown">
                 {{request.view_args.duration|or_else(5)|format_duration}}
                 </button>
@@ -65,8 +67,10 @@
 <div id="terminal">
     <pre>{{log_text|safe}}</pre>
 </div>
-<div class="container-fluid toolbar">
-    {% include 'includes/_pagination.html' %}
+<div class="container-fluid  border-top fixed-bottom">
+    <div class="d-flex justify-content-end toolbar">
+        {% include 'includes/_pagination.html' %}
+    </div>
 </div>
 {% endblock %}
 

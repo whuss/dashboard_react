@@ -60,12 +60,13 @@
 .toolbar {
     padding-top:4px;
     padding-bottom:4px;
-    margin:3px;
+    margin:0px;
     background-color:white;
 }
 
-.toolbar .label {
+.label {
     padding-left:1em;
+    padding-right:10px;
 }
 
 #content table tbody tr a {
