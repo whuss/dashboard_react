@@ -1097,12 +1097,12 @@ def crash_for_device(device):
     device_data = data.reset_index()
 
     device_data['formatted_message'] = device_data.apply(format_logentry, axis=1)
-    device_data['duration'] = 5
 
     class CrashTable(Table):
         classes = ["error-table"]
         timestamp = LinkCol('Time', 'show_logs',
-                            url_kwargs=dict(device='device', timestamp='timestamp', duration='duration'),
+                            url_kwargs=dict(device='device', timestamp='timestamp'),
+                            url_kwargs_extra=dict(duration=5, log_level='TRACE'),
                             attr='timestamp')
         formatted_message = PreCol('Error message')
 
@@ -1285,12 +1285,12 @@ def version_messages():
     device_id = request.args.get('id', default = "", type = str)
     errors = Errors()
     data = errors.version(device_id=device_id)
-    data['duration'] = 5
 
     class VersionTable(Table):
         classes = ["error-table"]
         timestamp = LinkCol('Time', 'show_logs',
-                            url_kwargs=dict(device='device', timestamp='timestamp', duration='duration'),
+                            url_kwargs=dict(device='device', timestamp='timestamp'),
+                            url_kwargs_extra=dict(log_level='TRACE', duration=5),
                             attr='timestamp')
         ip = Col('IP Address')
         commit = Col('Commit')
