@@ -38,8 +38,13 @@
             </div>
 
             <div class="btn-group" style="align-items: center;">
-            <span class="label">At&nbsp;time:</span>
-            <input type="text" name="datetime" onkeydown="change_date(this)" value="{{request.view_args.timestamp|datetime}}">
+                <span class="label">At&nbsp;time:</span>
+                <div class="input-group">
+                    <input class="form-control" type="text" name="datetime" onkeydown="change_date(this)" value="{{request.view_args.timestamp|datetime}}">
+                    <div class="input-group-append">
+                        <div class="input-group-text" id="btnGroupAddon2"><i class="fa fa-calendar" aria-hidden="true"></i></div>
+                    </div>
+                </div>
             </div>
 
             <div class="btn-group" style="align-items: center;">

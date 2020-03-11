@@ -43,6 +43,19 @@
         <!-- Bootstrap -->
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
         <!-- Optional JavaScript -->
+        <script>
+            // Open/close navbar dropdown menus on hover
+            $('ul.navbar-nav li.dropdown').hover(
+                function()
+                {
+                    $(this).find('.dropdown-menu').stop(true, true).delay(0).fadeIn(50);
+                },
+                function()
+                {
+                    $(this).find('.dropdown-menu').stop(true, true).delay(50).fadeOut(0);
+                }
+            );
+        </script>
         {% block script %}
         {% endblock %}
     </body>
