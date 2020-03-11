@@ -676,9 +676,11 @@ class Errors(object):
 
         if page is not None:
             print(f"Pageinate: page={page}")
-            data = query.paginate(page, MAX_LOG_ITEMS_PER_PAGE, False).items
+            pagination = query.paginate(page, MAX_LOG_ITEMS_PER_PAGE, False)
+            data = pagination.items
         else:
             data = query.all()
+            pagination = None
 
         data = pd.DataFrame(data)
 
@@ -687,7 +689,7 @@ class Errors(object):
 
         if not data.empty:
             data = data.set_index(['device', data.index])
-        return data
+        return data, pagination
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -1251,12 +1253,12 @@ def _logs(device_id, timestamp, log_level="TRACE", before=2, after=2, page=None)
     start_date = restart_time - timedelta(minutes=before)
     end_date = restart_time + timedelta(minutes=after)
 
-    logs = Errors().logs(device_id=device_id, log_level=log_level, since=start_date, until=end_date, page=page)
+    logs, pagination = Errors().logs(device_id=device_id, log_level=log_level, since=start_date, until=end_date, page=page)
     if not logs.empty:
-        log_text = format_logs(logs)
+        log_text = format_logs(logs, device=device_id)
     else:
         log_text = "No logs available."
-    return log_text
+    return log_text, pagination
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1273,9 +1275,9 @@ def show_logs(device, duration=5, timestamp=None, log_level="TRACE"):
         page = 1
     if not timestamp:
         timestamp = datetime.now()
-    log_text = _logs(device, timestamp, log_level, before=duration-2, after=2, page=page)
+    log_text, pagination = _logs(device, timestamp, log_level, before=duration, after=2, page=page)
     devices = Dashboard().devices()
-    return render_template("device_log.html", devices=devices, log_text=log_text, device=device)
+    return render_template("device_log.html", devices=devices, log_text=log_text, device=device, pagination=pagination)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1312,7 +1314,7 @@ def version_messages():
 
 trace_re = re.compile("(.*) \[(.+):(\d+)\]")
 
-def format_logentry(lp):
+def format_logentry(lp, device=None):
     # This is obsolete, and only needed for old log entries
     # Trace log entries get correctly formatted since commit a30b3b5e2afc1b5a7c5790e0f53596cf8c9f80d4
     if lp.log_level == "TRACE":
@@ -1331,8 +1333,14 @@ def format_logentry(lp):
     else:
         log_level_class = lp.log_level
 
+    if device:
+        log_url = url_for('show_logs', device=device, duration=1, log_level="TRACE", timestamp=time)
+        time_format = f'<a href="{log_url}">{time}</a>'
+    else:
+        time_format = time
+
     header_no_format = f'({time}) {lp.log_level:<8} {location:>25} '
-    header = f'({time}) <span class="{log_level_class}">{lp.log_level:<8}</span> ' \
+    header = f'({time_format}) <span class="{log_level_class}">{lp.log_level:<8}</span> ' \
                 f'<span class="log-filename" data-toggle="tooltip" title="{lp.filename}:{lp.line_number}" >' \
                 f'{location:>25}</span> '
     identation = len(header_no_format) * " "
@@ -1348,10 +1356,10 @@ def format_logentry(lp):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def format_logs(logs):
+def format_logs(logs, device=None):
     log_text = ""
     for index, lp in logs.iterrows():
-        log_text += format_logentry(lp)
+        log_text += format_logentry(lp, device)
 
     return log_text
 
@@ -1379,9 +1387,9 @@ def _monitor_device():
         num_lines = 50000
 
     start_date = datetime.now() - timedelta(days=1)
-    logs = Errors().logs(device_id=device, since=start_date, num_lines=num_lines, log_level=log_level)
+    logs, pagination = Errors().logs(device_id=device, since=start_date, num_lines=num_lines, log_level=log_level)
 
-    log_text = format_logs(logs)
+    log_text = format_logs(logs, device=device)
 
     if limit:
         title = f"Start monitoring device {device} ..."
