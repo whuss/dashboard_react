@@ -642,13 +642,15 @@ class Errors(object):
     def error_heatmap(self):
         from sqlalchemy import Date
         lp = LoggerPackage
-        query = db.session.query(lp.device,
-                                 lp.filename,
-                                 lp.line_number,
-                                 lp.timestamp.cast(Date).label('date'),
-                                 db.func.count(lp.timestamp).label('error_count')) \
+        query = db.session \
+                  .query(lp.device,
+                         lp.filename,
+                         lp.line_number,
+                         lp.timestamp.cast(Date).label('date'),
+                         db.func.count(lp.timestamp).label('error_count')) \
                   .filter(lp.log_level == "ERROR") \
                   .filter(lp.device != "PTL_DEFAULT") \
+                  .group_by('date') \
                   .group_by(lp.filename) \
                   .group_by(lp.line_number) \
                   .group_by(lp.device)
@@ -656,7 +658,6 @@ class Errors(object):
         data = pd.DataFrame(query.all())
         data['end_of_day'] = data.date.apply(lambda x: x + timedelta(days=1))
         data = data.set_index(['device', 'date'])
-        data = data.sort_index()
         return data
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -1176,15 +1177,20 @@ def crash_for_device(device):
 
 @app.route('/system/errors')
 def error_statistics():
-    error_histogram = Errors().error_histogram()
+    error_heatmap = Errors().error_heatmap()
+    #error_histogram = Errors().error_histogram()
 
-    def _format_date(date):
+    error_histogram = error_heatmap.groupby(['device', 'date']).error_count.sum().reset_index()
+
+    def _format_next_day(date):
         return (date + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
-    error_histogram.end_of_day = error_histogram.end_of_day.apply(_format_date)
+    error_histogram.end_of_day = error_histogram.date.apply(_format_next_day)
 
     # compute time range
-    dates = error_histogram.reset_index().date
+    dates = error_histogram.date
     x_range = min(dates), max(dates)
+
+    error_histogram = error_histogram.set_index(['device', 'date'])
 
     # combute range of y_axis
     y_range = 1, max(error_histogram.error_count)
