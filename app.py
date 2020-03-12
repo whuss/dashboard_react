@@ -619,6 +619,26 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def error_histogram(self):
+        from sqlalchemy import Date
+        lp = LoggerPackage
+        lp = LoggerPackage
+        query = db.session \
+                  .query(lp.device,
+                         lp.timestamp.cast(Date).label('date'),
+                         db.func.count(lp.timestamp).label('error_count')) \
+                  .filter(lp.log_level == "ERROR") \
+                  .filter(lp.device != "PTL_DEFAULT") \
+                  .group_by('date') \
+                  .group_by(lp.device)
+
+        data=pd.DataFrame(query.all())
+        data['end_of_day'] = data.date.apply(lambda x: x + timedelta(days=1))
+        data = data.set_index(['device', 'date'])
+        return data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def error_heatmap(self):
         from sqlalchemy import Date
         lp = LoggerPackage
@@ -626,7 +646,7 @@ class Errors(object):
                                  lp.filename,
                                  lp.line_number,
                                  lp.timestamp.cast(Date).label('date'),
-                                 db.func.count(lp.timestamp).label('count')) \
+                                 db.func.count(lp.timestamp).label('error_count')) \
                   .filter(lp.log_level == "ERROR") \
                   .filter(lp.device != "PTL_DEFAULT") \
                   .group_by(lp.filename) \
@@ -634,6 +654,7 @@ class Errors(object):
                   .group_by(lp.device)
 
         data = pd.DataFrame(query.all())
+        data['end_of_day'] = data.date.apply(lambda x: x + timedelta(days=1))
         data = data.set_index(['device', 'date'])
         data = data.sort_index()
         return data
@@ -1155,23 +1176,11 @@ def crash_for_device(device):
 
 @app.route('/system/errors')
 def error_statistics():
-    error_data = Errors().errors()
-    error_histogram = error_data.reset_index()
-    error_histogram = error_histogram.drop(columns=['source', 'filename', 'line_number', 'log_level', 'message'])
-    error_histogram['date'] = error_histogram.timestamp.apply(lambda x: x.date())
-    error_histogram = error_histogram.drop(columns=['timestamp'])
-    error_histogram = error_histogram.groupby(['device', 'date']).count()
-    error_histogram = error_histogram.rename(columns=dict(level_1="error_count"))
-    error_histogram = error_histogram.reset_index()
-    error_histogram = error_histogram.set_index(['device', 'date'])
-    error_histogram = error_histogram.dropna()
+    error_histogram = Errors().error_histogram()
 
-    # compute string of the end of the day for url creation
-    def end_of_day(row):
-        date = row.name[1]
+    def _format_date(date):
         return (date + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
-
-    #error_histogram['end_of_day'] = error_histogram.apply(end_of_day, axis=1)
+    error_histogram.end_of_day = error_histogram.end_of_day.apply(_format_date)
 
     # compute time range
     dates = error_histogram.reset_index().date
@@ -1185,11 +1194,10 @@ def error_statistics():
 
     for device in error_histogram.index.levels[0]:
         histogram_data = error_histogram.loc[device].reset_index()
-        histogram_data['end_of_day'] = histogram_data.apply(lambda row: (row['date'] + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S'), axis=1)
         fig = plot_errors(histogram_data, x_range=x_range, y_range=y_range, device=device)
         script, div = components(fig)
         try:
-            total_number_of_errors = len(error_data.loc[device])
+            total_number_of_errors = histogram_data.error_count.sum()
         except KeyError:
             total_number_of_errors = 0
         data_dict[device] = dict(total_number_of_errors=total_number_of_errors,
@@ -1217,15 +1225,14 @@ def error_heatmap():
 
     class HeatmapTable(Table):
         classes = ["error-table"]
-        date = Col('Date')
         date = LinkCol('Date', 'show_logs',
                        url_kwargs=dict(device='device',
-                                       timestamp='next_day',
+                                       timestamp='end_of_day',
                                        filename='filename',
                                        line_number='line_number'),
                        url_kwargs_extra=dict(log_level='ERROR', duration=60*24), attr="date")
         location = Col("Location")
-        count = Col("Error count")
+        error_count = Col("Error count")
 
     data_dict = dict()
 
@@ -1233,7 +1240,6 @@ def error_heatmap():
         device_data = data.loc[device] \
                           .reset_index() \
                           .sort_values(by='date', ascending=False)
-        device_data['next_day'] = device_data.apply(lambda row: row['date'] + timedelta(days=1), axis=1)
         device_data['device'] = device
         data_dict[device] = HeatmapTable(device_data.to_dict(orient='records'))
 
