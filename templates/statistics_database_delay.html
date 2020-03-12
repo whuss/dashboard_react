@@ -22,13 +22,15 @@
     <thead class="thead-dark">
     <tr>
         <th>Device ID</th>
+        <th>Number of packages</th>
         <th>Package Delay</th>
     </tr>
     </thead>
   {% for device, figure in figures.items() %}
   <tr>
     <th scope="row"> {{device}}</th>
-    <td><div align="center">{{figure|safe}}</div></td>
+    <td>{{ figure.total_packages }}</td>
+    <td><div align="center">{{figure.div|safe}}</div></td>
   </tr>
   {% endfor %}
   </table>

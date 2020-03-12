@@ -603,7 +603,8 @@ class Errors(object):
 
     def errors(self, device=None):
         lp = LoggerPackage
-        query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename, lp.line_number, lp.log_level, lp.message) \
+        query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename,
+                                 lp.line_number, lp.log_level, lp.message) \
                           .filter(lp.log_level == "ERROR")
 
         if device:
@@ -613,7 +614,28 @@ class Errors(object):
 
         data = pd.DataFrame(query.all())
 
-        data = data.set_index(['device', data.index])
+        data = data.set_index(['device'])
+        return data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def error_heatmap(self):
+        from sqlalchemy import Date
+        lp = LoggerPackage
+        query = db.session.query(lp.device,
+                                 lp.filename,
+                                 lp.line_number,
+                                 lp.timestamp.cast(Date).label('date'),
+                                 db.func.count(lp.timestamp).label('count')) \
+                  .filter(lp.log_level == "ERROR") \
+                  .filter(lp.device != "PTL_DEFAULT") \
+                  .group_by(lp.filename) \
+                  .group_by(lp.line_number) \
+                  .group_by(lp.device)
+
+        data = pd.DataFrame(query.all())
+        data = data.set_index(['device', 'date'])
+        data = data.sort_index()
         return data
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -633,7 +655,17 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def logs(self, device_id=None, since=None, until=None, num_lines=None, log_level="TRACE", page=None):
+    def logs(self, device_id=None, since=None, until=None, num_lines=None, log_level="TRACE", page=None,
+             filename=None, line_number=None):
+
+        print(f"device_id={device_id}")
+        print(f"since={since}")
+        print(f"until={until}")
+        print(f"num_lines={num_lines}")
+        print(f"log_level={log_level}")
+        print(f"page={page}")
+        print(f"filename={filename}")
+        print(f"line_number={line_number}")
         MAX_LOG_ITEMS_PER_PAGE=50
         lp = LoggerPackage
 
@@ -669,6 +701,12 @@ class Errors(object):
                 filter = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE"]
 
             query = query.filter(lp.log_level.in_(filter))
+
+        if filename:
+            query = query.filter(lp.filename == filename)
+
+        if line_number:
+            query = query.filter(lp.line_number == line_number)
 
         if num_lines:
             query = query.order_by(lp.timestamp.desc()) \
@@ -1126,13 +1164,14 @@ def error_statistics():
     error_histogram = error_histogram.rename(columns=dict(level_1="error_count"))
     error_histogram = error_histogram.reset_index()
     error_histogram = error_histogram.set_index(['device', 'date'])
+    error_histogram = error_histogram.dropna()
 
     # compute string of the end of the day for url creation
     def end_of_day(row):
         date = row.name[1]
         return (date + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
 
-    error_histogram['end_of_day'] = error_histogram.apply(end_of_day, axis=1)
+    #error_histogram['end_of_day'] = error_histogram.apply(end_of_day, axis=1)
 
     # compute time range
     dates = error_histogram.reset_index().date
@@ -1146,6 +1185,7 @@ def error_statistics():
 
     for device in error_histogram.index.levels[0]:
         histogram_data = error_histogram.loc[device].reset_index()
+        histogram_data['end_of_day'] = histogram_data.apply(lambda row: (row['date'] + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S'), axis=1)
         fig = plot_errors(histogram_data, x_range=x_range, y_range=y_range, device=device)
         script, div = components(fig)
         try:
@@ -1167,9 +1207,39 @@ def error_statistics():
                            js_resources=js_resources,
                            css_resources=css_resources)
 
-
 # ----------------------------------------------------------------------------------------------------------------------
 
+
+@app.route('/system/error_heatmap')
+def error_heatmap():
+    data = Errors().error_heatmap()
+    data['location'] = data.apply(lambda row: f"{os.path.basename(row['filename'])}:{row['line_number']}", axis=1)
+
+    class HeatmapTable(Table):
+        classes = ["error-table"]
+        date = Col('Date')
+        date = LinkCol('Date', 'show_logs',
+                       url_kwargs=dict(device='device',
+                                       timestamp='next_day',
+                                       filename='filename',
+                                       line_number='line_number'),
+                       url_kwargs_extra=dict(log_level='ERROR', duration=60*24), attr="date")
+        location = Col("Location")
+        count = Col("Error count")
+
+    data_dict = dict()
+
+    for device in data.index.levels[0]:
+        device_data = data.loc[device] \
+                          .reset_index() \
+                          .sort_values(by='date', ascending=False)
+        device_data['next_day'] = device_data.apply(lambda row: row['date'] + timedelta(days=1), axis=1)
+        device_data['device'] = device
+        data_dict[device] = HeatmapTable(device_data.to_dict(orient='records'))
+
+    return render_template("errors.html", route='/system/errors', data=data_dict, messages="Errors by file location")
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 @app.route('/system/crashes')
 def crashes():
@@ -1248,12 +1318,13 @@ def crashes():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def _logs(device_id, timestamp, log_level="TRACE", before=2, after=2, page=None):
+def _logs(device_id, timestamp, log_level="TRACE", before=2, after=2, page=None, filename=None, line_number=None):
     restart_time = utils.parse_date(timestamp)
     start_date = restart_time - timedelta(minutes=before)
     end_date = restart_time + timedelta(minutes=after)
 
-    logs, pagination = Errors().logs(device_id=device_id, log_level=log_level, since=start_date, until=end_date, page=page)
+    logs, pagination = Errors().logs(device_id=device_id, log_level=log_level, since=start_date, until=end_date,
+                                     page=page, filename=filename, line_number=line_number)
     if not logs.empty:
         log_text = format_logs(logs, device=device_id)
     else:
@@ -1273,9 +1344,14 @@ def show_logs(device, duration=5, timestamp=None, log_level="TRACE"):
     except ValueError:
         print(f"get value page={page} is not an integer")
         page = 1
+
+    filename = request.args.get('filename', default=None)
+    line_number = request.args.get('line_number', type=int, default=None)
+
     if not timestamp:
         timestamp = datetime.now()
-    log_text, pagination = _logs(device, timestamp, log_level, before=duration, after=2, page=page)
+    log_text, pagination = _logs(device, timestamp, log_level, before=duration, after=2, page=page,
+                                 filename=filename, line_number=line_number)
     devices = Dashboard().devices()
     return render_template("device_log.html", devices=devices, log_text=log_text, device=device, pagination=pagination)
 
@@ -1513,12 +1589,14 @@ def statistics_database_delay():
     for device in data.index.levels[0]:
         device_data = data.loc[device].delay.dropna()
 
+        total_packages = device_data.count()
+
         fig = plot_duration_histogram(device_data, time_scale="s",
                 x_axis_label="Package delay", y_axis_label="Amount",
                 plot_width=600, plot_height=400
             )
         script, div = components(fig)
-        figures[device] = div
+        figures[device] = dict(div=div, total_packages=total_packages)
         scripts.append(script)
 
     # grab the static resources
