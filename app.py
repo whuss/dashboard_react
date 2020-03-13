@@ -627,7 +627,7 @@ class Errors(object):
                   .query(lp.device,
                          lp.timestamp.cast(Date).label('date'),
                          db.func.count(lp.timestamp).label('error_count')) \
-                  .filter(lp.log_level == "ERROR") \
+                  .filter(lp.log_level.in_(["ERROR", "CRITICAL"])) \
                   .filter(lp.device != "PTL_DEFAULT") \
                   .group_by('date') \
                   .group_by(lp.device)
@@ -648,7 +648,7 @@ class Errors(object):
                          lp.line_number,
                          lp.timestamp.cast(Date).label('date'),
                          db.func.count(lp.timestamp).label('error_count')) \
-                  .filter(lp.log_level == "ERROR") \
+                  .filter(lp.log_level.in_(["ERROR", "CRITICAL"])) \
                   .filter(lp.device != "PTL_DEFAULT") \
                   .group_by('date') \
                   .group_by(lp.filename) \
