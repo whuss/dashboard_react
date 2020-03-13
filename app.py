@@ -22,7 +22,7 @@ import humanfriendly
 
 from plots import plot_histogram, plot_duration_histogram, plot_time_series
 from plots import plot_on_off_cycles, plot_lost_signal, plot_crashes, plot_errors
-from plots import plot_database_size
+from plots import plot_database_size, plot_error_heatmap, color_palette
 
 import utils
 
@@ -1178,13 +1178,11 @@ def crash_for_device(device):
 @app.route('/system/errors')
 def error_statistics():
     error_heatmap = Errors().error_heatmap()
-    #error_histogram = Errors().error_histogram()
-
     error_histogram = error_heatmap.groupby(['device', 'date']).error_count.sum().reset_index()
 
     def _format_next_day(date):
         return (date + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
-    error_histogram.end_of_day = error_histogram.date.apply(_format_next_day)
+    error_histogram['end_of_day'] = error_histogram.date.apply(_format_next_day)
 
     # compute time range
     dates = error_histogram.date
@@ -1195,13 +1193,33 @@ def error_statistics():
     # combute range of y_axis
     y_range = 1, max(error_histogram.error_count)
 
+    error_heatmap['location'] = error_heatmap.apply(lambda row: f"{os.path.basename(row['filename'])}:{row['line_number']}", axis=1)
+    # all errors locations in the dataset
+    locations = pd.DataFrame(error_heatmap.location.unique(), columns=['location'])
+    # assigne a unique color for each error location
+    locations['colors'] = color_palette(len(locations.location))
+    locations
+
+    eh = error_heatmap.reset_index()
+    errors_by_day = eh.drop(columns=['filename', 'line_number']) \
+                      .groupby(['device', 'date']) \
+                      .sum() \
+                      .rename(columns=dict(error_count='errors_by_day'))
+    eh = eh.join(errors_by_day, on=['device', 'date'])
+    eh['error_count_normalized'] = eh.error_count / eh.errors_by_day
+    eh = eh.merge(locations, on = ['location'])
+    eh['date_label'] = eh.date
+    eh = eh.set_index(['device', 'date', eh.index]).sort_index()
+    error_heatmap = eh
+
     scripts = []
     data_dict = dict()
 
     for device in error_histogram.index.levels[0]:
         histogram_data = error_histogram.loc[device].reset_index()
         fig = plot_errors(histogram_data, x_range=x_range, y_range=y_range, device=device)
-        script, div = components(fig)
+        fig_heatmap = plot_error_heatmap(error_heatmap.loc[device], x_range=x_range, device=device)
+        script, div = components(column(fig, fig_heatmap))
         try:
             total_number_of_errors = histogram_data.error_count.sum()
         except KeyError:

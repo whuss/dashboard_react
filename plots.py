@@ -1,14 +1,29 @@
 import pandas as pd
 import numpy as np
+import itertools
 from datetime import timedelta
 from bokeh.core.enums import Dimensions, StepMode
-from bokeh.transform import dodge
+from bokeh.transform import dodge, cumsum
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, OpenURL, TapTool
 from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool, PrintfTickFormatter
 from bokeh.models.formatters import NumeralTickFormatter
+from bokeh import palettes, layouts
 
 from flask import url_for
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def color_palette(size):
+    # create palette of 52 unique colors
+    palette_generator = itertools.cycle(palettes.Category20[20] +
+                                        palettes.Set3[12] +
+                                        palettes.Category20b[20])
+    # if more colors are needed cycle through the palette
+    c = [color for color, _ in zip(palette_generator, range(size))]
+    return c
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -333,8 +348,7 @@ def plot_errors(data, device="PTL_DEFAULT", **kwargs):
 
     data_source = ColumnDataSource(data)
 
-    vbar_width = timedelta(days=1) / 2.5
-    vbar_shift = vbar_width.total_seconds() * 1000
+    vbar_width = timedelta(days=1) / 2
 
     fig = figure(x_axis_type="datetime", x_range=x_range,
                  y_axis_type="log", y_range=y_range,
@@ -358,15 +372,56 @@ def plot_errors(data, device="PTL_DEFAULT", **kwargs):
              top='error_count',
              color='#c61803',
              source=data_source,
-             name="errors",
-             legend_label="errors")
-    fig.legend.location = "top_left"
+             name="errors")
 
     url = url_for("show_logs", device=device, timestamp="TIMESTAMP", duration=24*60, log_level="ERROR")
     url = url.replace("TIMESTAMP", "@end_of_day")
     taptool = fig.select(type=TapTool)[0]
     taptool.callback = OpenURL(url=url, same_tab=False)
     return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_error_heatmap(data, device="PTL_DEFAULT", **kwargs):
+    if 'x_range' in kwargs:
+        x_range = kwargs['x_range']
+        x_range = x_range[0] - timedelta(days=1), x_range[1] + timedelta(days=1)
+    else:
+        dates = list(data.date)
+        x_range = (min(dates) - timedelta(days=1), max(dates) + timedelta(days=1))
+
+    fig = figure(plot_height=200, plot_width=800,
+                 title=f"Error heatmap for {device}",
+                 x_axis_type='datetime',
+                 x_range=x_range,
+                 y_range=(0, 1),
+                 tools="tap")
+
+    error_hover_tool = HoverTool(tooltips=[('date', '@date_label{%F}'),
+                                           ('location', '@location'),
+                                           ('errors', '@error_count{%d}')],
+                                 formatters={'date_label': 'datetime',
+                                             'location': 'printf',
+                                             'error_count': 'printf'})
+
+    fig.add_tools(error_hover_tool)
+
+    for date in data.index.get_level_values(0).unique():
+        data_source = ColumnDataSource(data.loc[date])
+        fig.vbar(bottom=cumsum('error_count_normalized', include_zero=True),
+                 top=cumsum('error_count_normalized'),
+                 x=date, width=timedelta(days=1)/2, source=data_source, fill_color='colors')
+
+    from bokeh.models import NumeralTickFormatter
+
+    fig.output_backend = "svg"
+    fig.toolbar.logo = None
+    fig.yaxis.formatter = NumeralTickFormatter(format='0 %')
+
+    #tooltips="@location: @error_count Errors",
+    return fig
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
