@@ -1209,6 +1209,7 @@ def error_statistics():
     eh['error_count_normalized'] = eh.error_count / eh.errors_by_day
     eh = eh.merge(locations, on = ['location'])
     eh['date_label'] = eh.date
+    eh['end_of_day'] = eh.date.apply(_format_next_day)
     eh = eh.set_index(['device', 'date', eh.index]).sort_index()
     error_heatmap = eh
 

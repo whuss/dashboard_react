@@ -6,8 +6,8 @@ from bokeh.core.enums import Dimensions, StepMode
 from bokeh.transform import dodge, cumsum
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, OpenURL, TapTool
-from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool, PrintfTickFormatter
-from bokeh.models.formatters import NumeralTickFormatter
+from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
+from bokeh.models import NumeralTickFormatter, PrintfTickFormatter
 from bokeh import palettes, layouts
 
 from flask import url_for
@@ -365,6 +365,7 @@ def plot_errors(data, device="PTL_DEFAULT", **kwargs):
                                  mode='vline')
 
     fig.add_tools(error_hover_tool)
+    fig.add_tools(SaveTool())
 
     fig.vbar(x='date',
              width=vbar_width,
@@ -392,11 +393,14 @@ def plot_error_heatmap(data, device="PTL_DEFAULT", **kwargs):
         x_range = (min(dates) - timedelta(days=1), max(dates) + timedelta(days=1))
 
     fig = figure(plot_height=200, plot_width=800,
-                 title=f"Error heatmap for {device}",
+                 title=f"Error heatmap",
                  x_axis_type='datetime',
                  x_range=x_range,
                  y_range=(0, 1),
                  tools="tap")
+    fig.output_backend = "svg"
+    fig.toolbar.logo = None
+    fig.yaxis.formatter = NumeralTickFormatter(format='0 %')
 
     error_hover_tool = HoverTool(tooltips=[('date', '@date_label{%F}'),
                                            ('location', '@location'),
@@ -406,6 +410,7 @@ def plot_error_heatmap(data, device="PTL_DEFAULT", **kwargs):
                                              'error_count': 'printf'})
 
     fig.add_tools(error_hover_tool)
+    fig.add_tools(SaveTool())
 
     for date in data.index.get_level_values(0).unique():
         data_source = ColumnDataSource(data.loc[date])
@@ -413,11 +418,14 @@ def plot_error_heatmap(data, device="PTL_DEFAULT", **kwargs):
                  top=cumsum('error_count_normalized'),
                  x=date, width=timedelta(days=1)/2, source=data_source, fill_color='colors')
 
-    from bokeh.models import NumeralTickFormatter
-
-    fig.output_backend = "svg"
-    fig.toolbar.logo = None
-    fig.yaxis.formatter = NumeralTickFormatter(format='0 %')
+    url = url_for("show_logs", device=device, timestamp="TIMESTAMP", duration=24*60, log_level="ERROR",
+                  filename='FILENAME',
+                  line_number='LINENUMBER')
+    url = url.replace("TIMESTAMP", "@end_of_day") \
+             .replace("FILENAME", "@filename") \
+             .replace("LINENUMBER", "@line_number")
+    taptool = fig.select(type=TapTool)[0]
+    taptool.callback = OpenURL(url=url, same_tab=False)
 
     #tooltips="@location: @error_count Errors",
     return fig
