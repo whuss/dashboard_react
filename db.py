@@ -951,6 +951,60 @@ class DatabaseDelay(object):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class Connectivity(object):
+    DEAD_MAN_SWITCH_INTERVAL = timedelta(minutes=1)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @staticmethod
+    def connection_times(since: datetime, until: datetime, device=None):
+        colors = ['#00cc00', '#ff0000']
+
+        dmp = DeadManPackage
+        query = db.session.query(dmp.device, dmp.timestamp) \
+                  .filter(dmp.timestamp >= since) \
+                  .filter(dmp.timestamp <= until) \
+                  .filter(dmp.device != "PTL_DEFAULT")
+
+        if device:
+            query = query.filter(dmp.device == device)
+
+        data = pd.DataFrame(query.all())
+        # compute the time difference between two consecutive rows
+        data['delay'] = data.groupby('device').timestamp.diff()
+        # The first row for each device has no 'delay' value.
+        # We assume this is the start of a connected interval.
+        # To do this we set the delay to be bigger than the threshold
+        # for data loss
+        data = data.fillna(2 * Connectivity.DEAD_MAN_SWITCH_INTERVAL)
+        # A data loss happened, if the delay is bigger than a threshold
+        # If the row 'connected' contains 1 then no data loss happened at this time
+        data['data_loss'] = (data.delay <= 1.5 * Connectivity.DEAD_MAN_SWITCH_INTERVAL).astype(int)
+        # compute the difference of consecutive data_loss values to see where
+        # the connection status changed
+        data['keep_row'] = data.groupby('device').data_loss.diff(periods=-1)
+        # We merge intervals of consecutive 'data loss' or 'connection' intervals by
+        # keeping only rows where the value of 'keep_rows' is not zero
+        data = data[data.keep_row != 0.0]
+        # the timestamp row now marks the beginning of an interval where
+        # the connection status did not change.
+        data = data.rename(columns=dict(timestamp='begin'))
+        # compute the duration of each interval
+        data['duration'] = data.groupby('device').begin.diff(periods=-1).abs()
+        data['end'] = data.begin + data.duration
+        data['connected'] = 1 - data.data_loss
+        data = data.drop(columns=['delay', 'keep_row', 'data_loss'])
+        data = data.sort_index()
+        data['color'] = colors[0]
+        data.loc[data.connected == 0, 'color'] = colors[1]
+        data = data.dropna()
+        data = data.set_index(['device', data.index]).sort_index()
+
+        return data
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 def _timeseries(data, sensor: str):
     expected_signal_interval = timedelta(minutes=10)
 
