@@ -994,7 +994,6 @@ class Connectivity(object):
         data['end'] = data.begin + data.duration
         data['connected'] = 1 - data.data_loss
         data = data.drop(columns=['delay', 'keep_row', 'data_loss'])
-        data = data.sort_index()
         data['color'] = colors[0]
         data.loc[data.connected == 0, 'color'] = colors[1]
         data = data.dropna()
