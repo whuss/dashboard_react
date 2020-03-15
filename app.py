@@ -614,7 +614,23 @@ class Errors(object):
             .group_by(lp.device)
 
         data = pd.DataFrame(query.all())
-        # data['end_of_day'] = data.date.apply(lambda x: x + timedelta(days=1))
+        data = data.set_index(['device', 'date'])
+        return data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def restart_histogram(self):
+        from sqlalchemy import Date
+        vp = VersionPackage
+        query = db.session \
+            .query(vp.device,
+                   vp.timestamp.cast(Date).label('date'),
+                   db.func.count(vp.timestamp).label('restart_count')) \
+            .filter(vp.device != "PTL_DEFAULT") \
+            .group_by('date') \
+            .group_by(vp.device)
+
+        data = pd.DataFrame(query.all())
         data = data.set_index(['device', 'date'])
         return data
 
@@ -1294,32 +1310,18 @@ def error_heatmap():
 @app.route('/system/crashes')
 def crashes():
     crash_histogram = Errors().crash_histogram()
-    # crash_data = Errors().crashes()
-    # crash_histogram = crash_data.reset_index()
-    # crash_histogram = crash_histogram.drop(columns=['source', 'filename', 'line_number', 'log_level', 'message'])
-    # crash_histogram['date'] = crash_histogram.timestamp.apply(lambda x: x.date())
-    # crash_histogram = crash_histogram.drop(columns=['timestamp'])
-    # crash_histogram = crash_histogram.groupby(['device', 'date']).count()
-    # crash_histogram = crash_histogram.rename(columns=dict(level_1="crash_count"))
-    # crash_histogram = crash_histogram.reset_index()
-    # crash_histogram = crash_histogram.set_index(['device', 'date'])
+    restart_histogram = Errors().restart_histogram()
 
-    version_data = Errors().version()
-    version_histogram = version_data.reset_index()
-    version_histogram = version_histogram.drop(columns=['version_timestamp', 'branch', 'commit', 'ip'])
-    version_histogram['date'] = version_histogram.timestamp.apply(lambda x: x.date())
-    version_histogram = version_histogram.drop(columns=['timestamp'])
-    version_histogram = version_histogram.groupby(['device', 'date']).count()
-    version_histogram = version_histogram.rename(columns=dict(level_1="restart_count"))
-    version_histogram = version_histogram.reset_index()
-    version_histogram = version_histogram.set_index(['device', 'date'])
-
-    combined_histogram = pd.merge(crash_histogram, version_histogram,
+    combined_histogram = pd.merge(crash_histogram, restart_histogram,
                                   left_index=True, right_index=True, how="outer") \
                            .fillna(value=0)
 
-    combined_histogram.crash_count = combined_histogram.crash_count.astype('int')
-    combined_histogram.restart_count = combined_histogram.restart_count.astype('int')
+    # compute time range
+    dates = combined_histogram.reset_index().date
+    x_range = min(dates), max(dates)
+
+    # compute range of y_axis
+    y_range = 0, max(combined_histogram.max())
 
     # compute string of the end of the day for url creation
     def end_of_day(row):
@@ -1327,13 +1329,6 @@ def crashes():
         return (date + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
 
     combined_histogram['end_of_day'] = combined_histogram.apply(end_of_day, axis=1)
-
-    # compute time range
-    dates = combined_histogram.reset_index().date
-    x_range = min(dates), max(dates)
-
-    # combute range of y_axis
-    y_range = 0, max(max(version_histogram.restart_count), max(crash_histogram.crash_count))
 
     scripts = []
     data_dict = dict()
@@ -1343,11 +1338,11 @@ def crashes():
         fig = plot_crashes(histogram_data, x_range=x_range, y_range=y_range, device=device)
         script, div = components(fig)
         try:
-            total_number_of_crashes = histogram_data.crash_count.sum()
+            total_number_of_crashes = int(histogram_data.crash_count.sum())
         except KeyError:
             total_number_of_crashes = 0
         try:
-            total_number_of_restarts = len(version_data.loc[device])
+            total_number_of_restarts = int(histogram_data.restart_count.sum())
         except KeyError:
             total_number_of_restarts = 0
         data_dict[device] = dict(total_number_of_crashes=total_number_of_crashes,
