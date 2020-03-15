@@ -61,6 +61,19 @@ db.Model.metadata.reflect(bind=db.engine)
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class DeadManPackage(db.Model):
+    __tablename__ = 'DeadManPackage'
+    __table_args__ = dict(extend_existing=True)
+
+    id = db.Column('pk_db_dead_man_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    service = db.Column('service_sn', key='service')
+    source = db.Column('ix_source_sn', key='source')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class DbSizePackage(db.Model):
     __tablename__ = 'DbSizePackage'
     __table_args__ = dict(extend_existing=True)
