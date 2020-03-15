@@ -601,6 +601,25 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def crash_histogram(self):
+        from sqlalchemy import Date
+        lp = LoggerPackage
+        query = db.session \
+            .query(lp.device,
+                   lp.timestamp.cast(Date).label('date'),
+                   db.func.count(lp.timestamp).label('crash_count')) \
+            .filter(lp.log_level.in_(["CRITICAL"])) \
+            .filter(lp.device != "PTL_DEFAULT") \
+            .group_by('date') \
+            .group_by(lp.device)
+
+        data = pd.DataFrame(query.all())
+        # data['end_of_day'] = data.date.apply(lambda x: x + timedelta(days=1))
+        data = data.set_index(['device', 'date'])
+        return data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def errors(self, device=None):
         lp = LoggerPackage
         query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename,
@@ -621,7 +640,6 @@ class Errors(object):
 
     def error_histogram(self):
         from sqlalchemy import Date
-        lp = LoggerPackage
         lp = LoggerPackage
         query = db.session \
                   .query(lp.device,
@@ -1272,17 +1290,19 @@ def error_heatmap():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 @app.route('/system/crashes')
 def crashes():
-    crash_data = Errors().crashes()
-    crash_histogram = crash_data.reset_index()
-    crash_histogram = crash_histogram.drop(columns=['source', 'filename', 'line_number', 'log_level', 'message'])
-    crash_histogram['date'] = crash_histogram.timestamp.apply(lambda x: x.date())
-    crash_histogram = crash_histogram.drop(columns=['timestamp'])
-    crash_histogram = crash_histogram.groupby(['device', 'date']).count()
-    crash_histogram = crash_histogram.rename(columns=dict(level_1="crash_count"))
-    crash_histogram = crash_histogram.reset_index()
-    crash_histogram = crash_histogram.set_index(['device', 'date'])
+    crash_histogram = Errors().crash_histogram()
+    # crash_data = Errors().crashes()
+    # crash_histogram = crash_data.reset_index()
+    # crash_histogram = crash_histogram.drop(columns=['source', 'filename', 'line_number', 'log_level', 'message'])
+    # crash_histogram['date'] = crash_histogram.timestamp.apply(lambda x: x.date())
+    # crash_histogram = crash_histogram.drop(columns=['timestamp'])
+    # crash_histogram = crash_histogram.groupby(['device', 'date']).count()
+    # crash_histogram = crash_histogram.rename(columns=dict(level_1="crash_count"))
+    # crash_histogram = crash_histogram.reset_index()
+    # crash_histogram = crash_histogram.set_index(['device', 'date'])
 
     version_data = Errors().version()
     version_histogram = version_data.reset_index()
@@ -1323,7 +1343,7 @@ def crashes():
         fig = plot_crashes(histogram_data, x_range=x_range, y_range=y_range, device=device)
         script, div = components(fig)
         try:
-            total_number_of_crashes = len(crash_data.loc[device])
+            total_number_of_crashes = histogram_data.crash_count.sum()
         except KeyError:
             total_number_of_crashes = 0
         try:
@@ -1419,7 +1439,9 @@ def version_messages():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-trace_re = re.compile("(.*) \[(.+):(\d+)\]")
+
+trace_re = re.compile(r"(.*) \[(.+):(\d+)\]")
+
 
 def format_logentry(lp, device=None):
     # This is obsolete, and only needed for old log entries
@@ -1559,7 +1581,6 @@ def statistics_mouse():
             script, div_deviation = components(fig_deviation)
             scripts.append(script)
 
-
             stats = data.describe().to_html()
             statistics_data[device] = dict(stats=stats,
                                       plot_distance=div_distance,
@@ -1581,6 +1602,7 @@ def statistics_mouse():
                            css_resources=css_resources)
 
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 def parse_date_range(request):
     start_str = request.args.get('start', default = "", type = str)
@@ -1642,6 +1664,7 @@ def statistics_database_delay():
                            css_resources=css_resources)
 
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 @app.route('/database/size')
 def database_size():
