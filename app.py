@@ -89,14 +89,14 @@ def format_datetime(value, format='medium'):
 
 @app.template_filter('str')
 def _str(input):
-        return str(input) if input else ""
+    return str(input) if input else ""
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.template_filter('or_else')
 def _or_else(input, else_input):
-        return str(input) if input else str(else_input)
+    return str(input) if input else str(else_input)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
