@@ -3,9 +3,7 @@
 {% block head %}
 {{ js_resources|indent(4)|safe }}
 {{ css_resources|indent(4)|safe }}
-{% for device, plot_script in plot_scripts.items() %}
 {{ plot_script|indent(4)|safe }}
-{% endfor %}
 {% endblock %}
 
 {% block page_title %}

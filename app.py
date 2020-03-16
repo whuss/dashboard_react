@@ -771,8 +771,8 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
     # If no sensor_key is given, use the lower case sensor name
     sensor_key = kwargs.pop("sensor_key", sensor).lower()
     start_date, end_date = time_range
-    plot_scripts = {}
-    plot_divs = {}
+    figures = []
+    devices = []
     x_range = (start_date, end_date)
     for device, data in sensor_data.items():
         if not data.empty:
@@ -781,6 +781,7 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
                                    x_range=x_range,
                                    y_axis_label=unit,
                                    mode='step')
+            x_range = fig.x_range
             if connectivity_data is not None:
                 try:
                     device_data = connectivity_data.loc[device]
@@ -788,11 +789,11 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
                     fig = column(fig, connectivity_fig)
                 except KeyError:
                     print(f"Warning: No connectivity data for device {device}.")
-            script, div = components(fig)
-        else:
-            script, div = "", ""
-        plot_scripts[device] = script
-        plot_divs[device] = div
+            figures.append(fig)
+            devices.append(device)
+
+    script, divs = components(figures)
+    plot_divs = dict(zip(devices, divs))
 
     # grab the static resources
     js_resources = INLINE.render_js()
@@ -804,7 +805,7 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
         timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
         sensor=sensor,
         unit=unit,
-        plot_scripts=plot_scripts,
+        plot_script=script,
         plot_divs=plot_divs,
         js_resources=js_resources,
         css_resources=css_resources,
@@ -899,26 +900,31 @@ def sensors_device(device):
 @app.route('/sensors/presence', methods=['GET'])
 def sensors_presence():
     start_date, end_date = parse_date_range(request)
+    x_range = start_date, end_date
     on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date, end_date).dropna()
     connectivity_data = Connectivity.connection_times(start_date, end_date)
 
-    plot_scripts = {}
-    plot_divs = {}
+    figures = []
+    devices = []
 
     # If no sensor_key is given, use the lower case sensor name
     for device in on_off_data.index.levels[0]:
         device_data = on_off_data.loc[device]
-        fig = plot_on_off_times(device_data)
-        if connectivity_data is not None:
-            try:
-                device_data = connectivity_data.loc[device]
-                connectivity_fig = plot_connection_times(device_data, x_range=fig.x_range)
-                fig = column(fig, connectivity_fig)
-            except KeyError:
-                print(f"Warning: No connectivity data for device {device}.")
-        script, div = components(fig)
-        plot_scripts[device] = script
-        plot_divs[device] = div
+        if not device_data.empty:
+            fig = plot_on_off_times(device_data, x_range=x_range)
+            x_range = fig.x_range
+            if connectivity_data is not None:
+                try:
+                    device_data = connectivity_data.loc[device]
+                    connectivity_fig = plot_connection_times(device_data, x_range=x_range)
+                    fig = column(fig, connectivity_fig)
+                except KeyError:
+                    print(f"Warning: No connectivity data for device {device}.")
+            figures.append(fig)
+            devices.append(device)
+
+    plot_script, divs = components(figures)
+    plot_divs = dict(zip(devices, divs))
 
     # grab the static resources
     js_resources = INLINE.render_js()
@@ -930,7 +936,7 @@ def sensors_presence():
         timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
         sensor="Presence",
         unit="on/off",
-        plot_scripts=plot_scripts,
+        plot_script=plot_script,
         plot_divs=plot_divs,
         js_resources=js_resources,
         css_resources=css_resources,
@@ -1039,11 +1045,15 @@ def timeseries_plot_brightness(device_data, unit: str, x_range, **kwargs):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range: Tuple[datetime, datetime], **kwargs):
+def create_timeseries_brightness(sensor_data,
+                                 sensor: str,
+                                 unit: str,
+                                 time_range: Tuple[datetime, datetime],
+                                 **kwargs):
     sensor_id_dict = {"brightness_r_h@BH1750": "RH",
-                          "brightness_r_v@BH1750": "RV",
-                          "brightness_l_h@BH1750": "LH",
-                          "brightness_l_v@BH1750": "LV"}
+                      "brightness_r_v@BH1750": "RV",
+                      "brightness_l_h@BH1750": "LH",
+                      "brightness_l_v@BH1750": "LV"}
 
     # If no sensor_key is given, use the lower case sensor name
     sensor_key = kwargs.get("sensor_key", sensor).lower()
@@ -1051,27 +1061,25 @@ def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range
     connectivity_data = kwargs.pop('connectivity_data', None)
 
     start_date, end_date = time_range
-    plot_scripts = {}
-    plot_divs = {}
+    x_range = (start_date, end_date)
+
+    figures = []
+    devices_list = []
 
     # loop over all devices
     devices = sensor_data.index.levels[0]
     for device in devices:
         device_data = sensor_data.loc[device].dropna()
-        script, div = "", ""
 
         # re-index the data set of each single device
         # so that sensor_ids only contains items that are
         # included in the data set of this particular device
         device_data = device_data.set_index(device_data.index)
         sensor_ids = device_data.index.levels[0]
-        figures = []
-        x_range = None
+        figures_device = []
         # loop over all 4 brightness sensors
         # if data for this sensor is available
         for sensor_id in sensor_ids:
-            if not x_range:
-                x_range = (start_date, end_date)
             data = device_data.loc[sensor_id]
             data = data.sort_values(by=['timestamp'])
 
@@ -1086,23 +1094,21 @@ def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range
                                    title=f"Sensor: {sensor_name}")
             x_range = fig.x_range
 
-            figures.append(fig)
+            figures_device.append(fig)
 
         if connectivity_data is not None:
             try:
                 device_data = connectivity_data.loc[device]
                 connectivity_fig = plot_connection_times(device_data, x_range=x_range)
-                figures.append(connectivity_fig)
+                figures_device.append(connectivity_fig)
             except KeyError:
                 print(f"Warning: No connectivity data for device {device}.")
 
-        plot = column(*figures)
-        _script, _div = components(plot)
-        script += _script
-        div += _div
+        figures.append(column(*figures_device))
+        devices_list.append(device)
 
-        plot_scripts[device] = script
-        plot_divs[device] = div
+    plot_script, divs = components(figures)
+    plot_divs = dict(zip(devices_list, divs))
 
     # grab the static resources
     js_resources = INLINE.render_js()
@@ -1114,7 +1120,7 @@ def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range
         timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
         sensor=sensor,
         unit=unit,
-        plot_scripts=plot_scripts,
+        plot_script=plot_script,
         plot_divs=plot_divs,
         js_resources=js_resources,
         css_resources=css_resources,
