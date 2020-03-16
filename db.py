@@ -493,7 +493,7 @@ class PresenceDetectorStatistics(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def on_off_timeseries(self, since, until):
+    def on_off_timeseries(self, since, until, device=None):
         ip = InstructionPackage
         query = db.session.query(ip.device, ip.timestamp, ip.value) \
             .filter(ip.source.contains("Lullaby")) \
@@ -502,6 +502,9 @@ class PresenceDetectorStatistics(object):
             .filter(ip.timestamp >= since) \
             .filter(ip.timestamp <= until) \
             .order_by(ip.device, ip.timestamp)
+
+        if device:
+            query = query.filter(ip.device == device)
 
         data = pd.DataFrame(query.all())
         data.value = data.value.apply(self._on_off)
@@ -690,7 +693,7 @@ class Errors(object):
         print(f"page={page}")
         print(f"filename={filename}")
         print(f"line_number={line_number}")
-        MAX_LOG_ITEMS_PER_PAGE=50
+        MAX_LOG_ITEMS_PER_PAGE = 50
         lp = LoggerPackage
 
         sq_device = db.session.query(DeviceInfo.device).subquery()

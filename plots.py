@@ -477,8 +477,10 @@ def plot_database_size(data):
 
 
 def plot_connection_times(device_data, **kwargs):
+    title = kwargs.pop('title', None)
     plot_width = kwargs.pop('plot_width', 800)
-    plot_height = kwargs.pop('plot_height', 50)
+    plot_height = kwargs.pop('plot_height', 80 if title else 50)
+
     if 'x_range' in kwargs:
         x_range = kwargs['x_range']
     else:
@@ -498,7 +500,8 @@ def plot_connection_times(device_data, **kwargs):
 
     data_source = ColumnDataSource(device_data)
 
-    fig = figure(x_axis_type="datetime",
+    fig = figure(title=title,
+                 x_axis_type="datetime",
                  x_range=x_range, y_range=(0, 1),
                  plot_height=plot_height, plot_width=plot_width)
     fig.hbar(y=0.5, left='begin', right='end', height='height', color='color', line_color=None, source=data_source)
@@ -528,6 +531,8 @@ def plot_connection_times(device_data, **kwargs):
 def plot_on_off_times(device_data, **kwargs):
     plot_width = kwargs.pop('plot_width', 800)
     plot_height = kwargs.pop('plot_height', 80)
+    title = kwargs.pop('title', None)
+
     if 'x_range' in kwargs:
         x_range = kwargs['x_range']
     else:
@@ -550,7 +555,8 @@ def plot_on_off_times(device_data, **kwargs):
 
     data_source = ColumnDataSource(device_data)
 
-    fig = figure(x_axis_type="datetime",
+    fig = figure(title=title,
+                 x_axis_type="datetime",
                  x_range=x_range, y_range=(0, 1),
                  plot_height=plot_height, plot_width=plot_width,
                  toolbar_location="above")

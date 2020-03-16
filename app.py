@@ -823,10 +823,15 @@ def sensors_device(device):
     figures = {}
     sensor = SensorData()
 
-    #sensor_data = PresenceDetectorStatistics().on_off_timeseries(start_date, end_date, device)
-    #fig = plot_time_series(sensor_data.timestamp, sensor_data.value, x_range=x_range, mode="step")
-    #x_range = fig.x_range
-    #figures['on_off'] = fig
+    connectivity_data = Connectivity.connection_times(start_date, end_date, device)
+    fig = plot_connection_times(connectivity_data, x_range=x_range, title="Internet connection")
+    x_range = fig.x_range
+    figures['connectivity'] = fig
+
+    sensor_data = PresenceDetectorStatistics().on_off_timeseries(start_date, end_date, device)
+    fig = plot_on_off_times(sensor_data, x_range=x_range, title="Light On/Off")
+    x_range = fig.x_range
+    figures['on_off'] = fig
 
     sensor_data = sensor.temperature(start_date, end_date, device)[device]
     fig = plot_time_series(sensor_data.timestamp,
