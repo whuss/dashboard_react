@@ -505,6 +505,8 @@ def plot_connection_times(device_data, **kwargs):
     # disable grid
     fig.xgrid.grid_line_color = None
     fig.ygrid.grid_line_color = None
+    # disable border
+    fig.outline_line_color = None
 
     hover_tool = HoverTool(tooltips=[('begin', '@begin{%F %H:%M:%S}'),
                                      ('end', '@end{%F %H:%M:%S}'),
@@ -513,7 +515,67 @@ def plot_connection_times(device_data, **kwargs):
                            formatters={'begin': 'datetime',
                                        'end': 'datetime',
                                        'duration_str': 'printf',
-                                       'connected': 'printf'})
+                                       'connection_status': 'printf'})
+    fig.add_tools(hover_tool)
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_on_off_times(device_data, **kwargs):
+    plot_width = kwargs.pop('plot_width', 800)
+    plot_height = kwargs.pop('plot_height', 50)
+    if 'x_range' in kwargs:
+        x_range = kwargs['x_range']
+    else:
+        x_range = device_data.begin.min(), device_data.end.max()
+
+    device_data.loc[:, 'duration_str'] = device_data.duration.apply(utils.format_time_span)
+
+    def light_status(connected):
+        if connected:
+            return "on"
+        else:
+            return "off"
+    device_data.loc[:, 'light_status'] = device_data.value.apply(light_status)
+
+    colors = ['#eeeeee', '#ffcc00'] # [off, on]
+    device_data['color'] = device_data.value.apply(lambda x: colors[x])
+
+    # double the height of the hbar when the light is on to make short burst more visible
+    device_data['height'] = device_data.value.apply(lambda x: 0.25 * (x + 1))
+
+    data_source = ColumnDataSource(device_data)
+
+    fig = figure(x_axis_type="datetime",
+                 x_range=x_range,
+                 plot_height=plot_height, plot_width=plot_width)
+    fig.hbar(y=0.125, left='begin', right='end', height='height', color='color', source=data_source)
+    fig.yaxis.visible = False
+    # disable grid
+    fig.xgrid.grid_line_color = None
+    fig.ygrid.grid_line_color = None
+    # disable border
+    fig.outline_line_color = None
+
+    fig.toolbar.logo = None
+    #fig.toolbar_location = 'above'
+    #fig.tools = [WheelZoomTool(dimensions=Dimensions.width),
+    #             PanTool(dimensions=Dimensions.width),
+    #             ResetTool(),
+    #             SaveTool(),
+    #             # TODO: add hover tool
+    #             # HoverTool(mode='vline')
+    #]
+
+    hover_tool = HoverTool(tooltips=[('begin', '@begin{%F %H:%M:%S}'),
+                                     ('end', '@end{%F %H:%M:%S}'),
+                                     ('duration', '@duration_str'),
+                                     ('status', '@light_status')],
+                           formatters={'begin': 'datetime',
+                                       'end': 'datetime',
+                                       'duration_str': 'printf',
+                                       'light_status': 'printf'})
     fig.add_tools(hover_tool)
     return fig
 

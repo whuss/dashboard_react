@@ -27,6 +27,7 @@ import humanfriendly
 from plots import plot_histogram, plot_duration_histogram, plot_time_series
 from plots import plot_on_off_cycles, plot_lost_signal, plot_crashes, plot_errors
 from plots import plot_database_size, plot_error_heatmap, color_palette, plot_connection_times
+from plots import plot_on_off_times
 
 import utils
 
@@ -898,15 +899,44 @@ def sensors_device(device):
 @app.route('/sensors/presence', methods=['GET'])
 def sensors_presence():
     start_date, end_date = parse_date_range(request)
-    on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date, end_date)
+    on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date, end_date).dropna()
     connectivity_data = Connectivity.connection_times(start_date, end_date)
 
-    return create_timeseries(on_off_data, sensor="Presence detected",
-                             sensor_key="value",
-                             unit="off=0, on=1",
-                             time_range=(start_date, end_date),
-                             mode="step",
-                             connectivity_data=connectivity_data)
+    plot_scripts = {}
+    plot_divs = {}
+
+    # If no sensor_key is given, use the lower case sensor name
+    for device in on_off_data.index.levels[0]:
+        device_data = on_off_data.loc[device]
+        fig = plot_on_off_times(device_data)
+        if connectivity_data is not None:
+            try:
+                device_data = connectivity_data.loc[device]
+                connectivity_fig = plot_connection_times(device_data, x_range=fig.x_range)
+                fig = column(fig, connectivity_fig)
+            except KeyError:
+                print(f"Warning: No connectivity data for device {device}.")
+        script, div = components(fig)
+        plot_scripts[device] = script
+        plot_divs[device] = div
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    # render template
+    html = render_template(
+        'sensors_timeseries.html',
+        timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
+        sensor="Presence",
+        unit="on/off",
+        plot_scripts=plot_scripts,
+        plot_divs=plot_divs,
+        js_resources=js_resources,
+        css_resources=css_resources,
+    )
+
+    return encode_utf8(html)
 
 # ----------------------------------------------------------------------------------------------------------------------
 

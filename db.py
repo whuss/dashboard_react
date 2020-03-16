@@ -494,33 +494,30 @@ class PresenceDetectorStatistics(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     def on_off_timeseries(self, since, until):
-        sq_device = self.query_device.subquery()
         ip = InstructionPackage
-        sq_on_off = db.session.query(ip.device, ip.service, ip.source, ip.timestamp, ip.instruction, ip.target, ip.value) \
-                       .filter(ip.source.contains("Lullaby")) \
-                       .filter(ip.instruction == "MODE") \
-                       .filter(ip.target == "POWER") \
-                       .filter(ip.timestamp >= since) \
-                       .filter(ip.timestamp <= until) \
-                       .subquery()
-
-        query = self.query_device \
-                    .outerjoin(sq_on_off, DeviceInfo.device == sq_on_off.c.device) \
-                    .add_columns(sq_on_off.c.timestamp, sq_on_off.c.value)
+        query = db.session.query(ip.device, ip.timestamp, ip.value) \
+            .filter(ip.source.contains("Lullaby")) \
+            .filter(ip.instruction == "MODE") \
+            .filter(ip.target == "POWER") \
+            .filter(ip.timestamp >= since) \
+            .filter(ip.timestamp <= until) \
+            .order_by(ip.device, ip.timestamp)
 
         data = pd.DataFrame(query.all())
         data.value = data.value.apply(self._on_off)
+
+        # remove consecutive rows with the same 'value'
+        data['keep_row'] = data.groupby('device').value.diff(periods=-1)
+        data = data[data.keep_row != 0.0]
+        # merge intervals, such that each row in the data corresponds to one
+        # interval ['begin', 'end'] where the light has been either on ('value'=1)
+        # or off ('value' = 0) the whole time.
+        data = data.rename(columns=dict(timestamp='begin'))
+        data['duration'] = data.groupby('device').begin.diff(periods=-1).abs()
+        data['end'] = data.begin + data.duration
+
         data = data.set_index(['device', data.index])
-
-        devices = self.query_device.all()
-        data_dict = {}
-        for device in devices:
-            device = device[0]
-            df = data.loc[device]
-            df = df.sort_values(by=['timestamp'])
-            data_dict[device] = df[['timestamp', 'value']].dropna()
-
-        return data_dict
+        return data
 
     # ------------------------------------------------------------------------------------------------------------------
 
