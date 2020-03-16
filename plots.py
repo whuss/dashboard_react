@@ -493,12 +493,15 @@ def plot_connection_times(device_data, **kwargs):
             return "lost signal"
     device_data.loc[:, 'connection_status'] = device_data.connected.apply(connection_status)
 
+    # double the height of the hbar when the light is on to make short burst more visible
+    device_data['height'] = device_data.connected.apply(lambda x: 0.5 * (2 - x))
+
     data_source = ColumnDataSource(device_data)
 
     fig = figure(x_axis_type="datetime",
-                 x_range=x_range, y_range=(0, 0.25),
+                 x_range=x_range, y_range=(0, 1),
                  plot_height=plot_height, plot_width=plot_width)
-    fig.hbar(y=0.125, left='begin', right='end', height=0.25, color='color', source=data_source)
+    fig.hbar(y=0.5, left='begin', right='end', height='height', color='color', line_color=None, source=data_source)
     fig.yaxis.visible = False
     fig.toolbar.logo = None
     fig.toolbar_location = None
@@ -524,7 +527,7 @@ def plot_connection_times(device_data, **kwargs):
 
 def plot_on_off_times(device_data, **kwargs):
     plot_width = kwargs.pop('plot_width', 800)
-    plot_height = kwargs.pop('plot_height', 50)
+    plot_height = kwargs.pop('plot_height', 80)
     if 'x_range' in kwargs:
         x_range = kwargs['x_range']
     else:
@@ -543,14 +546,15 @@ def plot_on_off_times(device_data, **kwargs):
     device_data['color'] = device_data.value.apply(lambda x: colors[x])
 
     # double the height of the hbar when the light is on to make short burst more visible
-    device_data['height'] = device_data.value.apply(lambda x: 0.25 * (x + 1))
+    device_data['height'] = device_data.value.apply(lambda x: 0.5 * (x + 1))
 
     data_source = ColumnDataSource(device_data)
 
     fig = figure(x_axis_type="datetime",
-                 x_range=x_range,
-                 plot_height=plot_height, plot_width=plot_width)
-    fig.hbar(y=0.125, left='begin', right='end', height='height', color='color', source=data_source)
+                 x_range=x_range, y_range=(0, 1),
+                 plot_height=plot_height, plot_width=plot_width,
+                 toolbar_location="above")
+    fig.hbar(y=0.5, left='begin', right='end', height='height', color='color', line_color=None, source=data_source)
     fig.yaxis.visible = False
     # disable grid
     fig.xgrid.grid_line_color = None
@@ -559,14 +563,13 @@ def plot_on_off_times(device_data, **kwargs):
     fig.outline_line_color = None
 
     fig.toolbar.logo = None
-    #fig.toolbar_location = 'above'
-    #fig.tools = [WheelZoomTool(dimensions=Dimensions.width),
-    #             PanTool(dimensions=Dimensions.width),
-    #             ResetTool(),
-    #             SaveTool(),
-    #             # TODO: add hover tool
-    #             # HoverTool(mode='vline')
-    #]
+    fig.tools = [WheelZoomTool(dimensions=Dimensions.width),
+                 PanTool(dimensions=Dimensions.width),
+                 ResetTool(),
+                 SaveTool(),
+                 # TODO: add hover tool
+                 # HoverTool(mode='vline')
+    ]
 
     hover_tool = HoverTool(tooltips=[('begin', '@begin{%F %H:%M:%S}'),
                                      ('end', '@end{%F %H:%M:%S}'),

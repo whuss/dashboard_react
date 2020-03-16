@@ -957,7 +957,7 @@ class Connectivity(object):
 
     @staticmethod
     def connection_times(since: datetime, until: datetime, device=None):
-        colors = ['#00cc00', '#ff0000']
+        colors = ['#a1eca4', '#ff0000'] # [connected, disconnected]
 
         dmp = DeadManPackage
         query = db.session.query(dmp.device, dmp.timestamp) \
