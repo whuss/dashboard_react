@@ -15,3 +15,14 @@ def parse_date(timestamp):
             return datetime.strptime(timestamp, '%Y-%m-%d %H:%M')
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+
+def format_time_span(input):
+    seconds = input.seconds
+    minutes = seconds // 60
+    seconds = seconds % 60
+    hours = minutes // 60
+    minutes = minutes % 60
+    return f"{hours:02}:{minutes:02}:{seconds:02}"
+
+# ----------------------------------------------------------------------------------------------------------------------

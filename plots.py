@@ -11,6 +11,7 @@ from bokeh.models import NumeralTickFormatter, PrintfTickFormatter
 from bokeh import palettes, layouts
 
 from flask import url_for
+import utils
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -470,6 +471,50 @@ def plot_database_size(data):
              color='#c8c8c8',
              source=data_source,
              name="db_size")
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_connection_times(device_data, **kwargs):
+    plot_width = kwargs.pop('plot_width', 800)
+    plot_height = kwargs.pop('plot_height', 50)
+    if 'x_range' in kwargs:
+        x_range = kwargs['x_range']
+    else:
+        x_range = device_data.begin.min(), device_data.end.max()
+
+    device_data.loc[:, 'duration_str'] = device_data.duration.apply(utils.format_time_span)
+
+    def connection_status(connected):
+        if connected:
+            return "connected"
+        else:
+            return "lost signal"
+    device_data.loc[:, 'connection_status'] = device_data.connected.apply(connection_status)
+
+    data_source = ColumnDataSource(device_data)
+
+    fig = figure(x_axis_type="datetime",
+                 x_range=x_range, y_range=(0, 0.25),
+                 plot_height=plot_height, plot_width=plot_width)
+    fig.hbar(y=0.125, left='begin', right='end', height=0.25, color='color', source=data_source)
+    fig.yaxis.visible = False
+    fig.toolbar.logo = None
+    fig.toolbar_location = None
+    # disable grid
+    fig.xgrid.grid_line_color = None
+    fig.ygrid.grid_line_color = None
+
+    hover_tool = HoverTool(tooltips=[('begin', '@begin{%F %H:%M:%S}'),
+                                     ('end', '@end{%F %H:%M:%S}'),
+                                     ('duration', '@duration_str'),
+                                     ('status', '@connection_status')],
+                           formatters={'begin': 'datetime',
+                                       'end': 'datetime',
+                                       'duration_str': 'printf',
+                                       'connected': 'printf'})
+    fig.add_tools(hover_tool)
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------

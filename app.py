@@ -7,6 +7,7 @@ from flask import Flask, render_template, jsonify, request, url_for
 
 from db import db
 from db import Errors, Dashboard, DatabaseDelay, ModeStatistics, MouseData, PresenceDetectorStatistics, SensorData
+from db import Connectivity
 
 from flask_basicauth import BasicAuth
 from flask_table import Col, LinkCol, Table
@@ -25,7 +26,7 @@ import humanfriendly
 
 from plots import plot_histogram, plot_duration_histogram, plot_time_series
 from plots import plot_on_off_cycles, plot_lost_signal, plot_crashes, plot_errors
-from plots import plot_database_size, plot_error_heatmap, color_palette
+from plots import plot_database_size, plot_error_heatmap, color_palette, plot_connection_times
 
 import utils
 
@@ -104,13 +105,7 @@ def _or_else(input, else_input):
 @app.template_filter('timespan')
 def _time_span(input):
     if input:
-        seconds = input.seconds
-        minutes = seconds // 60
-        seconds = seconds % 60
-        hours = minutes // 60
-        minutes = minutes % 60
-        return f"{hours:02}:{minutes:02}:{seconds:02}"
-        #return humanfriendly.format_timespan(input, max_units=2)
+        utils.format_time_span(input)
     return ""
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -515,10 +510,10 @@ def format_logentry(lp, device=None):
     header = f'({time_format}) <span class="{log_level_class}">{lp.log_level:<8}</span> ' \
                 f'<span class="log-filename" data-toggle="tooltip" title="{lp.filename}:{lp.line_number}" >' \
                 f'{location:>25}</span> '
-    identation = len(header_no_format) * " "
+    indentation = len(header_no_format) * " "
     message_lines = lp.message.split("\n")
     formatted_message = header + message_lines[0] + "\n" + \
-        "\n".join([identation + line for line in message_lines[1:]])
+        "\n".join([indentation + line for line in message_lines[1:]])
 
     if len(message_lines) > 1:
         formatted_message += "\n"
@@ -553,7 +548,7 @@ def _monitor_device():
             limit = False
 
     print(f"_monitor: device={device}, limit={limit}, log_level={log_level}")
-    if limit == True:
+    if limit:
         num_lines = 35
     else:
         num_lines = 50000
@@ -664,7 +659,7 @@ def parse_date_range(request):
 
     print(f"Date range: {start_str} -- {end_str}")
     print(f"Parsed Date range: {start_date} -- {end_date}")
-    return (start_date, end_date)
+    return start_date, end_date
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -771,6 +766,7 @@ def sensors():
 
 
 def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[datetime, datetime], **kwargs):
+    connectivity_data = kwargs.pop('connectivity_data', None)
     # If no sensor_key is given, use the lower case sensor name
     sensor_key = kwargs.pop("sensor_key", sensor).lower()
     start_date, end_date = time_range
@@ -784,6 +780,13 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
                                    x_range=x_range,
                                    y_axis_label=unit,
                                    mode='step')
+            if connectivity_data is not None:
+                try:
+                    device_data = connectivity_data.loc[device]
+                    connectivity_fig = plot_connection_times(device_data, x_range=fig.x_range)
+                    fig = column(fig, connectivity_fig)
+                except KeyError:
+                    print(f"Warning: No connectivity data for device {device}.")
             script, div = components(fig)
         else:
             script, div = "", ""
@@ -896,10 +899,14 @@ def sensors_device(device):
 def sensors_presence():
     start_date, end_date = parse_date_range(request)
     on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date, end_date)
+    connectivity_data = Connectivity.connection_times(start_date, end_date)
 
     return create_timeseries(on_off_data, sensor="Presence detected",
                              sensor_key="value",
-                             unit="off=0, on=1", time_range=(start_date, end_date), mode="step")
+                             unit="off=0, on=1",
+                             time_range=(start_date, end_date),
+                             mode="step",
+                             connectivity_data=connectivity_data)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -908,8 +915,13 @@ def sensors_presence():
 def sensors_temp():
     start_date, end_date = parse_date_range(request)
     sensor_data = SensorData().temperature(start_date, end_date)
+    connectivity_data = Connectivity.connection_times(start_date, end_date)
 
-    return create_timeseries(sensor_data, sensor="Temperature", unit="°C", time_range=(start_date, end_date))
+    return create_timeseries(sensor_data,
+                             sensor="Temperature",
+                             unit="°C",
+                             time_range=(start_date, end_date),
+                             connectivity_data=connectivity_data)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -918,8 +930,13 @@ def sensors_temp():
 def sensors_humidity():
     start_date, end_date = parse_date_range(request)
     sensor_data = SensorData().humidity(start_date, end_date)
+    connectivity_data = Connectivity.connection_times(start_date, end_date)
 
-    return create_timeseries(sensor_data, sensor="Humidity", unit="%RH", time_range=(start_date, end_date))
+    return create_timeseries(sensor_data,
+                             sensor="Humidity",
+                             unit="%RH",
+                             time_range=(start_date, end_date),
+                             connectivity_data=connectivity_data)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -928,8 +945,13 @@ def sensors_humidity():
 def sensors_pressure():
     start_date, end_date = parse_date_range(request)
     sensor_data = SensorData().pressure(start_date, end_date)
+    connectivity_data = Connectivity.connection_times(start_date, end_date)
 
-    return create_timeseries(sensor_data, sensor="Pressure", unit="hPa", time_range=(start_date, end_date))
+    return create_timeseries(sensor_data,
+                             sensor="Pressure",
+                             unit="hPa",
+                             time_range=(start_date, end_date),
+                             connectivity_data=connectivity_data)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -938,8 +960,14 @@ def sensors_pressure():
 def sensors_gas():
     start_date, end_date = parse_date_range(request)
     sensor_data = SensorData().gas(start_date, end_date)
+    connectivity_data = Connectivity.connection_times(start_date, end_date)
 
-    return create_timeseries(sensor_data, sensor="Gas", sensor_key="amount", unit="VOC kOhm", time_range=(start_date, end_date))
+    return create_timeseries(sensor_data,
+                             sensor="Gas",
+                             sensor_key="amount",
+                             unit="VOC kOhm",
+                             time_range=(start_date, end_date),
+                             connectivity_data=connectivity_data)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -989,6 +1017,9 @@ def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range
 
     # If no sensor_key is given, use the lower case sensor name
     sensor_key = kwargs.get("sensor_key", sensor).lower()
+
+    connectivity_data = kwargs.pop('connectivity_data', None)
+
     start_date, end_date = time_range
     plot_scripts = {}
     plot_divs = {}
@@ -1027,6 +1058,14 @@ def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range
 
             figures.append(fig)
 
+        if connectivity_data is not None:
+            try:
+                device_data = connectivity_data.loc[device]
+                connectivity_fig = plot_connection_times(device_data, x_range=x_range)
+                figures.append(connectivity_fig)
+            except KeyError:
+                print(f"Warning: No connectivity data for device {device}.")
+
         plot = column(*figures)
         _script, _div = components(plot)
         script += _script
@@ -1060,8 +1099,13 @@ def create_timeseries_brightness(sensor_data, sensor: str, unit: str, time_range
 def sensors_brightness():
     start_date, end_date = parse_date_range(request)
     sensor_data = SensorData().brightness(start_date, end_date)
+    connectivity_data = Connectivity.connection_times(start_date, end_date)
 
-    return create_timeseries_brightness(sensor_data, sensor="Brightness", unit="lx", time_range=(start_date, end_date))
+    return create_timeseries_brightness(sensor_data,
+                                        sensor="Brightness",
+                                        unit="lx",
+                                        time_range=(start_date, end_date),
+                                        connectivity_data=connectivity_data)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Main
