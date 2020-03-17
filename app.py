@@ -9,7 +9,7 @@ from db import db
 from db import Errors, Dashboard, DatabaseDelay, ModeStatistics, MouseData, PresenceDetectorStatistics, SensorData
 from db import Connectivity
 
-from flask_basicauth import BasicAuth
+# from flask_basicauth import BasicAuth
 from flask_table import Col, LinkCol, Table
 import babel
 
@@ -53,12 +53,12 @@ def create_app():
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = _db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['BASIC_AUTH_USERNAME'] = "ReproLight"
-    app.config['BASIC_AUTH_PASSWORD'] = "infinity"
-    app.config['BASIC_AUTH_FORCE'] = True
+    # app.config['BASIC_AUTH_USERNAME'] = "ReproLight"
+    # app.config['BASIC_AUTH_PASSWORD'] = "infinity"
+    # app.config['BASIC_AUTH_FORCE'] = True
     db.init_app(app)
 
-    basic_auth = BasicAuth(app)
+    # basic_auth = BasicAuth(app)
     return app
 
 # ----------------------------------------------------------------------------------------------------------------------
