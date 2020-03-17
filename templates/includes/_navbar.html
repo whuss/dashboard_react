@@ -10,45 +10,45 @@
         <div id="navbar" class="navbar">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="/">Dashboard</a>
+                    <a class="nav-link" href="{{ url_for('index') }}">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/sensors">Sensors</a>
+                    <a class="nav-link" href="{{ url_for('sensors') }}">Sensors</a>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Time series</a>
                     <div class="dropdown-menu">
-                        <a class="dropdown-item" href=/sensors/presence>Presence</a>
-                        <a class="dropdown-item" href=/sensors/temperature>Temperature</a>
-                        <a class="dropdown-item" href=/sensors/humidity>Humidity</a>
-                        <a class="dropdown-item" href=/sensors/pressure>Pressure</a>
-                        <a class="dropdown-item" href=/sensors/gas>Gas</a>
-                        <a class="dropdown-item" href=/sensors/brightness>Brightness</a>
+                        <a class="dropdown-item" href="{{ url_for('sensors_presence') }}">Presence</a>
+                        <a class="dropdown-item" href="{{ url_for('sensors_temperature') }}">Temperature</a>
+                        <a class="dropdown-item" href="{{ url_for('sensors_humidity') }}">Humidity</a>
+                        <a class="dropdown-item" href="{{ url_for('sensors_pressure') }}">Pressure</a>
+                        <a class="dropdown-item" href="{{ url_for('sensors_gas') }}">Gas</a>
+                        <a class="dropdown-item" href="{{ url_for('sensors_brightness') }}">Brightness</a>
                     </div>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Statistics</a>
                     <div class="dropdown-menu">
-                        <a class="dropdown-item" href=/statistics/mode>Mode</a>
-                        <a class="dropdown-item" href=/statistics/mouse>Mouse gestures</a>
-                        <a class="dropdown-item" href=/statistics/switch_cycles>On/Off Cycles</a>
+                        <a class="dropdown-item" href="{{ url_for('statistics_mode') }}">Mode</a>
+                        <a class="dropdown-item" href="{{ url_for('statistics_mouse') }}">Mouse gestures</a>
+                        <a class="dropdown-item" href="{{ url_for('statistics_switch_cycles') }}">On/Off Cycles</a>
                     </div>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">System</a>
                     <div class="dropdown-menu">
-                        <a class="dropdown-item" href=/system/crashes>Stability</a>
-                        <a class="dropdown-item" href=/system/version>Restarts</a>
-                        <a class="dropdown-item" href=/system/errors>Errors</a>
-                        <a class="dropdown-item" href=/system/error_heatmap>Error locations</a>
-                        <a class="dropdown-item" href="/monitor">Logs</a>
+                        <a class="dropdown-item" href="{{ url_for('crashes') }}">Stability</a>
+                        <a class="dropdown-item" href="{{ url_for('version_messages') }}">Restarts</a>
+                        <a class="dropdown-item" href="{{ url_for('error_statistics') }}">Errors</a>
+                        <a class="dropdown-item" href="{{ url_for('error_heatmap') }}">Error locations</a>
+                        <a class="dropdown-item" href="{{ url_for('monitor') }}">Logs</a>
                     </div>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Database</a>
                     <div class="dropdown-menu">
-                        <a class="dropdown-item" href=/statistics/database_delay>Delay</a>
-                        <a class="dropdown-item" href=/database/size>Size</a>
+                        <a class="dropdown-item" href="{{ url_for('statistics_database_delay') }}">Delay</a>
+                        <a class="dropdown-item" href="{{ url_for('database_size') }}">Size</a>
                     </div>
                 </li>
             </ul>
