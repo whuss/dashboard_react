@@ -334,11 +334,53 @@ class Dashboard(object):
                                 since,
                                 sq_last_connection.c.last_update) \
                    .order_by(DeviceInfo.device)
+
     # ------------------------------------------------------------------------------------------------------------------
 
     def dashboard(self, start_date):
         query = self.query_dashboard(start_date)
         return query.all()
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def info(self):
+        query_device = db.session.query(DeviceInfo.device, DeviceInfo.mode.label('study_mode')) \
+            .order_by(DeviceInfo.device) \
+            .filter(DeviceInfo.device != "PTL_DEFAULT")
+
+        dmp = DeadManPackage
+        sq_connection = db.session.query(dmp.device, db.func.max(dmp.timestamp).label('last_connection')) \
+            .group_by(dmp.device) \
+            .filter(DeviceInfo.device != "PTL_DEFAULT") \
+            .subquery()
+
+        query = query_device.outerjoin(sq_connection, sq_connection.c.device == DeviceInfo.device) \
+            .add_columns(sq_connection.c.last_connection)
+
+        data = pd.DataFrame(query.all())
+        now = datetime.now()
+        data['offline_duration'] = data.last_connection.apply(lambda x: now - x)
+
+        def health_status(offline_duration):
+            if offline_duration < timedelta(minutes=2):
+                return "HEALTHY"
+            else:
+                return "SICK"
+
+        data['health_status'] = data.offline_duration.apply(health_status)
+
+        def sick_reason(row):
+            if pd.isna(row.last_connection):
+                return "Never online"
+
+            if row.health_status == "SICK":
+                return f"Offline for {row.offline_duration}"
+            else:
+                return ""
+
+        data['sick_reason'] = data.apply(sick_reason, axis=1)
+
+        return data
 
 # ----------------------------------------------------------------------------------------------------------------------
 

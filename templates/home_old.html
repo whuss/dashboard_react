@@ -1,0 +1,40 @@
+{% extends 'layout.html' %}
+
+{% block page_title %}
+<h1>Dashboard</h1>
+{% endblock %}
+
+{% block body %}
+<div id="content">
+<table id="data-table" class="table">
+    <thead class="thead-dark">
+    <tr>
+        <th>Device ID</th>
+        <th>Device Mode</th>
+        <th>Device State</th>
+        <th>Lighting Mode</th>
+        <th>Since</th>
+        <th>Last Connection</th>
+        <th>Health Status</th>
+    </tr>
+    </thead>
+    <tbody>
+        {% for ptl in dashboard %}
+        <tr>
+            <th scope="row"> {{ptl.device}}</th>
+            <td><div class="deviceMode {{'NORM' if ptl.mode == 'NORM' else 'FULL'}}" data-id="{{ptl.device}}" data-mode="{{ptl.mode}}">{{ptl.mode}}</div></td>
+            <td><i class="fa fa-lightbulb-o {{'OFF' if ptl.mode == 'OFF' else 'ON'}}"></i></td>
+            <td>{{ptl.mode|str}}</td>
+            <td>{{ptl.since|timespan}}</td>
+            <td>{{ptl.last_update|datetime}}</td>
+            <td><i class="fa fa-heartbeat {{'HEALTHY' if ptl.mode else 'SICK'}}"></i></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock body %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+{% endblock script %}

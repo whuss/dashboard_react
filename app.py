@@ -114,6 +114,8 @@ def _time_span(input):
 
 @app.template_filter('none')
 def _number(input):
+    if pd.isna(input):
+        return ""
     return input if input else ""
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -205,10 +207,18 @@ app.jinja_env.globals['url_for_self'] = url_for_self
 
 @app.route('/')
 def index():
+    data = Dashboard().info()
+    return render_template('home.html', data=data)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/dashboard')
+def index_old():
     dash = Dashboard()
     start_date = datetime.now() - timedelta(days=1)
     dashboard = dash.dashboard(start_date)
-    return render_template('home.html', dashboard=dashboard)
+    return render_template('home_old.html', dashboard=dashboard)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
