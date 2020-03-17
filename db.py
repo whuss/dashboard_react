@@ -27,6 +27,7 @@ class DeadManPackage(db.Model):
     service = db.Column('service_sn', key='service')
     source = db.Column('ix_source_sn', key='source')
     timestamp = db.Column('ix_data_dtm', key='timestamp')
+    create_dtm = db.Column('create_dtm')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -39,6 +40,7 @@ class DbSizePackage(db.Model):
     date = db.Column('ix_data_dtm', key='date')
     data_size_in_mb = db.Column('data_size_in_mb', key='data_size_in_mb')
     index_size_in_mb = db.Column('index_size_in_mb', key='index_size_in_mb')
+    create_dtm = db.Column('create_dtm')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -54,6 +56,7 @@ class ErrorPackage(db.Model):
     timestamp = db.Column('ix_data_dtm', key='timestamp')
     errno = db.Column('number_int', key="errno")
     message = db.Column('message_str', key="message")
+    create_dtm = db.Column('create_dtm')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -71,6 +74,7 @@ class LoggerPackage(db.Model):
     line_number = db.Column('line_number_int', key='line_number')
     log_level = db.Column('log_level_ind', key='log_level')
     message = db.Column('message_str', key="message")
+    create_dtm = db.Column('create_dtm')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -88,6 +92,7 @@ class VersionPackage(db.Model):
     commit = db.Column('commit_sn', key="commit")
     branch = db.Column('branch_sn', key="branch")
     version_timestamp = db.Column('version_timestamp_dtm', key='version_timestamp')
+    create_dtm = db.Column('create_dtm')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -100,6 +105,7 @@ class DeviceInfo(db.Model):
     device = db.Column('uk_device_sn', key='device')
     mode = db.Column('device_mode_ind', key='mode')
     last_update = db.Column('last_update_dtm', key='last_update')
+    create_dtm = db.Column('create_dtm')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -116,6 +122,7 @@ class InstructionPackage(db.Model):
     instruction = db.Column('instruction_ind', key='instruction')
     target = db.Column('target_ind', key='target')
     value = db.Column('value_jsn', key='value')
+    create_dtm = db.Column('create_dtm')
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -139,6 +146,7 @@ class LightingPackage(db.Model):
     device = db.Column('ix_device_sn', key='device')
     timestamp = db.Column('ix_data_dtm', key='timestamp')
     mode = db.Column('ix_mode_ind', key='mode')
+    create_dtm = db.Column('create_dtm')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -156,6 +164,7 @@ class MouseGesturePackage(db.Model):
     gesture_distance = db.Column('gesture_distance_dbl', key='gesture_distance')
     gesture_speed = db.Column('gesture_speed_dbl', key='gesture_speed')
     gesture_deviation = db.Column('gesture_deviation_dbl', key='gesture_deviation')
+    create_dtm = db.Column('create_dtm')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -169,6 +178,7 @@ class TemperaturePackage(db.Model):
     timestamp = db.Column('ix_data_dtm', key='timestamp')
     temperature = db.Column('temperature_dbl', key='temperature')
     unit = db.Column('unit_sn', key='unit')
+    create_dtm = db.Column('create_dtm')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -182,6 +192,7 @@ class HumidityPackage(db.Model):
     timestamp = db.Column('ix_data_dtm', key='timestamp')
     humidity = db.Column('humidity_dbl', key='humidity')
     unit = db.Column('unit_sn', key='unit')
+    create_dtm = db.Column('create_dtm')
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -196,6 +207,7 @@ class PressurePackage(db.Model):
     timestamp = db.Column('ix_data_dtm', key='timestamp')
     pressure = db.Column('pressure_dbl', key='pressure')
     unit = db.Column('unit_sn', key='unit')
+    create_dtm = db.Column('create_dtm')
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -211,6 +223,7 @@ class GasPackage(db.Model):
     gas = db.Column('gas_ind', key='gas')
     amount = db.Column('amount_dbl', key='amount')
     unit = db.Column('unit_sn', key='unit')
+    create_dtm = db.Column('create_dtm')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -225,6 +238,7 @@ class BrightnessPackage(db.Model):
     brightness = db.Column('brightness_int', key='brightness')
     source = db.Column('ix_source_sn', key='source')
     unit = db.Column('unit_sn', key='unit')
+    create_dtm = db.Column('create_dtm')
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -238,6 +252,7 @@ class LoudnessPackage(db.Model):
     timestamp = db.Column('ix_data_dtm', key='timestamp')
     loudness = db.Column('loudness_dbl', key='loudness')
     unit = db.Column('unit_sn', key='unit')
+    create_dtm = db.Column('create_dtm')
 
 # ----------------------------------------------------------------------------------------------------------------------
 # DB Queries
@@ -890,56 +905,51 @@ class DatabaseDelay(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     def package_delay(self, start_date, end_date):
-        p = ErrorPackage
+        p = InstructionPackage
         query1 = db.session.query(p.device, p.create_dtm, p.timestamp) \
                         .filter(p.timestamp >= start_date) \
                         .filter(p.timestamp <= end_date)
-        p = InstructionPackage
-        query2 = db.session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= start_date) \
-                        .filter(p.timestamp <= end_date)
-        p = LightingPackage
-        query3 = db.session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= start_date) \
-                        .filter(p.timestamp <= end_date)
-        p = MouseGesturePackage
+        # p = LightingPackage
+        # query2 = db.session.query(p.device, p.create_dtm, p.timestamp) \
+        #                 .filter(p.timestamp >= start_date) \
+        #                 .filter(p.timestamp <= end_date)
+        # p = MouseGesturePackage
+        # query3 = db.session.query(p.device, p.create_dtm, p.timestamp) \
+        #                 .filter(p.timestamp >= start_date) \
+        #                 .filter(p.timestamp <= end_date)
+        p = TemperaturePackage
         query4 = db.session.query(p.device, p.create_dtm, p.timestamp) \
                         .filter(p.timestamp >= start_date) \
                         .filter(p.timestamp <= end_date)
-        p = TemperaturePackage
-        query5 = db.session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= start_date) \
-                        .filter(p.timestamp <= end_date)
-        p = HumidityPackage
-        query6 = db.session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= start_date) \
-                        .filter(p.timestamp <= end_date)
-        p = PressurePackage
-        query7 = db.session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= start_date) \
-                        .filter(p.timestamp <= end_date)
-        p = GasPackage
-        query8 = db.session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= start_date) \
-                        .filter(p.timestamp <= end_date)
-        p = BrightnessPackage
-        query9 = db.session.query(p.device, p.create_dtm, p.timestamp) \
-                         .filter(p.timestamp >= start_date) \
-                         .filter(p.timestamp <= end_date)
-        p = LoudnessPackage
-        query10 = db.session.query(p.device, p.create_dtm, p.timestamp) \
-                         .filter(p.timestamp >= start_date) \
-                         .filter(p.timestamp <= end_date)
+        # p = HumidityPackage
+        # query5 = db.session.query(p.device, p.create_dtm, p.timestamp) \
+        #                 .filter(p.timestamp >= start_date) \
+        #                 .filter(p.timestamp <= end_date)
+        # p = PressurePackage
+        # query6 = db.session.query(p.device, p.create_dtm, p.timestamp) \
+        #                 .filter(p.timestamp >= start_date) \
+        #                 .filter(p.timestamp <= end_date)
+        # p = GasPackage
+        # query7 = db.session.query(p.device, p.create_dtm, p.timestamp) \
+        #                 .filter(p.timestamp >= start_date) \
+        #                 .filter(p.timestamp <= end_date)
+        # p = BrightnessPackage
+        # query8 = db.session.query(p.device, p.create_dtm, p.timestamp) \
+        #                 .filter(p.timestamp >= start_date) \
+        #                 .filter(p.timestamp <= end_date)
+        # p = LoudnessPackage
+        # query9 = db.session.query(p.device, p.create_dtm, p.timestamp) \
+        #                 .filter(p.timestamp >= start_date) \
+        #                 .filter(p.timestamp <= end_date)
 
-        query = query1.union(query2) \
-                      .union(query3) \
-                      .union(query4) \
-                      .union(query5) \
-                      .union(query6) \
-                      .union(query7) \
-                      .union(query8) \
-                      .union(query9) \
-                      .union(query10) \
+        query = query1.union(query4) \
+                      #.union(query3) \
+                      #.union(query4) \
+                      #.union(query5) \
+                      #.union(query6) \
+                      #.union(query7) \
+                      #.union(query8) \
+                      #.union(query9)
 
         data = pd.DataFrame(query.all())
         data = data.set_index(['device', data.index])
