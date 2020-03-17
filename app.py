@@ -953,7 +953,7 @@ def sensors_presence():
 
 
 @app.route('/sensors/temperature', methods=['GET'])
-def sensors_temp():
+def sensors_temperature():
     start_date, end_date = parse_date_range(request)
     sensor_data = SensorData().temperature(start_date, end_date)
     connectivity_data = Connectivity.connection_times(start_date, end_date)
