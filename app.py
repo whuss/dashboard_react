@@ -962,6 +962,71 @@ def sensors_device(device):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+@app.route('/debug/sensors/presence', methods=['GET'])
+def debug_sensors_presence():
+    start_date, end_date = parse_date_range(request)
+    x_range = start_date, end_date
+    debug_on_off_data = PresenceDetectorStatistics().debug_on_off_timeseries(start_date, end_date)
+    on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date, end_date).dropna()
+    connectivity_data = Connectivity.connection_times(start_date, end_date)
+
+    figures = []
+    devices = []
+
+    # If no sensor_key is given, use the lower case sensor name
+    for device in on_off_data.index.levels[0]:
+        device_data = on_off_data.loc[device]
+        debug_device_data = debug_on_off_data.loc[device]
+        figures_device = []
+        if not device_data.empty:
+            fig = plot_on_off_times(device_data, x_range=x_range)
+            figures_device.append(fig)
+            x_range = fig.x_range
+
+            fig_debug = plot_time_series(debug_device_data.timestamp,
+                                   debug_device_data[['value']].iloc[:, 0],
+                                   x_range=x_range,
+                                   y_axis_label="on/off",
+                                   mode='marker')
+            figures_device.append(fig_debug)
+            if connectivity_data is not None:
+                try:
+                    device_data = connectivity_data.loc[device]
+                    connectivity_fig = plot_connection_times(device_data, x_range=x_range)
+                    figures_device.append(connectivity_fig)
+
+                except KeyError:
+                    print(f"Warning: No connectivity data for device {device}.")
+            if len(figures_device) > 1:
+                fig = column(*figures_device)
+            figures.append(fig)
+            devices.append(device)
+
+    plot_script, divs = components(figures)
+    plot_divs = dict(zip(devices, divs))
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    # render template
+    html = render_template(
+        'sensors_timeseries.html',
+        timespan=humanfriendly.format_timespan(end_date - start_date, max_units=2),
+        sensor="Presence",
+        unit="on/off",
+        plot_script=plot_script,
+        plot_divs=plot_divs,
+        js_resources=js_resources,
+        css_resources=css_resources,
+    )
+
+    return encode_utf8(html)
+
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 @app.route('/sensors/presence', methods=['GET'])
 def sensors_presence():
     start_date, end_date = parse_date_range(request)

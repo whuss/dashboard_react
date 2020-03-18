@@ -550,6 +550,29 @@ class PresenceDetectorStatistics(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def debug_on_off_timeseries(self, since, until):
+        ip = InstructionPackage
+        sq_on_off = db.session.query(ip.device, ip.service, ip.source, ip.timestamp, ip.instruction, ip.target,
+                                     ip.value) \
+            .filter(ip.source.contains("Lullaby")) \
+            .filter(ip.instruction == "MODE") \
+            .filter(ip.target == "POWER") \
+            .filter(ip.timestamp >= since) \
+            .filter(ip.timestamp <= until) \
+            .subquery()
+
+        query = self.query_device \
+            .outerjoin(sq_on_off, DeviceInfo.device == sq_on_off.c.device) \
+            .add_columns(sq_on_off.c.timestamp, sq_on_off.c.value)
+
+        data = pd.DataFrame(query.all())
+        data.value = data.value.apply(self._on_off)
+        data = data.set_index(['device', data.index])
+
+        return data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def on_off_timeseries(self, since, until, device=None):
         ip = InstructionPackage
         query = db.session.query(ip.device, ip.timestamp, ip.value) \

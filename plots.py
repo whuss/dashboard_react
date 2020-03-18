@@ -217,6 +217,15 @@ def plot_time_series(x, y, x_range, **kwargs):
             mode=StepMode.after,
             **line_kwargs
         )
+    elif mode == "marker":
+        fig.step(
+            x=x,
+            line_width=1,
+            y=y,
+            mode=StepMode.after,
+            **line_kwargs
+        )
+        fig.circle(x=x, y=y, size=5, color="black")
     else:
         fig.line(
             x=x,
