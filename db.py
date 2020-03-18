@@ -590,7 +590,7 @@ class PresenceDetectorStatistics(object):
         data.value = data.value.apply(self._on_off)
 
         # remove consecutive rows with the same 'value'
-        data['keep_row'] = data.groupby('device').value.diff(periods=-1)
+        data['keep_row'] = data.groupby('device').value.diff(periods=1)
         data = data[data.keep_row != 0.0]
         # merge intervals, such that each row in the data corresponds to one
         # interval ['begin', 'end'] where the light has been either on ('value'=1)
