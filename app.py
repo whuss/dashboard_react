@@ -1227,7 +1227,8 @@ def create_timeseries_brightness(sensor_data,
 
             fig = plot_time_series(timestamp, time_series,
                                    x_range=x_range,
-                                   title=f"Sensor: {sensor_name}")
+                                   title=f"Sensor: {sensor_name}",
+                                   mode="step")
             x_range = fig.x_range
 
             figures_device.append(fig)
