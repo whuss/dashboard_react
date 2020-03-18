@@ -1052,10 +1052,9 @@ def sensors_presence():
                     except KeyError:
                         print(f"Warning: No connectivity data for device {device}.")
             figures.append(fig)
+            devices.append(device)
         except KeyError:
             print(f"Warning: No on_of_data for device: {device}")
-            figures.append("")
-        devices.append(device)
 
     plot_script, divs = components(figures)
     plot_divs = dict(zip(devices, divs))
