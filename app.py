@@ -44,6 +44,7 @@ _dbname: str = "bbf_inf_rep"
 
 _db_url: str = f'mysql://{_user}:{_password}@{_host}/{_dbname}'
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Setup
 # ----------------------------------------------------------------------------------------------------------------------
@@ -61,12 +62,14 @@ def create_app():
     # basic_auth = BasicAuth(app)
     return app
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 app = create_app()
 app.app_context().push()
 db.Model.metadata.reflect(bind=db.engine)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Jinja customization
@@ -81,10 +84,11 @@ def format_datetime(value, format='medium'):
         value = utils.parse_date(value)
 
     if format == 'full':
-        format="EEEE, d. MMMM y 'at' HH:mm"
+        format = "EEEE, d. MMMM y 'at' HH:mm"
     elif format == 'medium':
-        format="y-MM-dd HH:mm"
+        format = "y-MM-dd HH:mm"
     return babel.dates.format_datetime(value, format)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -93,12 +97,14 @@ def format_datetime(value, format='medium'):
 def _str(input):
     return str(input) if input else ""
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.template_filter('or_else')
 def _or_else(input, else_input):
     return str(input) if input else str(else_input)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -109,6 +115,7 @@ def _time_span(input):
         utils.format_time_span(input)
     return ""
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -118,6 +125,7 @@ def _number(input):
         return ""
     return input if input else ""
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -126,6 +134,7 @@ def _unit(input, unit='°C'):
     if not input:
         return ""
     return f"{input:.2f} {unit}"
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -138,7 +147,7 @@ def _format_duration(input):
             return f"{minutes} minutes"
         elif minutes % 60 == 0 and minutes // 60 < 24:
             return f"{minutes // 60} hours"
-        elif minutes == 60*24:
+        elif minutes == 60 * 24:
             return f"1 day"
         else:
             return humanfriendly.format_timespan(timedelta(minutes=minutes), max_units=2)
@@ -146,10 +155,11 @@ def _format_duration(input):
         # input is not an integer
         return str(minutes)
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
-#@app.teardown_request
-#def teardown(exception=None):
+# @app.teardown_request
+# def teardown(exception=None):
 #    # teardown database session
 #    session.close()
 
@@ -159,10 +169,14 @@ def _format_duration(input):
 @app.context_processor
 def utility_processor():
     def _get_current_page():
-        return request.args.get('page', default = 1, type=int)
+        return request.args.get('page', default=1, type=int)
+
+    # ------------------------------------------------------------------------------------------------------------------
 
     def _str(input):
         return str(input) if input else ""
+
+    # ------------------------------------------------------------------------------------------------------------------
 
     def _time_span(input):
         if input:
@@ -172,16 +186,22 @@ def utility_processor():
             hours = minutes // 60
             minutes = minutes % 60
             return f"{hours:02}:{minutes:02}:{seconds:02}"
-            #return humanfriendly.format_timespan(input, max_units=2)
+            # return humanfriendly.format_timespan(input, max_units=2)
         return ""
+
+    # ------------------------------------------------------------------------------------------------------------------
 
     def _number(input):
         return input if input else ""
+
+    # ------------------------------------------------------------------------------------------------------------------
 
     def _unit(input, unit):
         if not input:
             return ""
         return f"{input:.2f} {unit}"
+
+    # ------------------------------------------------------------------------------------------------------------------
 
     return dict(_str=_str,
                 _time_span=_time_span,
@@ -189,16 +209,19 @@ def utility_processor():
                 _unit=_unit,
                 get_current_page=_get_current_page)
 
+
 # ----------------------------------------------------------------------------------------------------------------------<
 
 
 def url_for_self(**args):
     return url_for(request.endpoint, **dict(request.view_args, **args))
 
+
 # ----------------------------------------------------------------------------------------------------------------------<
 
 
 app.jinja_env.globals['url_for_self'] = url_for_self
+
 
 # ----------------------------------------------------------------------------------------------------------------------<
 # Routes
@@ -210,6 +233,7 @@ def index():
     data = Dashboard().info()
     return render_template('home.html', data=data)
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -220,15 +244,18 @@ def index_old():
     dashboard = dash.dashboard(start_date)
     return render_template('home_old.html', dashboard=dashboard)
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class PreCol(Col):
     """Column class for Flask Table that wraps its content in a pre tag"""
+
     def td_format(self, content):
         return f'''<pre style="text-align: left; width: 75%; white-space: pre-line;">
                        {content}
                    </pre>'''
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -237,6 +264,7 @@ class CrashCol(Col):
     def td_format(self, content):
         c = 'SICK' if content else 'HEALTHY'
         return f'''<i class="fa fa-heartbeat {c}"></i>'''
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -260,6 +288,7 @@ def crash_for_device(device):
 
     return render_template("crashes_device.html", device=device, table=table)
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -270,6 +299,7 @@ def error_statistics():
 
     def _format_next_day(date):
         return (date + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
+
     error_histogram['end_of_day'] = error_histogram.date.apply(_format_next_day)
 
     # compute time range
@@ -281,21 +311,22 @@ def error_statistics():
     # combute range of y_axis
     y_range = 1, max(error_histogram.error_count)
 
-    error_heatmap['location'] = error_heatmap.apply(lambda row: f"{os.path.basename(row['filename'])}:{row['line_number']}", axis=1)
+    error_heatmap['location'] = error_heatmap.apply(
+        lambda row: f"{os.path.basename(row['filename'])}:{row['line_number']}", axis=1)
     # all errors locations in the dataset
     locations = pd.DataFrame(error_heatmap.location.unique(), columns=['location'])
-    # assigne a unique color for each error location
+    # assign a unique color for each error location
     locations['colors'] = color_palette(len(locations.location))
     locations
 
     eh = error_heatmap.reset_index()
     errors_by_day = eh.drop(columns=['filename', 'line_number']) \
-                      .groupby(['device', 'date']) \
-                      .sum() \
-                      .rename(columns=dict(error_count='errors_by_day'))
+        .groupby(['device', 'date']) \
+        .sum() \
+        .rename(columns=dict(error_count='errors_by_day'))
     eh = eh.join(errors_by_day, on=['device', 'date'])
     eh['error_count_normalized'] = eh.error_count / eh.errors_by_day
-    eh = eh.merge(locations, on = ['location'])
+    eh = eh.merge(locations, on=['location'])
     eh['date_label'] = eh.date
     eh['end_of_day'] = eh.date.apply(_format_next_day)
     eh = eh.set_index(['device', 'date', eh.index]).sort_index()
@@ -328,6 +359,7 @@ def error_statistics():
                            js_resources=js_resources,
                            css_resources=css_resources)
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -343,7 +375,7 @@ def error_heatmap():
                                        timestamp='end_of_day',
                                        filename='filename',
                                        line_number='line_number'),
-                       url_kwargs_extra=dict(log_level='ERROR', duration=60*24), attr="date")
+                       url_kwargs_extra=dict(log_level='ERROR', duration=60 * 24), attr="date")
         location = Col("Location")
         error_count = Col("Error count")
 
@@ -351,12 +383,13 @@ def error_heatmap():
 
     for device in data.index.levels[0]:
         device_data = data.loc[device] \
-                          .reset_index() \
-                          .sort_values(by='date', ascending=False)
+            .reset_index() \
+            .sort_values(by='date', ascending=False)
         device_data['device'] = device
         data_dict[device] = HeatmapTable(device_data.to_dict(orient='records'))
 
     return render_template("errors.html", route='/system/errors', data=data_dict, messages="Errors by file location")
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -368,7 +401,7 @@ def crashes():
 
     combined_histogram = pd.merge(crash_histogram, restart_histogram,
                                   left_index=True, right_index=True, how="outer") \
-                           .fillna(value=0)
+        .fillna(value=0)
 
     # compute time range
     dates = combined_histogram.reset_index().date
@@ -415,6 +448,7 @@ def crashes():
                            js_resources=js_resources,
                            css_resources=css_resources)
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -430,6 +464,7 @@ def _logs(device_id, timestamp, log_level="TRACE", before=2, after=2, page=None,
     else:
         log_text = "No logs available."
     return log_text, pagination
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -455,12 +490,13 @@ def show_logs(device, duration=5, timestamp=None, log_level="TRACE"):
     devices = Dashboard().devices()
     return render_template("device_log.html", devices=devices, log_text=log_text, device=device, pagination=pagination)
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.route('/system/version', methods=['GET'])
 def version_messages():
-    device_id = request.args.get('id', default = "", type = str)
+    device_id = request.args.get('id', default="", type=str)
     errors = Errors()
     data = errors.version(device_id=device_id)
 
@@ -480,11 +516,12 @@ def version_messages():
 
     for device in data.index.levels[0]:
         device_data = data.loc[device] \
-                          .sort_values(by='timestamp', ascending=False)
+            .sort_values(by='timestamp', ascending=False)
         device_data['device'] = device
         data_dict[device] = VersionTable(device_data.to_dict(orient='records'))
 
     return render_template("errors.html", route='/system/version', data=data_dict, messages="System start")
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -519,17 +556,18 @@ def format_logentry(lp, device=None):
 
     header_no_format = f'({time}) {lp.log_level:<8} {location:>25} '
     header = f'({time_format}) <span class="{log_level_class}">{lp.log_level:<8}</span> ' \
-                f'<span class="log-filename" data-toggle="tooltip" title="{lp.filename}:{lp.line_number}" >' \
-                f'{location:>25}</span> '
+             f'<span class="log-filename" data-toggle="tooltip" title="{lp.filename}:{lp.line_number}" >' \
+             f'{location:>25}</span> '
     indentation = len(header_no_format) * " "
     message_lines = lp.message.split("\n")
     formatted_message = header + message_lines[0] + "\n" + \
-        "\n".join([indentation + line for line in message_lines[1:]])
+                        "\n".join([indentation + line for line in message_lines[1:]])
 
     if len(message_lines) > 1:
         formatted_message += "\n"
 
     return formatted_message
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -540,6 +578,7 @@ def format_logs(logs, device=None):
         log_text += format_logentry(lp, device)
 
     return log_text
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -576,6 +615,7 @@ def _monitor_device():
 
     return jsonify(title=title, result=f"<pre>{log_text}</pre>")
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -586,6 +626,7 @@ def monitor():
         print(device)
     return render_template("monitor.html", devices=devices)
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -594,6 +635,7 @@ def statistics_mode():
     data = ModeStatistics().mode_counts()
     labels = ["Auto", "Off", "Manual", "Light Shower"]
     return render_template('statistics_mode.html', data=data, labels=jsonify(labels))
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -610,31 +652,31 @@ def statistics_mouse():
     for device, data in mouse_data.items():
         if data.count()[0] > 0:
             fig_distance = plot_histogram(data.distance.dropna(),
-                x_axis_label="Mouse distance", y_axis_label="Amount",
-                plot_width=300, plot_height=400
-            )
+                                          x_axis_label="Mouse distance", y_axis_label="Amount",
+                                          plot_width=300, plot_height=400
+                                          )
             script, div_distance = components(fig_distance)
             scripts.append(script)
 
             fig_speed = plot_histogram(data.speed.dropna(),
-                x_axis_label="Mouse speed", y_axis_label="Amount",
-                plot_width=300, plot_height=400, fill_color='blue'
-            )
+                                       x_axis_label="Mouse speed", y_axis_label="Amount",
+                                       plot_width=300, plot_height=400, fill_color='blue'
+                                       )
             script, div_speed = components(fig_speed)
             scripts.append(script)
 
             fig_deviation = plot_histogram(data.deviation.dropna(),
-                x_axis_label="Gesture deviation", y_axis_label="Amount",
-                plot_width=300, plot_height=400, fill_color='orange'
-            )
+                                           x_axis_label="Gesture deviation", y_axis_label="Amount",
+                                           plot_width=300, plot_height=400, fill_color='orange'
+                                           )
             script, div_deviation = components(fig_deviation)
             scripts.append(script)
 
             stats = data.describe().to_html()
             statistics_data[device] = dict(stats=stats,
-                                      plot_distance=div_distance,
-                                      plot_speed=div_speed,
-                                      plot_deviation=div_deviation)
+                                           plot_distance=div_distance,
+                                           plot_speed=div_speed,
+                                           plot_deviation=div_deviation)
 
         else:
             statistics_data[device] = no_data
@@ -644,18 +686,19 @@ def statistics_mouse():
     css_resources = INLINE.render_css()
 
     return render_template("statistics_mouse.html",
-                           timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
+                           timespan=humanfriendly.format_timespan(end_date - start_date, max_units=2),
                            data=statistics_data,
                            scripts=scripts,
                            js_resources=js_resources,
                            css_resources=css_resources)
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 def parse_date_range(request):
-    start_str = request.args.get('start', default = "", type = str)
-    end_str = request.args.get('end', default = "", type = str)
+    start_str = request.args.get('start', default="", type=str)
+    end_str = request.args.get('end', default="", type=str)
     from dateutil.parser import parse
 
     if not end_str:
@@ -671,6 +714,7 @@ def parse_date_range(request):
     print(f"Date range: {start_str} -- {end_str}")
     print(f"Parsed Date range: {start_date} -- {end_date}")
     return start_date, end_date
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -694,9 +738,9 @@ def statistics_database_delay():
         total_packages = device_data.count()
 
         fig = plot_duration_histogram(device_data, time_scale="s",
-                x_axis_label="Package delay", y_axis_label="Amount",
-                plot_width=600, plot_height=400
-            )
+                                      x_axis_label="Package delay", y_axis_label="Amount",
+                                      plot_width=600, plot_height=400
+                                      )
         script, div = components(fig)
         figures[device] = dict(div=div, total_packages=total_packages)
         scripts.append(script)
@@ -706,11 +750,12 @@ def statistics_database_delay():
     css_resources = INLINE.render_css()
 
     return render_template("statistics_database_delay.html",
-                           timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
+                           timespan=humanfriendly.format_timespan(end_date - start_date, max_units=2),
                            figures=figures,
                            scripts=scripts,
                            js_resources=js_resources,
                            css_resources=css_resources)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -732,6 +777,7 @@ def database_size():
                            script=script,
                            js_resources=js_resources,
                            css_resources=css_resources)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -764,6 +810,7 @@ def statistics_switch_cycles():
                            js_resources=js_resources,
                            css_resources=css_resources)
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -772,6 +819,7 @@ def sensors():
     sensor_data = SensorData().current_sensor_data()
 
     return render_template('sensors.html', sensors=sensor_data)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -812,7 +860,7 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
     # render template
     html = render_template(
         'sensors_timeseries.html',
-        timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
+        timespan=humanfriendly.format_timespan(end_date - start_date, max_units=2),
         sensor=sensor,
         unit=unit,
         plot_script=script,
@@ -822,6 +870,7 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
     )
 
     return encode_utf8(html)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -886,7 +935,7 @@ def sensors_device(device):
 
     plot = column(*list(figures.values()))
 
-    #plot = column(figures['temperature'],
+    # plot = column(figures['temperature'],
     #              figures['humidity'],
     #              figures['pressure'],
     #              figures['gas'])
@@ -899,7 +948,7 @@ def sensors_device(device):
     # render template
     html = render_template(
         'device_sensors_timeseries.html',
-        timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
+        timespan=humanfriendly.format_timespan(end_date - start_date, max_units=2),
         device=device,
         plot_scripts=plot_scripts,
         plot_divs=plot_divs,
@@ -908,6 +957,7 @@ def sensors_device(device):
     )
 
     return encode_utf8(html)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -948,7 +998,7 @@ def sensors_presence():
     # render template
     html = render_template(
         'sensors_timeseries.html',
-        timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
+        timespan=humanfriendly.format_timespan(end_date - start_date, max_units=2),
         sensor="Presence",
         unit="on/off",
         plot_script=plot_script,
@@ -958,6 +1008,7 @@ def sensors_presence():
     )
 
     return encode_utf8(html)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -974,6 +1025,7 @@ def sensors_temperature():
                              time_range=(start_date, end_date),
                              connectivity_data=connectivity_data)
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -988,6 +1040,7 @@ def sensors_humidity():
                              unit="%RH",
                              time_range=(start_date, end_date),
                              connectivity_data=connectivity_data)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1004,6 +1057,7 @@ def sensors_pressure():
                              time_range=(start_date, end_date),
                              connectivity_data=connectivity_data)
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -1019,6 +1073,7 @@ def sensors_gas():
                              unit="VOC kOhm",
                              time_range=(start_date, end_date),
                              connectivity_data=connectivity_data)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1056,6 +1111,7 @@ def timeseries_plot_brightness(device_data, unit: str, x_range, **kwargs):
         figures[f'brightness_{sensor_name}'] = fig
 
     return figures
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1132,7 +1188,7 @@ def create_timeseries_brightness(sensor_data,
     # render template
     html = render_template(
         'sensors_timeseries.html',
-        timespan=humanfriendly.format_timespan(end_date-start_date, max_units=2),
+        timespan=humanfriendly.format_timespan(end_date - start_date, max_units=2),
         sensor=sensor,
         unit=unit,
         plot_script=plot_script,
@@ -1142,6 +1198,7 @@ def create_timeseries_brightness(sensor_data,
     )
 
     return encode_utf8(html)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1157,6 +1214,7 @@ def sensors_brightness():
                                         unit="lx",
                                         time_range=(start_date, end_date),
                                         connectivity_data=connectivity_data)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Main
