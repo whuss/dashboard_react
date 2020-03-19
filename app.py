@@ -1041,16 +1041,15 @@ def sensors_presence():
     for device in on_off_data.index.levels[0]:
         try:
             device_data = on_off_data.loc[device]
-            if not device_data.empty:
-                fig = plot_on_off_times(device_data, x_range=x_range)
-                x_range = fig.x_range
-                if connectivity_data is not None:
-                    try:
-                        device_data = connectivity_data.loc[device]
-                        connectivity_fig = plot_connection_times(device_data, x_range=x_range)
-                        fig = column(fig, connectivity_fig)
-                    except KeyError:
-                        print(f"Warning: No connectivity data for device {device}.")
+            fig = plot_on_off_times(device_data, x_range=x_range)
+            x_range = fig.x_range
+            if connectivity_data is not None:
+                try:
+                    device_data = connectivity_data.loc[device]
+                    connectivity_fig = plot_connection_times(device_data, x_range=x_range)
+                    fig = column(fig, connectivity_fig)
+                except KeyError:
+                    print(f"Warning: No connectivity data for device {device}.")
             figures.append(fig)
             devices.append(device)
         except KeyError:

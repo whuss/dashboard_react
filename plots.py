@@ -549,6 +549,8 @@ def plot_on_off_times(device_data, **kwargs):
 
     if 'x_range' in kwargs:
         x_range = kwargs['x_range']
+        if isinstance(x_range, tuple):
+            x_range = Range1d(x_range[0], x_range[1])
     else:
         x_range = Range1d(device_data.begin.min(), device_data.end.max())
 
