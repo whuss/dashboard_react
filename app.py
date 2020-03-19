@@ -408,7 +408,7 @@ def crashes():
     x_range = min(dates), max(dates)
 
     # compute range of y_axis
-    y_range = 0, max(combined_histogram.max())
+    y_range = 0.1, max(combined_histogram.max())
 
     # compute string of the end of the day for url creation
     def end_of_day(row):

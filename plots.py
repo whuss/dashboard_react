@@ -8,6 +8,7 @@ from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, OpenURL, TapTool
 from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
 from bokeh.models import NumeralTickFormatter, PrintfTickFormatter
+from bokeh.models.ranges import Range1d
 from bokeh import palettes, layouts
 
 from flask import url_for
@@ -298,7 +299,8 @@ def plot_crashes(data, device="PTL_DEFAULT", **kwargs):
     vbar_width = timedelta(days=1) / 2.5
     vbar_shift = vbar_width.total_seconds() * 1000
 
-    fig = figure(x_axis_type="datetime", x_range=x_range, y_range=y_range, plot_height=200, plot_width=800,
+    fig = figure(x_axis_type="datetime", y_axis_type="log",
+                 x_range=x_range, y_range=y_range, plot_height=200, plot_width=800,
                  title="Crashes/Restarts per day", tools="tap")
     fig.output_backend = "svg"
     fig.toolbar.logo = None
@@ -324,6 +326,7 @@ def plot_crashes(data, device="PTL_DEFAULT", **kwargs):
     fig.vbar(x=dodge('date', -vbar_shift / 2, range=fig.x_range),
              width=vbar_width,
              top='restart_count',
+             bottom=0.1,
              color='#478c06',
              source=data_source,
              name="restarts",
@@ -331,6 +334,7 @@ def plot_crashes(data, device="PTL_DEFAULT", **kwargs):
     fig.vbar(x=dodge('date', +vbar_shift / 2, range=fig.x_range),
              width=vbar_width,
              top='crash_count',
+             bottom=0.1,
              color="#ff3d06",
              source=data_source,
              name="crashes",
@@ -538,6 +542,7 @@ def plot_connection_times(device_data, **kwargs):
 
 
 def plot_on_off_times(device_data, **kwargs):
+    colors = ['#eeeeee', '#ffcc00']  # [off, on]
     plot_width = kwargs.pop('plot_width', 800)
     plot_height = kwargs.pop('plot_height', 80)
     title = kwargs.pop('title', None)
@@ -545,31 +550,13 @@ def plot_on_off_times(device_data, **kwargs):
     if 'x_range' in kwargs:
         x_range = kwargs['x_range']
     else:
-        x_range = device_data.begin.min(), device_data.end.max()
-
-    device_data.loc[:, 'duration_str'] = device_data.duration.apply(utils.format_time_span)
-
-    def light_status(connected):
-        if connected:
-            return "on"
-        else:
-            return "off"
-    device_data.loc[:, 'light_status'] = device_data.value.apply(light_status)
-
-    colors = ['#eeeeee', '#ffcc00'] # [off, on]
-    device_data['color'] = device_data.value.apply(lambda x: colors[x])
-
-    # double the height of the hbar when the light is on to make short burst more visible
-    device_data['height'] = device_data.value.apply(lambda x: 0.5 * (x + 1))
-
-    data_source = ColumnDataSource(device_data)
+        x_range = Range1d(device_data.begin.min(), device_data.end.max())
 
     fig = figure(title=title,
                  x_axis_type="datetime",
                  x_range=x_range, y_range=(0, 1),
                  plot_height=plot_height, plot_width=plot_width,
                  toolbar_location="above")
-    fig.hbar(y=0.5, left='begin', right='end', height='height', color='color', line_color=None, source=data_source)
     fig.yaxis.visible = False
     # disable grid
     fig.xgrid.grid_line_color = None
@@ -585,6 +572,29 @@ def plot_on_off_times(device_data, **kwargs):
                  # TODO: add hover tool
                  # HoverTool(mode='vline')
     ]
+
+    if device_data.empty:
+        fig.hbar(y=0.5, left=x_range.start, right=x_range.end, height=0.5, color=colors[0], line_color=None)
+        return fig
+
+    device_data.loc[:, 'duration_str'] = device_data.duration.apply(utils.format_time_span)
+
+    def light_status(connected):
+        if connected:
+            return "on"
+        else:
+            return "off"
+    device_data.loc[:, 'light_status'] = device_data.value.apply(light_status)
+
+    device_data['color'] = device_data.value.apply(lambda x: colors[x])
+
+    # double the height of the hbar when the light is on to make short burst more visible
+    device_data['height'] = device_data.value.apply(lambda x: 0.5 * (x + 1))
+
+    data_source = ColumnDataSource(device_data)
+
+    fig.hbar(y=0.5, left='begin', right='end', height='height', color='color', line_color=None, source=data_source)
+
 
     hover_tool = HoverTool(tooltips=[('begin', '@begin{%F %H:%M:%S}'),
                                      ('end', '@end{%F %H:%M:%S}'),

@@ -587,6 +587,9 @@ class PresenceDetectorStatistics(object):
             query = query.filter(ip.device == device)
 
         data = pd.DataFrame(query.all())
+        if data.empty:
+            return data
+
         data.value = data.value.apply(self._on_off)
 
         # remove consecutive rows with the same 'value'
