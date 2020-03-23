@@ -1023,9 +1023,8 @@ def debug_sensors_presence():
 
     return encode_utf8(html)
 
-
-
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 @app.route('/sensors/presence', methods=['GET'])
 def sensors_presence():

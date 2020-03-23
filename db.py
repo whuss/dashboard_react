@@ -1,10 +1,9 @@
-from flask_sqlalchemy import SQLAlchemy
-import pandas as pd
-import numpy as np
-from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
-import utils
+import numpy as np
+import pandas as pd
+from dataclasses import dataclass, field
+from flask_sqlalchemy import SQLAlchemy
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Setup
@@ -12,6 +11,7 @@ import utils
 
 
 db = SQLAlchemy()
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Define DB Model
@@ -29,6 +29,7 @@ class DeadManPackage(db.Model):
     timestamp = db.Column('ix_data_dtm', key='timestamp')
     create_dtm = db.Column('create_dtm')
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -41,6 +42,7 @@ class DbSizePackage(db.Model):
     data_size_in_mb = db.Column('data_size_in_mb', key='data_size_in_mb')
     index_size_in_mb = db.Column('index_size_in_mb', key='index_size_in_mb')
     create_dtm = db.Column('create_dtm')
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -57,6 +59,7 @@ class ErrorPackage(db.Model):
     errno = db.Column('number_int', key="errno")
     message = db.Column('message_str', key="message")
     create_dtm = db.Column('create_dtm')
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -76,6 +79,7 @@ class LoggerPackage(db.Model):
     message = db.Column('message_str', key="message")
     create_dtm = db.Column('create_dtm')
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -94,6 +98,7 @@ class VersionPackage(db.Model):
     version_timestamp = db.Column('version_timestamp_dtm', key='version_timestamp')
     create_dtm = db.Column('create_dtm')
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -106,6 +111,7 @@ class DeviceInfo(db.Model):
     mode = db.Column('device_mode_ind', key='mode')
     last_update = db.Column('last_update_dtm', key='last_update')
     create_dtm = db.Column('create_dtm')
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -127,13 +133,14 @@ class InstructionPackage(db.Model):
     # ------------------------------------------------------------------------------------------------------------------
 
     # FIXME: make static, get mapped column names
-    def getColumns(self):
+    def get_columns(self):
         return self.__table__.columns
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def getColumnNames(self):
-        return self.getColumns().keys()
+    def get_column_names(self):
+        return self.get_columns().keys()
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -147,6 +154,7 @@ class LightingPackage(db.Model):
     timestamp = db.Column('ix_data_dtm', key='timestamp')
     mode = db.Column('ix_mode_ind', key='mode')
     create_dtm = db.Column('create_dtm')
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -166,6 +174,7 @@ class MouseGesturePackage(db.Model):
     gesture_deviation = db.Column('gesture_deviation_dbl', key='gesture_deviation')
     create_dtm = db.Column('create_dtm')
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -179,6 +188,7 @@ class TemperaturePackage(db.Model):
     temperature = db.Column('temperature_dbl', key='temperature')
     unit = db.Column('unit_sn', key='unit')
     create_dtm = db.Column('create_dtm')
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -225,6 +235,7 @@ class GasPackage(db.Model):
     unit = db.Column('unit_sn', key='unit')
     create_dtm = db.Column('create_dtm')
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -240,6 +251,7 @@ class BrightnessPackage(db.Model):
     unit = db.Column('unit_sn', key='unit')
     create_dtm = db.Column('create_dtm')
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -254,6 +266,7 @@ class LoudnessPackage(db.Model):
     unit = db.Column('unit_sn', key='unit')
     create_dtm = db.Column('create_dtm')
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 # DB Queries
 # ----------------------------------------------------------------------------------------------------------------------
@@ -266,18 +279,18 @@ class Dashboard(object):
 
         # ---- Info query ----
         self.query_info = db.session.query(DeviceInfo.device,
-                                        DeviceInfo.mode)
+                                           DeviceInfo.mode)
 
         # ---- Mode query ----
         lp = LightingPackage
         lastone = db.func.max(lp.id).label('lastone')
         last_light_package = db.session.query(lp.device, lastone) \
-                                    .group_by(lp.device)
+            .group_by(lp.device)
 
         sq = last_light_package.subquery()
         # last know operating mode per PTL-device
         self.query_mode = db.session.query(lp.device, lp.timestamp, lp.mode) \
-                                 .join(sq, sq.columns.lastone == lp.id)
+            .join(sq, sq.columns.lastone == lp.id)
         super().__init__()
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -293,8 +306,8 @@ class Dashboard(object):
         lp = LightingPackage
         light_count = db.func.count(lp.id).label('light_count')
         return db.session.query(lp.device, light_count) \
-                      .filter(lp.timestamp >= start_date) \
-                      .group_by(lp.device)
+            .filter(lp.timestamp >= start_date) \
+            .group_by(lp.device)
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -303,8 +316,8 @@ class Dashboard(object):
         mp = MouseGesturePackage
         mouse_count = db.func.count(mp.id).label('mouse_count')
         return db.session.query(mp.device, mouse_count) \
-                      .filter(mp.timestamp >= start_date) \
-                      .group_by(mp.device)
+            .filter(mp.timestamp >= start_date) \
+            .group_by(mp.device)
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -312,11 +325,11 @@ class Dashboard(object):
         tp = TemperaturePackage
         last_connection = db.func.max(tp.id).label('last_index')
         last_index = db.session.query(tp.device, last_connection) \
-                       .group_by(tp.device) \
-                       .subquery()
+            .group_by(tp.device) \
+            .subquery()
 
         return db.session.query(tp.device, tp.id, tp.timestamp.label('last_update')) \
-                 .join(last_index, tp.id == last_index.c.last_index)
+            .join(last_index, tp.id == last_index.c.last_index)
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -328,12 +341,12 @@ class Dashboard(object):
         since = db.func.timediff(db.func.now(), sq_mode.c.timestamp).label('since')
 
         return self.query_info \
-                   .outerjoin(sq_mode, DeviceInfo.device == sq_mode.c.device) \
-                   .outerjoin(sq_last_connection, DeviceInfo.device == sq_last_connection.c.device) \
-                   .add_columns(sq_mode.c.mode,
-                                since,
-                                sq_last_connection.c.last_update) \
-                   .order_by(DeviceInfo.device)
+            .outerjoin(sq_mode, DeviceInfo.device == sq_mode.c.device) \
+            .outerjoin(sq_last_connection, DeviceInfo.device == sq_last_connection.c.device) \
+            .add_columns(sq_mode.c.mode,
+                         since,
+                         sq_last_connection.c.last_update) \
+            .order_by(DeviceInfo.device)
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -382,6 +395,7 @@ class Dashboard(object):
 
         return data
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -392,34 +406,34 @@ class SensorData(object):
 
         tp = TemperaturePackage
         self.sq_temperature = db.session.query(tp.device, db.func.max(tp.timestamp), tp.temperature, tp.unit) \
-                                     .group_by(tp.device) \
-                                     .subquery()
+            .group_by(tp.device) \
+            .subquery()
 
         hp = HumidityPackage
         self.sq_humidity = db.session.query(hp.device, db.func.max(hp.timestamp), hp.humidity, hp.unit) \
-                                  .group_by(hp.device) \
-                                  .subquery()
+            .group_by(hp.device) \
+            .subquery()
 
         pp = PressurePackage
         self.sq_pressure = db.session.query(pp.device, db.func.max(pp.timestamp), pp.pressure, pp.unit) \
-                                  .group_by(pp.device) \
-                                  .subquery()
+            .group_by(pp.device) \
+            .subquery()
 
         gp = GasPackage
         self.sq_gas = db.session.query(gp.device, db.func.max(gp.timestamp), gp.gas, gp.amount, gp.unit) \
-                             .group_by(gp.device) \
-                             .subquery()
+            .group_by(gp.device) \
+            .subquery()
 
         bp = BrightnessPackage
         self.sq_brightness = db.session.query(bp.device, db.func.max(bp.timestamp), bp.brightness, bp.unit) \
-                                    .filter(bp.source == "brightness_l_h@BH1750") \
-                                    .group_by(bp.device) \
-                                    .subquery()
+            .filter(bp.source == "brightness_l_h@BH1750") \
+            .group_by(bp.device) \
+            .subquery()
 
         lp = LoudnessPackage
         self.sq_loudness = db.session.query(lp.device, db.func.max(lp.timestamp), lp.loudness, lp.unit) \
-                                  .group_by(lp.device) \
-                                  .subquery()
+            .group_by(lp.device) \
+            .subquery()
 
         super().__init__()
 
@@ -434,28 +448,28 @@ class SensorData(object):
         sq_loudness = self.sq_loudness
 
         return self.query_device \
-                   .outerjoin(sq_temperature, DeviceInfo.device == sq_temperature.c.device) \
-                   .add_columns(sq_temperature.c.temperature, sq_temperature.c.unit.label('temperature_unit')) \
-                   .outerjoin(sq_humidity, DeviceInfo.device == sq_humidity.c.device) \
-                   .add_columns(sq_humidity.c.humidity, sq_humidity.c.unit.label('humidity_unit')) \
-                   .outerjoin(sq_pressure, DeviceInfo.device == sq_pressure.c.device) \
-                   .add_columns(sq_pressure.c.pressure, sq_pressure.c.unit.label('pressure_unit')) \
-                   .outerjoin(sq_gas, DeviceInfo.device == sq_gas.c.device) \
-                   .add_columns(sq_gas.c.gas, sq_gas.c.amount.label('gas_amount'), sq_gas.c.unit.label('gas_unit')) \
-                   .outerjoin(sq_brightness, DeviceInfo.device == sq_brightness.c.device) \
-                   .add_columns(sq_brightness.c.brightness, sq_brightness.c.unit.label('brightness_unit')) \
-                   .outerjoin(sq_loudness, DeviceInfo.device == sq_loudness.c.device) \
-                   .add_columns(sq_loudness.c.loudness, sq_loudness.c.unit.label('loudness_unit')) \
-                   .order_by(DeviceInfo.device) \
-                   .all()
+            .outerjoin(sq_temperature, DeviceInfo.device == sq_temperature.c.device) \
+            .add_columns(sq_temperature.c.temperature, sq_temperature.c.unit.label('temperature_unit')) \
+            .outerjoin(sq_humidity, DeviceInfo.device == sq_humidity.c.device) \
+            .add_columns(sq_humidity.c.humidity, sq_humidity.c.unit.label('humidity_unit')) \
+            .outerjoin(sq_pressure, DeviceInfo.device == sq_pressure.c.device) \
+            .add_columns(sq_pressure.c.pressure, sq_pressure.c.unit.label('pressure_unit')) \
+            .outerjoin(sq_gas, DeviceInfo.device == sq_gas.c.device) \
+            .add_columns(sq_gas.c.gas, sq_gas.c.amount.label('gas_amount'), sq_gas.c.unit.label('gas_unit')) \
+            .outerjoin(sq_brightness, DeviceInfo.device == sq_brightness.c.device) \
+            .add_columns(sq_brightness.c.brightness, sq_brightness.c.unit.label('brightness_unit')) \
+            .outerjoin(sq_loudness, DeviceInfo.device == sq_loudness.c.device) \
+            .add_columns(sq_loudness.c.loudness, sq_loudness.c.unit.label('loudness_unit')) \
+            .order_by(DeviceInfo.device) \
+            .all()
 
     # ------------------------------------------------------------------------------------------------------------------
 
     def temperature(self, since, until, device=None):
         tp = TemperaturePackage
         query = db.session.query(tp.device, tp.temperature, tp.unit, tp.timestamp) \
-                  .filter(tp.timestamp >= since) \
-                  .filter(tp.timestamp <= until)
+            .filter(tp.timestamp >= since) \
+            .filter(tp.timestamp <= until)
 
         if device:
             query = query.filter(tp.device == device)
@@ -476,8 +490,8 @@ class SensorData(object):
         """
         bp = BrightnessPackage
         query = db.session.query(bp.device, bp.brightness, bp.unit, bp.timestamp, bp.source) \
-                          .filter(bp.timestamp >= since) \
-                          .filter(bp.timestamp <= until)
+            .filter(bp.timestamp >= since) \
+            .filter(bp.timestamp <= until)
 
         if device:
             query = query.filter(bp.device == device)
@@ -488,13 +502,13 @@ class SensorData(object):
         data = data.set_index(['device', 'source', data.index])
         return data
 
-# ------------------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------------------------------
 
     def humidity(self, since, until, device=None):
         hp = HumidityPackage
         query = db.session.query(hp.device, hp.humidity, hp.unit, hp.timestamp) \
-                  .filter(hp.timestamp >= since) \
-                  .filter(hp.timestamp <= until)
+            .filter(hp.timestamp >= since) \
+            .filter(hp.timestamp <= until)
 
         if device:
             query = query.filter(hp.device == device)
@@ -504,13 +518,13 @@ class SensorData(object):
 
         return _timeseries(data, 'humidity')
 
-# ------------------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------------------------------
 
     def pressure(self, since, until, device=None):
         pp = PressurePackage
         query = db.session.query(pp.device, pp.pressure, pp.unit, pp.timestamp) \
-                  .filter(pp.timestamp >= since) \
-                  .filter(pp.timestamp <= until)
+            .filter(pp.timestamp >= since) \
+            .filter(pp.timestamp <= until)
 
         if device:
             query = query.filter(pp.device == device)
@@ -520,13 +534,13 @@ class SensorData(object):
 
         return _timeseries(data, 'pressure')
 
-# ------------------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------------------------------
 
     def gas(self, since, until, device=None):
         gp = GasPackage
         query = db.session.query(gp.device, gp.gas, gp.amount, gp.unit, gp.timestamp) \
-                  .filter(gp.timestamp >= since) \
-                  .filter(gp.timestamp <= until)
+            .filter(gp.timestamp >= since) \
+            .filter(gp.timestamp <= until)
 
         if device:
             query = query.filter(gp.device == device)
@@ -535,6 +549,7 @@ class SensorData(object):
         data = query.all()
 
         return _timeseries(data, 'amount')
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -546,7 +561,7 @@ class PresenceDetectorStatistics(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     def _on_off(self, x):
-            return 1 if x == "ON" else 0
+        return 1 if x == "ON" else 0
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -612,13 +627,13 @@ class PresenceDetectorStatistics(object):
         sq_device = db.session.query(DeviceInfo.device).subquery()
 
         query = db.session.query(ip.device, ip.source, ip.timestamp, ip.instruction, ip.target, ip.value) \
-                    .filter(ip.source.contains("Lullaby")) \
-                    .filter(ip.instruction == "MODE") \
-                    .filter(ip.target == "POWER") \
-                    .filter(ip.value == "ON") \
-                    .filter(ip.device != "PTL_DEFAULT") \
-                    .outerjoin(sq_device, sq_device.c.device == ip.device) \
-                    .order_by(ip.device)
+            .filter(ip.source.contains("Lullaby")) \
+            .filter(ip.instruction == "MODE") \
+            .filter(ip.target == "POWER") \
+            .filter(ip.value == "ON") \
+            .filter(ip.device != "PTL_DEFAULT") \
+            .outerjoin(sq_device, sq_device.c.device == ip.device) \
+            .order_by(ip.device)
 
         def is_night(date):
             time = date.time()
@@ -634,14 +649,16 @@ class PresenceDetectorStatistics(object):
         data = data.rename(columns=dict(value="count"))
         return data
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class Errors(object):
     def crashes(self, device=None):
         lp = LoggerPackage
-        query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename, lp.line_number, lp.log_level, lp.message) \
-                          .filter(lp.log_level == "CRITICAL")
+        query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename, lp.line_number, lp.log_level,
+                                 lp.message) \
+            .filter(lp.log_level == "CRITICAL")
 
         if device:
             query = query.filter(lp.device == device)
@@ -694,7 +711,7 @@ class Errors(object):
         lp = LoggerPackage
         query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename,
                                  lp.line_number, lp.log_level, lp.message) \
-                          .filter(lp.log_level == "ERROR")
+            .filter(lp.log_level == "ERROR")
 
         if device:
             query = query.filter(lp.device == device)
@@ -712,15 +729,15 @@ class Errors(object):
         from sqlalchemy import Date
         lp = LoggerPackage
         query = db.session \
-                  .query(lp.device,
-                         lp.timestamp.cast(Date).label('date'),
-                         db.func.count(lp.timestamp).label('error_count')) \
-                  .filter(lp.log_level.in_(["ERROR", "CRITICAL"])) \
-                  .filter(lp.device != "PTL_DEFAULT") \
-                  .group_by('date') \
-                  .group_by(lp.device)
+            .query(lp.device,
+                   lp.timestamp.cast(Date).label('date'),
+                   db.func.count(lp.timestamp).label('error_count')) \
+            .filter(lp.log_level.in_(["ERROR", "CRITICAL"])) \
+            .filter(lp.device != "PTL_DEFAULT") \
+            .group_by('date') \
+            .group_by(lp.device)
 
-        data=pd.DataFrame(query.all())
+        data = pd.DataFrame(query.all())
         data['end_of_day'] = data.date.apply(lambda x: x + timedelta(days=1))
         data = data.set_index(['device', 'date'])
         return data
@@ -731,17 +748,17 @@ class Errors(object):
         from sqlalchemy import Date
         lp = LoggerPackage
         query = db.session \
-                  .query(lp.device,
-                         lp.filename,
-                         lp.line_number,
-                         lp.timestamp.cast(Date).label('date'),
-                         db.func.count(lp.timestamp).label('error_count')) \
-                  .filter(lp.log_level.in_(["ERROR", "CRITICAL"])) \
-                  .filter(lp.device != "PTL_DEFAULT") \
-                  .group_by('date') \
-                  .group_by(lp.filename) \
-                  .group_by(lp.line_number) \
-                  .group_by(lp.device)
+            .query(lp.device,
+                   lp.filename,
+                   lp.line_number,
+                   lp.timestamp.cast(Date).label('date'),
+                   db.func.count(lp.timestamp).label('error_count')) \
+            .filter(lp.log_level.in_(["ERROR", "CRITICAL"])) \
+            .filter(lp.device != "PTL_DEFAULT") \
+            .group_by('date') \
+            .group_by(lp.filename) \
+            .group_by(lp.line_number) \
+            .group_by(lp.device)
 
         data = pd.DataFrame(query.all())
         data['end_of_day'] = data.date.apply(lambda x: x + timedelta(days=1))
@@ -753,10 +770,10 @@ class Errors(object):
     def crash_at_time(self, device, time):
         lp = LoggerPackage
         query = db.session.query(lp.device, lp.id, lp.log_level, lp.timestamp) \
-                          .filter(lp.log_level == "CRITICAL") \
-                          .filter(lp.device == device) \
-                          .filter(lp.timestamp <= time) \
-                          .filter(lp.timestamp >= time - timedelta(minutes=5))
+            .filter(lp.log_level == "CRITICAL") \
+            .filter(lp.device == device) \
+            .filter(lp.timestamp <= time) \
+            .filter(lp.timestamp >= time - timedelta(minutes=5))
 
         data = pd.DataFrame(query.all())
 
@@ -781,9 +798,10 @@ class Errors(object):
 
         sq_device = db.session.query(DeviceInfo.device).subquery()
 
-        query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename, lp.line_number, lp.log_level, lp.message) \
-                       .outerjoin(sq_device, sq_device.c.device == lp.device) \
-                       .order_by(lp.device)
+        query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename, lp.line_number, lp.log_level,
+                                 lp.message) \
+            .outerjoin(sq_device, sq_device.c.device == lp.device) \
+            .order_by(lp.device)
 
         query = query.filter(lp.device != "PTL_DEFAULT")
 
@@ -798,19 +816,19 @@ class Errors(object):
 
         if log_level != "TRACE":
             if log_level == "DEBUG":
-                filter = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
+                _filter = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
             elif log_level == "INFO":
-                filter = ["CRITICAL", "ERROR", "WARNING", "INFO"]
+                _filter = ["CRITICAL", "ERROR", "WARNING", "INFO"]
             elif log_level == "WARNING":
-                filter = ["CRITICAL", "ERROR", "WARNING"]
+                _filter = ["CRITICAL", "ERROR", "WARNING"]
             elif log_level == "ERROR":
-                filter = ["CRITICAL", "ERROR"]
+                _filter = ["CRITICAL", "ERROR"]
             elif log_level == "CRITICAL":
-                filter = ["CRITICAL"]
+                _filter = ["CRITICAL"]
             else:
-                filter = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE"]
+                _filter = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE"]
 
-            query = query.filter(lp.log_level.in_(filter))
+            query = query.filter(lp.log_level.in_(_filter))
 
         if filename:
             query = query.filter(lp.filename == filename)
@@ -820,7 +838,7 @@ class Errors(object):
 
         if num_lines:
             query = query.order_by(lp.timestamp.desc()) \
-                         .slice(1, num_lines)
+                .slice(1, num_lines)
 
         if page is not None:
             print(f"Pageinate: page={page}")
@@ -847,8 +865,8 @@ class Errors(object):
         sq_device = db.session.query(DeviceInfo.device).subquery()
 
         query = db.session.query(vp.device, vp.timestamp, vp.version_timestamp, vp.branch, vp.commit, vp.ip) \
-                       .outerjoin(sq_device, sq_device.c.device == vp.device) \
-                       .order_by(vp.device)
+            .outerjoin(sq_device, sq_device.c.device == vp.device) \
+            .order_by(vp.device)
 
         query = query.filter(vp.device != "PTL_DEFAULT")
 
@@ -862,6 +880,7 @@ class Errors(object):
 
         data = data.set_index(['device', data.index])
         return data
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -885,14 +904,14 @@ class ModeStatistics(object):
 
         lp = LightingPackage
         sq_mode = db.session.query(lp.device, lp.mode, db.func.count(lp.mode).label('count')) \
-                 .group_by(lp.mode) \
-                 .group_by(lp.device) \
-                 .order_by(lp.device) \
-                 .subquery()
+            .group_by(lp.mode) \
+            .group_by(lp.device) \
+            .order_by(lp.device) \
+            .subquery()
 
         self.query_mode = query_device.outerjoin(sq_mode, DeviceInfo.device == sq_mode.c.device) \
-                                      .add_columns(sq_mode.c.mode, sq_mode.c.count) \
-                                      .order_by(DeviceInfo.device)
+            .add_columns(sq_mode.c.mode, sq_mode.c.count) \
+            .order_by(DeviceInfo.device)
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -909,6 +928,7 @@ class ModeStatistics(object):
 
     def mode_counts(self):
         return self._table_to_python(self.query_mode.all())
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -927,16 +947,16 @@ class MouseData(object):
 
         mgp = MouseGesturePackage
         sq_mouse = db.session.query(mgp.device, mgp.timestamp, mgp.gesture_start, mgp.gesture_end,
-                                 mgp.gesture_distance, mgp.gesture_speed, mgp.gesture_deviation) \
-                          .filter(mgp.timestamp >= since) \
-                          .filter(mgp.timestamp <= until) \
-                          .subquery()
+                                    mgp.gesture_distance, mgp.gesture_speed, mgp.gesture_deviation) \
+            .filter(mgp.timestamp >= since) \
+            .filter(mgp.timestamp <= until) \
+            .subquery()
 
         query = self.query_device \
-                    .outerjoin(sq_mouse, sq_mouse.c.device == DeviceInfo.device) \
-                    .add_columns(sq_mouse.c.timestamp, sq_mouse.c.gesture_start, sq_mouse.c.gesture_end,
-                                 sq_mouse.c.gesture_distance, sq_mouse.c.gesture_speed, sq_mouse.c.gesture_deviation) \
-                    .order_by(sq_mouse.c.device, sq_mouse.c.timestamp)
+            .outerjoin(sq_mouse, sq_mouse.c.device == DeviceInfo.device) \
+            .add_columns(sq_mouse.c.timestamp, sq_mouse.c.gesture_start, sq_mouse.c.gesture_end,
+                         sq_mouse.c.gesture_distance, sq_mouse.c.gesture_speed, sq_mouse.c.gesture_deviation) \
+            .order_by(sq_mouse.c.device, sq_mouse.c.timestamp)
 
         data = pd.DataFrame(query.all())
         data = data.set_index(['device', data.index])
@@ -950,6 +970,7 @@ class MouseData(object):
             data_dict[device] = df.dropna()
 
         return data_dict
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -975,8 +996,8 @@ class DatabaseDelay(object):
     def package_delay(self, start_date, end_date):
         p = InstructionPackage
         query1 = db.session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= start_date) \
-                        .filter(p.timestamp <= end_date)
+            .filter(p.timestamp >= start_date) \
+            .filter(p.timestamp <= end_date)
         # p = LightingPackage
         # query2 = db.session.query(p.device, p.create_dtm, p.timestamp) \
         #                 .filter(p.timestamp >= start_date) \
@@ -987,8 +1008,8 @@ class DatabaseDelay(object):
         #                 .filter(p.timestamp <= end_date)
         p = TemperaturePackage
         query4 = db.session.query(p.device, p.create_dtm, p.timestamp) \
-                        .filter(p.timestamp >= start_date) \
-                        .filter(p.timestamp <= end_date)
+            .filter(p.timestamp >= start_date) \
+            .filter(p.timestamp <= end_date)
         # p = HumidityPackage
         # query5 = db.session.query(p.device, p.create_dtm, p.timestamp) \
         #                 .filter(p.timestamp >= start_date) \
@@ -1011,13 +1032,13 @@ class DatabaseDelay(object):
         #                 .filter(p.timestamp <= end_date)
 
         query = query1.union(query4) \
-                      #.union(query3) \
-                      #.union(query4) \
-                      #.union(query5) \
-                      #.union(query6) \
-                      #.union(query7) \
-                      #.union(query8) \
-                      #.union(query9)
+            # .union(query3) \
+        # .union(query4) \
+        # .union(query5) \
+        # .union(query6) \
+        # .union(query7) \
+        # .union(query8) \
+        # .union(query9)
 
         data = pd.DataFrame(query.all())
         data = data.set_index(['device', data.index])
@@ -1027,6 +1048,7 @@ class DatabaseDelay(object):
         # the db server are not time synced. This negative values are set to 0
         data.delay = np.maximum(data.delay, np.timedelta64(0))
         return data
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1042,9 +1064,9 @@ class Connectivity(object):
 
         dmp = DeadManPackage
         query = db.session.query(dmp.device, dmp.timestamp) \
-                  .filter(dmp.timestamp >= since) \
-                  .filter(dmp.timestamp <= until) \
-                  .filter(dmp.device != "PTL_DEFAULT")
+            .filter(dmp.timestamp >= since) \
+            .filter(dmp.timestamp <= until) \
+            .filter(dmp.device != "PTL_DEFAULT")
 
         if device:
             query = query.filter(dmp.device == device)
@@ -1081,6 +1103,7 @@ class Connectivity(object):
 
         return data
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -1088,7 +1111,7 @@ def _timeseries(data, sensor: str):
     expected_signal_interval = timedelta(minutes=10)
 
     def lost_signal(x):
-        return (x > expected_signal_interval)
+        return x > expected_signal_interval
 
     data = pd.DataFrame(data)
     data = data.set_index(['device', data.index])
@@ -1111,6 +1134,7 @@ def _timeseries(data, sensor: str):
         data_dict[device] = df[['timestamp', 'signal_delay', 'lost_signal', sensor]].dropna()
 
     return data_dict
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
