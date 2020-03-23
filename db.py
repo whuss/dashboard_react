@@ -1096,6 +1096,23 @@ class Connectivity(object):
             query = query.filter(dmp.device == device)
 
         data = pd.DataFrame(query.all())
+
+        devices = data.device.unique()
+        num_devices = len(devices)
+        # add a timestamp for each device at the start of the time interval
+        data_since = pd.DataFrame(np.vstack([devices,
+                                             np.array(num_devices * [since])])
+                                  .transpose(),
+                                  columns=["device", "timestamp"])
+        # add a timestamp for each device at the end of the time interval
+        data_until = pd.DataFrame(np.vstack([devices,
+                                             np.array(num_devices * [until])])
+                                  .transpose(),
+                                  columns=["device", "timestamp"])
+
+        # combine data
+        data = pd.concat([data_since, data, data_until]).reset_index()
+
         # compute the time difference between two consecutive rows
         data['delay'] = data.groupby('device').timestamp.diff()
         # The first row for each device has no 'delay' value.
