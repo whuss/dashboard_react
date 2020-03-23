@@ -94,25 +94,25 @@ def format_datetime(value, format='medium'):
 
 
 @app.template_filter('str')
-def _str(input):
-    return str(input) if input else ""
+def _str(_input):
+    return str(_input) if _input else ""
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.template_filter('or_else')
-def _or_else(input, else_input):
-    return str(input) if input else str(else_input)
+def _or_else(_input, else_input):
+    return str(_input) if _input else str(else_input)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.template_filter('timespan')
-def _time_span(input):
-    if input:
-        utils.format_time_span(input)
+def _time_span(_input):
+    if _input:
+        utils.format_time_span(_input)
     return ""
 
 
@@ -120,29 +120,29 @@ def _time_span(input):
 
 
 @app.template_filter('none')
-def _number(input):
-    if pd.isna(input):
+def _number(_input):
+    if pd.isna(_input):
         return ""
-    return input if input else ""
+    return _input if _input else ""
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.template_filter('unit')
-def _unit(input, unit='°C'):
-    if not input:
+def _unit(_input, unit='°C'):
+    if not _input:
         return ""
-    return f"{input:.2f} {unit}"
+    return f"{_input:.2f} {unit}"
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.template_filter('format_duration')
-def _format_duration(input):
+def _format_duration(_input):
     try:
-        minutes = int(input)
+        minutes = int(_input)
         if minutes < 60:
             return f"{minutes} minutes"
         elif minutes % 60 == 0 and minutes // 60 < 24:
@@ -155,14 +155,6 @@ def _format_duration(input):
         # input is not an integer
         return str(minutes)
 
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-# @app.teardown_request
-# def teardown(exception=None):
-#    # teardown database session
-#    session.close()
-
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -173,14 +165,14 @@ def utility_processor():
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def _str(input):
-        return str(input) if input else ""
+    def _str(_input):
+        return str(_input) if _input else ""
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def _time_span(input):
-        if input:
-            seconds = input.seconds
+    def _time_span(_input):
+        if _input:
+            seconds = _input.seconds
             minutes = seconds // 60
             seconds = seconds % 60
             hours = minutes // 60
@@ -191,15 +183,15 @@ def utility_processor():
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def _number(input):
-        return input if input else ""
+    def _number(_input):
+        return _input if _input else ""
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def _unit(input, unit):
-        if not input:
+    def _unit(_input, unit):
+        if not _input:
             return ""
-        return f"{input:.2f} {unit}"
+        return f"{_input:.2f} {unit}"
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -230,7 +222,7 @@ app.jinja_env.globals['url_for_self'] = url_for_self
 
 @app.route('/')
 def index():
-    data = Dashboard().info()
+    data = Dashboard.info()
     return render_template('home.html', data=data)
 
 

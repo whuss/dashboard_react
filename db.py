@@ -301,7 +301,8 @@ class Dashboard(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def query_light(self, start_date):
+    @staticmethod
+    def query_light(start_date):
         """number of lighting changes since start_date per PTL-device"""
         lp = LightingPackage
         light_count = db.func.count(lp.id).label('light_count')
@@ -311,7 +312,8 @@ class Dashboard(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def query_mouse(self, start_date):
+    @staticmethod
+    def query_mouse(start_date):
         """number of mouse gestures since start_date per PTL-device"""
         mp = MouseGesturePackage
         mouse_count = db.func.count(mp.id).label('mouse_count')
@@ -321,7 +323,8 @@ class Dashboard(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def query_last_connection(self, start_date):
+    @staticmethod
+    def query_last_connection():
         tp = TemperaturePackage
         last_connection = db.func.max(tp.id).label('last_index')
         last_index = db.session.query(tp.device, last_connection) \
@@ -336,7 +339,7 @@ class Dashboard(object):
     def query_dashboard(self, start_date):
         """database query for main information dashboard"""
         sq_mode = self.query_mode.subquery()
-        sq_last_connection = self.query_last_connection(start_date).subquery()
+        sq_last_connection = self.query_last_connection().subquery()
 
         since = db.func.timediff(db.func.now(), sq_mode.c.timestamp).label('since')
 
@@ -356,7 +359,8 @@ class Dashboard(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def info(self):
+    @staticmethod
+    def info():
         query_device = db.session.query(DeviceInfo.device, DeviceInfo.mode.label('study_mode')) \
             .order_by(DeviceInfo.device) \
             .filter(DeviceInfo.device != "PTL_DEFAULT")
@@ -465,7 +469,8 @@ class SensorData(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def temperature(self, since, until, device=None):
+    @staticmethod
+    def temperature(since, until, device=None):
         tp = TemperaturePackage
         query = db.session.query(tp.device, tp.temperature, tp.unit, tp.timestamp) \
             .filter(tp.timestamp >= since) \
@@ -481,7 +486,8 @@ class SensorData(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def brightness(self, since, until, device=None):
+    @staticmethod
+    def brightness(since, until, device=None):
         """ Return timeseries of Brightness package for all devices
 
         Note:
@@ -504,7 +510,8 @@ class SensorData(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def humidity(self, since, until, device=None):
+    @staticmethod
+    def humidity(since, until, device=None):
         hp = HumidityPackage
         query = db.session.query(hp.device, hp.humidity, hp.unit, hp.timestamp) \
             .filter(hp.timestamp >= since) \
@@ -520,7 +527,8 @@ class SensorData(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def pressure(self, since, until, device=None):
+    @staticmethod
+    def pressure(since, until, device=None):
         pp = PressurePackage
         query = db.session.query(pp.device, pp.pressure, pp.unit, pp.timestamp) \
             .filter(pp.timestamp >= since) \
@@ -536,7 +544,8 @@ class SensorData(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def gas(self, since, until, device=None):
+    @staticmethod
+    def gas(since, until, device=None):
         gp = GasPackage
         query = db.session.query(gp.device, gp.gas, gp.amount, gp.unit, gp.timestamp) \
             .filter(gp.timestamp >= since) \
@@ -560,7 +569,8 @@ class PresenceDetectorStatistics(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def _on_off(self, x):
+    @staticmethod
+    def _on_off(x):
         return 1 if x == "ON" else 0
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -581,14 +591,15 @@ class PresenceDetectorStatistics(object):
             .add_columns(sq_on_off.c.timestamp, sq_on_off.c.value)
 
         data = pd.DataFrame(query.all())
-        data.value = data.value.apply(self._on_off)
+        data.value = data.value.apply(PresenceDetectorStatistics._on_off)
         data = data.set_index(['device', data.index])
 
         return data
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def on_off_timeseries(self, since, until, device=None):
+    @staticmethod
+    def on_off_timeseries(since, until, device=None):
         ip = InstructionPackage
         query = db.session.query(ip.device, ip.timestamp, ip.value) \
             .filter(ip.source.contains("Lullaby")) \
@@ -605,7 +616,7 @@ class PresenceDetectorStatistics(object):
         if data.empty:
             return data
 
-        data.value = data.value.apply(self._on_off)
+        data.value = data.value.apply(PresenceDetectorStatistics._on_off)
 
         # remove consecutive rows with the same 'value'
         data['keep_row'] = data.groupby('device').value.diff(periods=1)
@@ -622,7 +633,8 @@ class PresenceDetectorStatistics(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def on_off_cycle_count(self):
+    @staticmethod
+    def on_off_cycle_count():
         ip = InstructionPackage
         sq_device = db.session.query(DeviceInfo.device).subquery()
 
@@ -639,7 +651,7 @@ class PresenceDetectorStatistics(object):
             time = date.time()
             return time.hour <= 6 or time.hour >= 22
 
-        data = pd.DataFrame(query.all())
+        data: pd.DataFrame = pd.DataFrame(query.all())
         data = data.drop(columns=['source', 'target', 'instruction'])
         data['date'] = data.timestamp.apply(lambda x: x.date())
         data['night'] = data.timestamp.apply(is_night)
@@ -654,7 +666,8 @@ class PresenceDetectorStatistics(object):
 
 
 class Errors(object):
-    def crashes(self, device=None):
+    @staticmethod
+    def crashes(device=None):
         lp = LoggerPackage
         query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename, lp.line_number, lp.log_level,
                                  lp.message) \
@@ -672,7 +685,8 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def crash_histogram(self):
+    @staticmethod
+    def crash_histogram():
         from sqlalchemy import Date
         lp = LoggerPackage
         query = db.session \
@@ -690,7 +704,8 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def restart_histogram(self):
+    @staticmethod
+    def restart_histogram():
         from sqlalchemy import Date
         vp = VersionPackage
         query = db.session \
@@ -707,7 +722,8 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def errors(self, device=None):
+    @staticmethod
+    def errors(device=None):
         lp = LoggerPackage
         query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename,
                                  lp.line_number, lp.log_level, lp.message) \
@@ -725,7 +741,8 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def error_histogram(self):
+    @staticmethod
+    def error_histogram():
         from sqlalchemy import Date
         lp = LoggerPackage
         query = db.session \
@@ -744,7 +761,8 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def error_heatmap(self):
+    @staticmethod
+    def error_heatmap():
         from sqlalchemy import Date
         lp = LoggerPackage
         query = db.session \
@@ -767,7 +785,8 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def crash_at_time(self, device, time):
+    @staticmethod
+    def crash_at_time(device, time):
         lp = LoggerPackage
         query = db.session.query(lp.device, lp.id, lp.log_level, lp.timestamp) \
             .filter(lp.log_level == "CRITICAL") \
@@ -782,7 +801,8 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def logs(self, device_id=None, since=None, until=None, num_lines=None, log_level="TRACE", page=None,
+    @staticmethod
+    def logs(device_id=None, since=None, until=None, num_lines=None, log_level="TRACE", page=None,
              filename=None, line_number=None):
 
         print(f"device_id={device_id}")
@@ -859,7 +879,8 @@ class Errors(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def version(self, device_id=None, check_crashes=True):
+    @staticmethod
+    def version(device_id=None, check_crashes=True):
         vp = VersionPackage
 
         sq_device = db.session.query(DeviceInfo.device).subquery()
@@ -876,7 +897,7 @@ class Errors(object):
         data = pd.DataFrame(query.all())
 
         if check_crashes:
-            data['crash'] = data.apply(lambda row: self.crash_at_time(row['device'], row['timestamp']), axis=1)
+            data['crash'] = data.apply(lambda row: Errors.crash_at_time(row['device'], row['timestamp']), axis=1)
 
         data = data.set_index(['device', data.index])
         return data
@@ -915,7 +936,8 @@ class ModeStatistics(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def _table_to_python(self, table):
+    @staticmethod
+    def _table_to_python(table):
         data = {}
         for row in table:
             if row.device not in data:
@@ -927,7 +949,7 @@ class ModeStatistics(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     def mode_counts(self):
-        return self._table_to_python(self.query_mode.all())
+        return ModeStatistics._table_to_python(self.query_mode.all())
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -982,7 +1004,8 @@ class DatabaseDelay(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def size(self):
+    @staticmethod
+    def size():
         dp = DbSizePackage
         query = db.session.query(dp.date, dp.data_size_in_mb, dp.index_size_in_mb)
         data = pd.DataFrame(query.all())
@@ -993,7 +1016,8 @@ class DatabaseDelay(object):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def package_delay(self, start_date, end_date):
+    @staticmethod
+    def package_delay(start_date, end_date):
         p = InstructionPackage
         query1 = db.session.query(p.device, p.create_dtm, p.timestamp) \
             .filter(p.timestamp >= start_date) \
