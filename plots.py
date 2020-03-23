@@ -542,7 +542,7 @@ def plot_connection_times(device_data, **kwargs):
 
 
 def plot_on_off_times(device_data, **kwargs):
-    colors = ['#eeeeee', '#ffcc00']  # [off, on]
+    colors = ['#eeeeee', '#ff8e00']  # [off, on]
     plot_width = kwargs.pop('plot_width', 800)
     plot_height = kwargs.pop('plot_height', 80)
     title = kwargs.pop('title', None)

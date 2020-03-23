@@ -607,16 +607,42 @@ class PresenceDetectorStatistics(object):
             .filter(ip.target == "POWER") \
             .filter(ip.timestamp >= since) \
             .filter(ip.timestamp <= until) \
-            .order_by(ip.device, ip.timestamp)
+            .filter(ip.device != "PTL_DEFAULT")
+
+        sq_index_since = db.session.query(ip.device, db.func.max(ip.timestamp).label('timestamp_since')) \
+            .filter(ip.source.contains("Lullaby")) \
+            .filter(ip.instruction == "MODE") \
+            .filter(ip.target == "POWER") \
+            .filter(ip.timestamp < since) \
+            .filter(ip.device != "PTL_DEFAULT") \
+            .group_by(ip.device) \
+            .subquery()
+
+        query_since = db.session.query(ip.device, ip.timestamp, ip.value) \
+            .filter(ip.source.contains("Lullaby")) \
+            .filter(ip.instruction == "MODE") \
+            .filter(ip.target == "POWER") \
+            .filter(ip.timestamp < since) \
+            .filter(ip.device != "PTL_DEFAULT") \
+            .join(sq_index_since, sq_index_since.c.device == ip.device) \
+            .filter(ip.timestamp == sq_index_since.c.timestamp_since)
 
         if device:
             query = query.filter(ip.device == device)
+            query_since = query_since.filter(ip.device == device)
 
         data = pd.DataFrame(query.all())
+        data_since = pd.DataFrame(query_since.all())
+        data_since.timestamp = since
+
+        data = pd.concat([data_since, data], ignore_index=True)
+
         if data.empty:
             return data
 
         data.value = data.value.apply(PresenceDetectorStatistics._on_off)
+
+        data = data.sort_values(['device', 'timestamp'])
 
         # remove consecutive rows with the same 'value'
         data['keep_row'] = data.groupby('device').value.diff(periods=1)
@@ -628,8 +654,13 @@ class PresenceDetectorStatistics(object):
         data['duration'] = data.groupby('device').begin.diff(periods=-1).abs()
         data['end'] = data.begin + data.duration
 
+        # set the end of the last interval to the end of the time interval [since, until]
+        data.end = data.end.fillna(until)
+        # fill NaT values for column duration
+        data.duration = data.end - data.begin
+
         data = data.set_index(['device', data.index])
-        return data
+        return data[['begin', 'value', 'duration', 'end']]
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -1111,7 +1142,7 @@ class Connectivity(object):
                                   columns=["device", "timestamp"])
 
         # combine data
-        data = pd.concat([data_since, data, data_until]).reset_index()
+        data = pd.concat([data_since, data, data_until], ignore_index=True)
 
         # compute the time difference between two consecutive rows
         data['delay'] = data.groupby('device').timestamp.diff()

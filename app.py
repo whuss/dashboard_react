@@ -1022,7 +1022,7 @@ def debug_sensors_presence():
 def sensors_presence():
     start_date, end_date = parse_date_range(request)
     x_range = start_date, end_date
-    on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date, end_date).dropna()
+    on_off_data = PresenceDetectorStatistics().on_off_timeseries(start_date, end_date)
     connectivity_data = Connectivity.connection_times(start_date, end_date)
 
     figures = []
