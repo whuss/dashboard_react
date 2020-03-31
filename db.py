@@ -41,8 +41,6 @@ class DbSizePackage(db.Model):
     date = db.Column('ix_data_dtm', key='date')
     data_size_in_mb = db.Column('data_size_in_mb', key='data_size_in_mb')
     index_size_in_mb = db.Column('index_size_in_mb', key='index_size_in_mb')
-    create_dtm = db.Column('create_dtm')
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 
