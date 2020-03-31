@@ -5,7 +5,8 @@
 
 # It is done this way because the MySQL event_scheduler is turned off in our database configuration
 
-from app import db, DbSizePackage
+from app import db
+from db import DbSizePackage
 
 # Get current size of database
 sql = """SELECT CURDATE(), table_schema, ROUND(SUM(data_length) / 1024 / 1024, 1) as data_size,
