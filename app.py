@@ -29,7 +29,7 @@ from plots import plot_on_off_cycles, plot_lost_signal, plot_crashes, plot_error
 from plots import plot_database_size, plot_error_heatmap, color_palette, plot_connection_times
 from plots import plot_on_off_times
 
-import utils
+import utils.date
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Configuration
@@ -81,7 +81,7 @@ def format_datetime(value, format='medium'):
     if not value:
         return ""
     if isinstance(value, str):
-        value = utils.parse_date(value)
+        value = utils.date.parse_date(value)
 
     if format == 'full':
         format = "EEEE, d. MMMM y 'at' HH:mm"
@@ -112,7 +112,7 @@ def _or_else(_input, else_input):
 @app.template_filter('timespan')
 def _time_span(_input):
     if _input:
-        utils.format_time_span(_input)
+        utils.date.format_time_span(_input)
     return ""
 
 
@@ -445,7 +445,7 @@ def crashes():
 
 
 def _logs(device_id, timestamp, log_level="TRACE", before=2, after=2, page=None, filename=None, line_number=None):
-    restart_time = utils.parse_date(timestamp)
+    restart_time = utils.date.parse_date(timestamp)
     start_date = restart_time - timedelta(minutes=before)
     end_date = restart_time + timedelta(minutes=after)
 

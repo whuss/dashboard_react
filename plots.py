@@ -12,7 +12,7 @@ from bokeh.models.ranges import Range1d
 from bokeh import palettes, layouts
 
 from flask import url_for
-import utils
+import utils.date
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -499,7 +499,7 @@ def plot_connection_times(device_data, **kwargs):
     else:
         x_range = device_data.begin.min(), device_data.end.max()
 
-    device_data.loc[:, 'duration_str'] = device_data.duration.apply(utils.format_time_span)
+    device_data.loc[:, 'duration_str'] = device_data.duration.apply(utils.date.format_time_span)
 
     def connection_status(connected):
         if connected:
@@ -579,7 +579,7 @@ def plot_on_off_times(device_data, **kwargs):
         fig.hbar(y=0.5, left=x_range.start, right=x_range.end, height=0.5, color=colors[0], line_color=None)
         return fig
 
-    device_data.loc[:, 'duration_str'] = device_data.duration.apply(utils.format_time_span)
+    device_data.loc[:, 'duration_str'] = device_data.duration.apply(utils.date.format_time_span)
 
     def light_status(connected):
         if connected:
