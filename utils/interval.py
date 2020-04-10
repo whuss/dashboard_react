@@ -1,14 +1,21 @@
 from dataclasses import dataclass
+from typing import TypeVar, Generic
 
 import pandas as pd
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+# Type of interval boundaries, needs to support arithmetic and comparisons.
+T = TypeVar('T')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 @dataclass
-class Interval:
-    begin: int
-    end: int
+class Interval(Generic[T]):
+    begin: T
+    end: T
 
 # ----------------------------------------------------------------------------------------------------------------------
 
