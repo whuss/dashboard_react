@@ -1,7 +1,9 @@
 from dataclasses import dataclass
-from typing import TypeVar, Generic
+from datetime import datetime, timedelta
+from typing import TypeVar, Generic, Union
 
 import pandas as pd
+from pandas.core.series import Series
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -17,10 +19,22 @@ class Interval(Generic[T]):
     begin: T
     end: T
 
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @property
+    def length(self):
+        return self.end - self.begin
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def is_intersecting(a, b):
+TimeInterval = Interval[datetime]
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def is_intersecting(a: Union[Interval[T], Series],
+                    b: Union[Interval[T], Series]) -> bool:
     # we assume a begins before b, otherwise swap the intervals
     if a.begin > b.begin:
         a, b = b, a
@@ -89,5 +103,12 @@ def intersect_intervals(intervals_1, intervals_2):
                 # intersection:         >----------<
                 intersections.append((interval_1.begin, interval_1.end))
                 interval_1 = generator_1.next()
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def remove_short_intervals(intervals, length: timedelta):
+    """Remove all intervals that are shorter than 'length'."""
+    return intervals[intervals.end - intervals.begin > length]
 
 # ----------------------------------------------------------------------------------------------------------------------
