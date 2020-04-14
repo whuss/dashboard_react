@@ -44,6 +44,8 @@ _dbname: str = "bbf_inf_rep"
 
 _db_url: str = f'mysql://{_user}:{_password}@{_host}/{_dbname}'
 
+_db_cache_url: str = f'mysql://{_user}:{_password}@localhost/bbf_inf_cache'
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Setup
@@ -54,6 +56,9 @@ def create_app():
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = _db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_BINDS'] = {
+        'cache': _db_cache_url
+    }
     # app.config['BASIC_AUTH_USERNAME'] = "ReproLight"
     # app.config['BASIC_AUTH_PASSWORD'] = "infinity"
     # app.config['BASIC_AUTH_FORCE'] = True

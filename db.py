@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date, time
 
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass, field
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects import mysql
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Setup
@@ -12,9 +13,27 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
+# ----------------------------------------------------------------------------------------------------------------------
+# Custom column types
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PickleTypeMedium(db.PickleType):
+    impl = mysql.MEDIUMBLOB
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Define DB Model
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class DataFramePackage(db.Model):
+    __bind_key__ = "cache"
+    id = db.Column(db.Integer, primary_key=True)
+    device = db.Column(db.String(20))
+    date = db.Column(db.Date)
+    query = db.Column(db.String(100))
+    data = db.Column(PickleTypeMedium)
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -1213,3 +1232,33 @@ def _timeseries(data, sensor: str):
 def dataframe_from_query(query):
     """Return the result of a SQLAlchemy query as a pandas dataframe"""
     return pd.read_sql(query.statement, query.session.bind)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def query_cache(device: str, data_date: date, query: str):
+    dfp = DataFramePackage
+    query = db.session.query(dfp.id) \
+        .filter(dfp.device == device) \
+        .filter(dfp.date == data_date) \
+        .filter(dfp.query == query)
+
+    return query.first() is not None
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def get_cached_sensor_data(device: str, data_date: date):
+    dfp = DataFramePackage
+    query = db.session.query(dfp.data) \
+        .filter(dfp.device == device) \
+        .filter(dfp.date == data_date) \
+        .filter(dfp.query == "sensor_data")
+
+    data = query.first()
+    if data:
+        return data[0]
+
+    return None
+
+# ----------------------------------------------------------------------------------------------------------------------

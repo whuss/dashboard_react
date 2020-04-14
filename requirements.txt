@@ -1,4 +1,5 @@
 pytest
+plumbum
 mysqlclient==1.3.10
 dataclasses==0.7
 Babel==2.8.0
