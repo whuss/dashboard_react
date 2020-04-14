@@ -51,7 +51,7 @@ def main():
 
 
 @click.command(name="init", help="Create database tables")
-def clear_cache():
+def initialize_cache():
     click.confirm("Create database tables for query cache?", abort=True)
     db.create_all(bind='cache')
 
