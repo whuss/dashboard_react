@@ -112,3 +112,18 @@ def remove_short_intervals(intervals, length: timedelta):
     return intervals[intervals.end - intervals.begin > length]
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+
+def parse_interval(interval):
+    if isinstance(interval, Interval):
+        return interval
+    if isinstance(interval, tuple):
+        if len(interval) == 2 and isinstance(interval[0], datetime) and isinstance(interval[1], datetime):
+            begin, end = interval
+            return TimeInterval(begin, end)
+    if isinstance(interval, pd.core.Series):
+        return interval
+
+    raise TypeError(f"Incorrect type for parameter interval: {interval}.")
+
+# ----------------------------------------------------------------------------------------------------------------------

@@ -1,75 +1,18 @@
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from dataclasses import dataclass
-from enum import Enum
 from typing import Optional
 
 import pandas as pd
+from dataclasses import dataclass
 
-from app import db, app
+from app import db
 from db import InstructionPackage, VersionPackage
-from utils.interval import TimeInterval, Interval
+from utils.interval import TimeInterval, Interval, parse_interval
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def parse_interval(interval):
-    if isinstance(interval, Interval):
-        return interval
-    if isinstance(interval, tuple):
-        if len(interval) == 2 and isinstance(interval[0], datetime) and isinstance(interval[1], datetime):
-            begin, end = interval
-            return TimeInterval(begin, end)
-    if isinstance(interval, pd.core.Series):
-        return interval
-
-    raise TypeError(f"Incorrect type for parameter interval: {interval}.")
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-def expand_mode_dataframe(data, since: datetime, until: datetime, column_name: str):
-    """Duplicate last value with timestamp set to until."""
-    if data.empty:
-        data = pd.DataFrame({"timestamp": [since, until], "status": ["OFF", "OFF"]}).set_index('timestamp')
-    else:
-        # get last data point
-        last_value = data.iloc[-1].copy()
-        # change timestamp
-        last_value.name = until
-
-        first_value = last_value.copy()
-        first_value.name = since
-        first_value.status = "OFF"
-        data = pd.concat([pd.DataFrame([first_value]),
-                          data,
-                          pd.DataFrame([last_value])],
-                         axis=0)[['status']]
-
-        # remove duplicate index entries
-        data = data.reset_index()\
-            .drop_duplicates(subset=['index']) \
-            .set_index('index')
-
-    def on_off(value):
-        if value == "OFF":
-            return 0
-        elif value == "ON":
-            return 1
-        raise ValueError(f"data {value} is not in ['ON', 'OFF']")
-
-    data = data.applymap(on_off)
-
-    # resample data
-    data = data.resample("1s").ffill()
-    data = data.rename(columns=dict(status=column_name))
-
-    return data
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-def get_mode_data_raw(device: str, interval) -> pd.DataFrame:
+def get_instructions_data(device: str, interval) -> pd.DataFrame:
     """Returns dataframe of all instructions that changed the ptl running mode in the given interval.
 
     @parameter: device
@@ -79,13 +22,13 @@ def get_mode_data_raw(device: str, interval) -> pd.DataFrame:
         A time interval. Either a tuple of two date objects, or an object with properties 'begin' and 'end'
         which return date objects.
 
-    @returns: a pandas dataframe with three data columns 'timestamp', 'target' and 'status'.
+    @returns: a pandas dataframe with data columns 'target' and 'status'.
 
-        timestamp: contains datetime objects
-        target: contains strings in the set {'POWER_PRESENCE', 'POWER_MANUAL', 'LIGHT_SHOWER', 'TASK_VERT', 'TASK_HORI'}
+        target: contains strings in the set {'POWER_PRESENCE', 'POWER_MANUAL', 'LIGHT_SHOWER',
+                                             'TASK_VERT', 'TASK_HORI', 'SETTINGS', 'RESTART'}
         status: contains strings in the set {'OFF', 'ON'}
 
-        the returned dataframe is sorted by the timestamp column.
+        The dataframe is sorted by its datetime index column named timestamp.
     """
 
     interval = parse_interval(interval)
@@ -152,9 +95,6 @@ def get_mode_data_raw(device: str, interval) -> pd.DataFrame:
 
     data_instructions.target = data_instructions.apply(power, axis=1)
 
-    # round timestamps to the nearest second
-    #data_instructions.timestamp = data_instructions.timestamp.apply(lambda t: t.round('1s'))
-
     # select columns
     data_instructions = data_instructions[['timestamp', 'target', 'status']]
 
@@ -173,106 +113,149 @@ def get_mode_data_raw(device: str, interval) -> pd.DataFrame:
     # combine instructions and restarts
     data = pd.concat([data_instructions, data_restart], axis=0)
 
-    return data.sort_values(by="timestamp").set_index("timestamp")
+    # sort and set index
+    data = data.sort_values(by="timestamp").set_index("timestamp")
+    data.index.name = "timestamp"
 
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-def get_mode_data_version1(device, interval, rule: str = "1Min") -> pd.DataFrame:
-    data = get_mode_data_raw(device, interval)
-    interval = parse_interval(interval)
-    since, until = interval.begin, interval.end
-
-    columns = [
-        expand_mode_dataframe(data[data.target == 'POWER_MANUAL'], since, until, column_name="power_manual"),
-        expand_mode_dataframe(data[data.target == 'POWER_PRESENCE'], since, until, column_name="presence"),
-        expand_mode_dataframe(data[data.target == 'TASK_VERT'], since, until, column_name="vertical"),
-        expand_mode_dataframe(data[data.target == 'TASK_HORI'], since, until, column_name="horizontal"),
-        expand_mode_dataframe(data[data.target == 'LIGHT_SHOWER'], since, until, column_name="light_shower"),
-        expand_mode_dataframe(data[data.target == 'SETTINGS'], since, until, column_name="settings")
-        ]
-
-    return pd.concat(columns, axis=1)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-def get_mode_data_version2(device: str, interval) -> pd.DataFrame:
-    data_raw = get_mode_data_raw(device, interval)
-    interval = parse_interval(interval)
-    since, until = interval.begin, interval.end
-
-    def filter_target_column(data: pd.DataFrame, target: str):
-        return data[data.target == target].drop(columns='target') \
-            .rename(columns=dict(status=target))
-
-    # todo add "SETTINGS" and "POWER_MANUAL"
-    instruction_targets = ['POWER_PRESENCE', 'POWER_MANUAL', 'LIGHT_SHOWER', 'TASK_VERT', 'TASK_HORI', 'SETTINGS']
-
-    split_data = [filter_target_column(data_raw, target) for target in instruction_targets]
-
-    from functools import reduce
-    merged_data = reduce(lambda a, b: pd.merge(a, b, how='outer', on='timestamp'), split_data)
-    return merged_data.sort_values(by="timestamp")
+    return data
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @dataclass
-class State:
+class PtlState:
+    """Encodes all possible states of the PTL, that are tracked for data analysis.
+
+    The state is encoded as a 3 tuple (power, scene, settings) where each component
+    is an element in a set of finite strings.
+
+    power: in {'OFF', 'ON'}, describing if the PTL is turned on or off.
+    scene: in {'AUTO', 'TASK_HORI', 'TASK_VERT', 'LIGHT_SHOWER'} describing the
+        selected lighting scene, where 'AUTO' corresponds to the AI-controlled mode.
+    settings: in {'OFF', 'ON'}, describing if the settings panel is open
+        on the PTL windows control application.
+
+    Note: This represenation is choosen over Enum, because it makes it easier to store
+        states in in pandas dataframes.
+    """
     power: str
-    mode: str
+    scene: str
     settings: str
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def state_transitions(state: State, transition) -> State:
-    new_state: State = State(state.power, state.mode, state.settings)
-    if transition.target in ["POWER_PRESENCE", "POWER_MANUAL"]:
-        new_state.power = transition.status
+def state_transitions(state: PtlState, instruction) -> PtlState:
+    """Transition function mapping a PTL 'state' to a new PTL state according
+    to 'instruction' which is tuple representation of the known PTL instructions.
+
+    @parameter: state
+        Represents the current state of the PTL
+
+    @parameter: instruction:
+        Represents an instruction that is applied to the current state.
+
+        'instruction' has string properties 'target' and 'status' with values in the sets:
+
+        instruction.target in {'POWER_PRESENCE', 'POWER_MANUAL', 'LIGHT_SHOWER',
+                               'TASK_VERT', 'TASK_HORI', 'SETTINGS', 'RESTART'}
+        instruction.status in {'OFF', 'ON'}
+
+        Note: The parameter 'instruction' has the same format as the data rows returned by
+              the get_instructions_data() function.
+
+    @returns: a new PtlState that is the result of applying instruction to state.
+
+    Note: The transition are defined according to the table defined in doc/state_transitions.ods
+
+    Note: The transitions function contains all possible combinations of (state, instruction) pairs,
+          also some that cannot happen in the real PTL. Since there is the possibility that some
+          instructions are not recorded in the database (loss of internet connection, etc.), we cannot
+          assume that only transitions that happen in the actual PTL happen, when the state_transition
+          function is applied to a list of instructions that are downloaded from the database.
+    """
+    new_state: PtlState = PtlState(state.power, state.scene, state.settings)
+    if instruction.target in ["POWER_PRESENCE", "POWER_MANUAL"]:
+        new_state.power = instruction.status
         return new_state
 
-    if transition.target in ["LIGHT_SHOWER", "TASK_HORI", "TASK_VERT"]:
+    if instruction.target in ["LIGHT_SHOWER", "TASK_HORI", "TASK_VERT"]:
         new_state.power = "ON"
         new_state.settings = "OFF"
-        if transition.status == "ON":
-            new_state.mode = transition.target
-        elif transition.status == "OFF":
-            new_state.mode = "AUTO"
+        if instruction.status == "ON":
+            new_state.scene = instruction.target
+        elif instruction.status == "OFF":
+            new_state.scene = "AUTO"
         else:
-            raise ValueError(f"Unknown transition: state={(state.power, state.mode, state.settings)}, "
-                             f"transition={(transition.target, transition.value)}")
+            raise ValueError(f"Unknown transition: state={(state.power, state.scene, state.settings)}, "
+                             f"transition={(instruction.target, instruction.value)}")
         return new_state
 
-    if transition.target == "SETTINGS":
-        new_state.settings = transition.status
+    if instruction.target == "SETTINGS":
+        new_state.settings = instruction.status
         return new_state
 
-    if transition.target == "RESTART":
-        new_state.mode = "AUTO"
+    if instruction.target == "RESTART":
+        new_state.scene = "AUTO"
         new_state.settings = "OFF"
         return new_state
 
-    raise ValueError(f"Unknown transition: state={(state.power, state.mode, state.settings)}, "
-                     f"transition={(transition.target, transition.value)}")
+    raise ValueError(f"Unknown transition: state={(state.power, state.scene, state.settings)}, "
+                     f"transition={(instruction.target, instruction.value)}")
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def get_mode_data(device: str, interval) -> pd.DataFrame:
-    data = get_mode_data_raw(device, interval)
+def get_state_data(device: str, interval, resample_rule: Optional[str] = None) -> pd.DataFrame:
+    """Calculate PTL states for the selected time interval.
+
+    Since the PTL does not actually record its state in the database, (and actually does not even track its state
+    internally) we need to compute its state from the instructions that are recorded in the database
+    InstructionPackage table. The instructions are downloaded by the get_instructions_data() function in this module.
+
+    The state of the PTL is encoded by the PtlState class. Note the get_instructions_data() function does not return
+    object of type PtlState but each data row is a pandas series item with the same format as PtlState, and thus can
+    be used in place of PtlState.
+
+    @parameter: device
+        Device name of a PTL
+
+    @parameter: interval
+        A time interval. Either a tuple of two date objects, or an object with properties 'begin' and 'end'
+        which return date objects.
+
+    @parameter: resample_rule
+        When resample_rule is given, the returned dataframe is resampled with the selected rule. The format
+        of this parameter is the same as the rule parameter of the pandas resample function, i.e. use '1S' to
+        get a data point every second. The state of a timestamp is extrapolated from the last known state,
+        it is assumed that no unknown state changes occurred.
+
+        The last known state is extended until the end of the selected time interval.
+
+        Note: It is not checked if the end of the time interval lies in the future.
+
+    @returns: a pandas dataframe with data columns 'power' and 'scene' and 'settings' describing the state of the PTL.
+
+        power: contains strings in the set {'OFF', 'ON'}, describing if the PTL is turned on or off.
+        scene: contains strings in the set {'AUTO', 'TASK_HORI', 'TASK_VERT', 'LIGHT_SHOWER'} describing the
+            selected lighting scene, where 'AUTO' corresponds to the AI-controlled mode.
+        settings: contains strings in the set {'OFF', 'ON'}, describing if the settings panel is open
+            on the PTL windows control application.
+
+        The dataframe is sorted by its datetime index column named timestamp.
+    """
+    data = get_instructions_data(device, interval)
     interval = parse_interval(interval)
     since, until = interval.begin, interval.end
 
     data['power'] = pd.NaT
-    data['mode'] = pd.NaT
+    data['scene'] = pd.NaT
     data['settings'] = pd.NaT
 
     # Set initial state
     first_timestamp = data.index.min()
     data.loc[first_timestamp, 'power'] = "OFF"
-    data.loc[first_timestamp, 'mode'] = "AUTO"
+    data.loc[first_timestamp, 'scene'] = "AUTO"
     data.loc[first_timestamp, 'settings'] = "OFF"
 
     # Apply state transition automaton
@@ -280,7 +263,7 @@ def get_mode_data(device: str, interval) -> pd.DataFrame:
     for index, row in data.iterrows():
         if not state:
             # the state is already set for the first row
-            state = State(row['power'], row['mode'], row['settings'])
+            state = PtlState(row.power, row.scene, row.settings)
             continue
 
         # compute state transition
@@ -288,10 +271,27 @@ def get_mode_data(device: str, interval) -> pd.DataFrame:
         state = state_transitions(state, transition)
 
         # update state in current row
-        row['power'] = state.power
-        row['mode'] = state.mode
-        row['settings'] = state.settings
+        row.power = state.power
+        row.scene = state.scene
+        row.settings = state.settings
 
+    # select only the columns describing the ptl state
+    data = data[['power', 'scene', 'settings']]
+
+    if resample_rule:
+        # copy the last known PTL state to the end of the selected time interval
+        last_ptl_state = data.iloc[-1]
+        # only append a data row if the timestamp of the last row is not already the
+        # end of the selected time interval
+        if last_ptl_state.name != until:
+            last_ptl_state.name = until
+            data_until = pd.DataFrame([last_ptl_state])
+            data = data.append(data_until)
+
+        # resample data
+        data = data.resample(resample_rule).ffill().dropna()
+
+    data.index.name = "timestamp"
     return data
 
 # ----------------------------------------------------------------------------------------------------------------------
