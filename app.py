@@ -17,6 +17,12 @@ from bokeh.embed import components
 from bokeh.layouts import column
 from bokeh.resources import INLINE
 from bokeh.util.string import encode_utf8
+from bokeh.models import ColumnDataSource
+from bokeh.plotting import figure
+from bokeh import palettes
+from bokeh.transform import cumsum
+from bokeh.models import NumeralTickFormatter
+from bokeh.models import HoverTool, SaveTool
 from typing import Tuple
 
 from dataclasses import dataclass, field
@@ -30,6 +36,8 @@ from plots import plot_database_size, plot_error_heatmap, color_palette, plot_co
 from plots import plot_on_off_times
 
 import utils.date
+
+from db import query_cache, get_devices, get_cached_data
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Configuration
@@ -1279,6 +1287,112 @@ def sensors_brightness():
                                         time_range=(start_date, end_date),
                                         connectivity_data=connectivity_data)
 
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_scene_durations(data):
+    data.loc[:, 'total_time'] = data.sum(axis=1)
+    data.AUTO /= data.total_time
+    data.TASK_HORI /= data.total_time
+    data.TASK_VERT /= data.total_time
+    data.LIGHT_SHOWER /= data.total_time
+
+    data = data.drop(columns=['total_time'])
+
+    # add fake data to see something
+    # TODO: remove this
+    #day = data.index.min()
+    #data.loc[day, :] = [0.25, 0.25, 0.25, 0.25]
+
+    data = data.rename(columns=dict(AUTO="automatic",
+                                    TASK_HORI="horizontal task",
+                                    TASK_VERT="vertical task",
+                                    LIGHT_SHOWER="light shower"))
+
+    data_t = data.transpose()
+    data_t = data_t.rename(columns={date: str(date) for date in data_t.columns})
+    data_t['colors'] = palettes.Category10[4]
+
+    #x_range = (data.index.min() - timedelta(days=1),
+    #           data.index.max() + timedelta(days=1))
+    from datetime import date
+    x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    data_source = ColumnDataSource(data_t)
+
+    fig = figure(plot_height=200, plot_width=800,
+                 title=f"Scenes",
+                 x_axis_type='datetime',
+                 x_range=x_range,
+                 y_range=(0, 1),
+                 tools="")
+    fig.yaxis.formatter = NumeralTickFormatter(format='0 %')
+
+    for date in data.index:
+        fig.vbar(bottom=cumsum(str(date), include_zero=True),
+                 top=cumsum(str(date)),
+                 x=date,
+                 width=timedelta(days=1) / 2,
+                 source=data_source,
+                 fill_color='colors',
+                 line_color='black',
+                 line_width=0)
+
+    fig.output_backend = "svg"
+    fig.toolbar.logo = None
+
+    hover_tool = HoverTool(tooltips=[('scene', '@index')],
+                           formatters={'scene': 'printf'})
+
+    fig.add_tools(hover_tool)
+    fig.add_tools(SaveTool())
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def test_plot():
+    p = figure(plot_width=400, plot_height=400)
+
+    # add a circle renderer with a size, color, and alpha
+    p.circle([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], size=20, color="navy", alpha=0.5)
+    return p
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/analytics/scenes')
+def analytics_scenes():
+    devices = get_devices()
+
+    full_data = dict()
+
+    @dataclass
+    class Scenes:
+        data: pd.DataFrame
+        plot: str
+
+    scripts = []
+
+    for device in devices:
+        scene_data = get_cached_data(device, None, "scene_durations")
+        if scene_data is not None:
+            fig = plot_scene_durations(scene_data)
+            script, div = components(fig)
+            scripts.append(script)
+            full_data[device] = div
+        else:
+            div = "no data"
+            full_data[device] = div
+
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    return render_template('analytics_scene.html', data=full_data,
+                           scripts=scripts,
+                           js_resources=js_resources,
+                           css_resources=css_resources,
+                           )
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Main

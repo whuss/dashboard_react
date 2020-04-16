@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, date, time
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -31,6 +32,16 @@ class DataFramePackage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     device = db.Column(db.String(20))
     date = db.Column(db.Date)
+    query = db.Column(db.String(100))
+    data = db.Column(PickleTypeMedium)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class DeviceDataFramePackage(db.Model):
+    __bind_key__ = "cache"
+    id = db.Column(db.Integer, primary_key=True)
+    device = db.Column(db.String(20))
     query = db.Column(db.String(100))
     data = db.Column(PickleTypeMedium)
 
@@ -1236,29 +1247,54 @@ def dataframe_from_query(query):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def query_cache(device: str, data_date: date, query: str):
-    dfp = DataFramePackage
-    query = db.session.query(dfp.id) \
-        .filter(dfp.device == device) \
-        .filter(dfp.date == data_date) \
-        .filter(dfp.query == query)
+def query_cache(device: str, data_date: Optional[date], query_name: str) -> bool:
+    if data_date:
+        dfp = DataFramePackage
+        query = db.session.query(dfp.id) \
+            .filter(dfp.device == device) \
+            .filter(dfp.date == data_date) \
+            .filter(dfp.query == query_name)
+    else:
+        dfp = DeviceDataFramePackage
+        query = db.session.query(dfp.id) \
+            .filter(dfp.device == device) \
+            .filter(dfp.query == query_name)
 
     return query.first() is not None
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def get_cached_sensor_data(device: str, data_date: date):
-    dfp = DataFramePackage
-    query = db.session.query(dfp.data) \
-        .filter(dfp.device == device) \
-        .filter(dfp.date == data_date) \
-        .filter(dfp.query == "sensor_data")
+def get_cached_data(device: str, data_date: Optional[date], query_name: str) -> Optional[pd.DataFrame]:
+    if data_date:
+        dfp = DataFramePackage
+        query = db.session.query(dfp.data) \
+            .filter(dfp.device == device) \
+            .filter(dfp.date == data_date) \
+            .filter(dfp.query == query_name)
+    else:
+        dfp = DeviceDataFramePackage
+        query = db.session.query(dfp.data) \
+            .filter(dfp.device == device) \
+            .filter(dfp.query == query_name)
 
     data = query.first()
     if data:
         return data[0]
 
     return None
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def get_devices():
+    def _is_ptl(device):
+        if not "PTL" in device:
+            return False
+        if device == "PTL_DEFAULT" or device == "PTL_UNIT_TEST":
+            return False
+
+        return True
+    return [device for device in Dashboard().devices() if _is_ptl(device)]
 
 # ----------------------------------------------------------------------------------------------------------------------

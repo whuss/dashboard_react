@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, time
+from typing import Union
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def parse_date(timestamp):
+def parse_date(timestamp: Union[datetime, str]) -> datetime:
     if isinstance(timestamp, datetime):
         return timestamp
     try:
@@ -17,8 +18,8 @@ def parse_date(timestamp):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def format_time_span(input):
-    seconds = input.seconds
+def format_time_span(td: timedelta) -> str:
+    seconds = td.seconds
     minutes = seconds // 60
     seconds = seconds % 60
     hours = minutes // 60
@@ -40,5 +41,17 @@ def date_range(start_date: date, end_date: date):
     while current_date < end_date:
         yield current_date
         current_date += one_day
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def start_of_day(day: date) -> datetime:
+    return datetime.combine(day, time())
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def end_of_day(day: date) -> datetime:
+    return datetime.combine(day, time(23, 59, 59, 999999))
 
 # ----------------------------------------------------------------------------------------------------------------------
