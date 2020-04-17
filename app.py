@@ -1366,8 +1366,56 @@ def test_plot():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+@app.route('/_get_plot', methods=['POST'])
+def _get_plot():
+    if request.method != 'POST':
+        return ""
+
+    device = request.form.get('device')
+    plotname = request.form.get('plotname')
+
+    print(f"_get_plot(device='{device}', plotname='{plotname}')")
+
+    scene_data = get_cached_data(device, None, "scene_durations")
+    if scene_data is None:
+        return jsonify(html_plot=f"no data {device}", device=device, plotname=plotname)
+
+    fig = plot_scene_durations(scene_data)
+    script, div = components(fig)
+    #return jsonify(html_plot=scene_data.to_html(), device=device, plotname=plotname)
+    return jsonify(html_plot=render_template('bokeh_plot.html', div_plot=div, script_plot=script),
+                   device=device, plotname=plotname)
+
+
 @app.route('/analytics/scenes')
 def analytics_scenes():
+    devices = get_devices()
+
+    data_list = []
+
+    @dataclass
+    class Scenes:
+        device: str
+        plot_parameters: str
+
+    for device in devices:
+        scene = Scenes(device=device,
+                       plot_parameters=f"data-plotname=scene_durations data-device={device}")
+        data_list.append(scene)
+
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    return render_template('analytics_scene.html', data_list=data_list,
+                           js_resources=js_resources,
+                           css_resources=css_resources,
+                           )
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/analytics/scenes_old')
+def analytics_scenes_old():
     devices = get_devices()
 
     full_data = dict()
@@ -1385,10 +1433,10 @@ def analytics_scenes():
             fig = plot_scene_durations(scene_data)
             script, div = components(fig)
             scripts.append(script)
-            full_data[device] = div
+            full_data[device] = Scenes(scene_data, div)
         else:
             div = "no data"
-            full_data[device] = div
+            full_data[device] = Scenes(scene_data, div)
 
     js_resources = INLINE.render_js()
     css_resources = INLINE.render_css()

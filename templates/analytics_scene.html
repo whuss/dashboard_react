@@ -3,9 +3,6 @@
 {% block head %}
 {{ js_resources|indent(4)|safe }}
 {{ css_resources|indent(4)|safe }}
-{% for plot_script in scripts %}
-{{ plot_script|indent(4)|safe }}
-{% endfor %}
 {% endblock %}
 
 {% block page_title %}
@@ -21,10 +18,10 @@
         <th>Scene durations</th>
     </tr>
     </thead>
-  {% for device, rows in data.items() %}
+  {% for data in data_list %}
   <tr>
-    <th scope="row"> <a href="{{url_for('crash_for_device', device=device)}}">{{device}}</a></th>
-    <td><div align="center">{{rows|safe}}</div></td>
+    <th scope="row">{{data.device}}</th>
+    <td><div align="center"><div class="bokeh-plot" {{data.plot_parameters|safe}}>{{data.plot_parameters}}</div></div></td>
   </tr>
   {% endfor %}
   </table>
@@ -42,5 +39,34 @@
             stateSave: false,
         });
     } );
+
+    $(document).ready( function()
+    {
+        const plots = document.querySelectorAll(".bokeh-plot");
+        for (const plot of plots)
+        {
+            console.log('plot: ', plot);
+            $.ajax(
+            {
+                method: 'POST',
+                url: {{ url_for('_get_plot')|tojson }},
+                data:
+                {
+                    device: plot.dataset.device,
+                    plotname: plot.dataset.plotname
+                }
+            }).done(drawPlot);
+        }
+
+        function drawPlot(data)
+        {
+            console.log('drawPlot: ', data.device, data.plotname);
+            console.log(`div[data-device='${data.device}']`);
+            //plot_element = document.querySelector(`div[data-device='${data.device}']`);
+            //console.log('drawPlot: ', plot_element);
+            //plot_element.html(data.html_plot);
+            $(`div[data-device='${data.device}'][data-plotname='${data.plotname}']`).html(data.html_plot);
+        }
+    });
 </script>
 {% endblock script %}
