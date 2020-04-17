@@ -800,32 +800,31 @@ def database_size():
 
 @app.route('/statistics/switch_cycles')
 def statistics_switch_cycles():
-    data = PresenceDetectorStatistics().on_off_cycle_count()
+    devices = get_devices()
 
-    figures = {}
-    scripts = []
+    data_list = []
+    json_list = []
 
-    # compute time range
-    dates = data.reset_index().date
-    x_range = min(dates) - timedelta(days=1), max(dates) + timedelta(days=1)
+    @dataclass
+    class Scenes:
+        id: str
+        device: str
 
-    for device in data.index.levels[0]:
-        device_data = data.loc[device].reset_index()
-        fig = plot_on_off_cycles(device_data, x_range=x_range)
-        script, div = components(fig)
-        figures[device] = div
-        scripts.append(script)
+    for device in devices:
+        parameters = prepare_plot('plot_on_off_cycles', plot_parameters={'device': device})
+        scene = Scenes(id=parameters['id'],
+                       device=device)
+        data_list.append(scene)
+        json_list.append(parameters)
 
-    # grab the static resources
     js_resources = INLINE.render_js()
     css_resources = INLINE.render_css()
 
-    return render_template("statistics_on_off.html",
-                           figures=figures,
-                           scripts=scripts,
+    return render_template('statistics_on_off.html', data_list=data_list,
                            js_resources=js_resources,
-                           css_resources=css_resources)
-
+                           css_resources=css_resources,
+                           json_data=json.dumps(json_list)
+                           )
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1297,16 +1296,6 @@ def sensors_brightness():
                                         unit="lx",
                                         time_range=(start_date, end_date),
                                         connectivity_data=connectivity_data)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 

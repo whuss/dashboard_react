@@ -693,33 +693,30 @@ class PresenceDetectorStatistics(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def on_off_cycle_count():
+    def on_off_cycle_count(device: str, since: date):
         ip = InstructionPackage
-        sq_device = db.session.query(DeviceInfo.device).subquery()
 
-        query = db.session.query(ip.device, ip.source, ip.timestamp, ip.instruction, ip.target, ip.value) \
+        query = db.session.query(ip.device, ip.timestamp, ip.instruction, ip.value) \
+            .filter(ip.device == device) \
+            .filter(ip.timestamp >= since) \
             .filter(ip.source.contains("Lullaby")) \
             .filter(ip.instruction == "MODE") \
             .filter(ip.target == "POWER") \
             .filter(ip.value == "ON") \
-            .filter(ip.device != "PTL_DEFAULT") \
-            .outerjoin(sq_device, sq_device.c.device == ip.device) \
-            .order_by(ip.device)
 
-        def is_night(date):
-            time = date.time()
+
+        def is_night(timestamp):
+            time = timestamp.time()
             return time.hour <= 6 or time.hour >= 22
 
         data: pd.DataFrame = pd.DataFrame(query.all())
-        data = data.drop(columns=['source', 'target', 'instruction'])
         data['date'] = data.timestamp.apply(lambda x: x.date())
         data['night'] = data.timestamp.apply(is_night)
-        data = data.set_index(['device', 'date', 'night', data.index])
-        data = data.groupby(['device', 'date', 'night']).count()
+        data = data.set_index(['date', 'night', data.index])
+        data = data.groupby(['date', 'night']).count()
         data = data.drop(columns=['timestamp'])
         data = data.rename(columns=dict(value="count"))
         return data
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 

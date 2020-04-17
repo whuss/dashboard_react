@@ -3,9 +3,6 @@
 {% block head %}
 {{ js_resources|indent(4)|safe }}
 {{ css_resources|indent(4)|safe }}
-{% for plot_script in scripts %}
-{{ plot_script|indent(4)|safe }}
-{% endfor %}
 {% endblock %}
 
 {% block page_title %}
@@ -21,10 +18,10 @@
         <th>Cycles</th>
     </tr>
     </thead>
-  {% for device, figure in figures.items() %}
+  {% for data in data_list %}
   <tr>
-    <th scope="row"> {{device}}</th>
-    <td><div align="center">{{figure|safe}}</div></td>
+    <th scope="row"> {{data.device}}</th>
+    <td><div align="center"><div class="bokeh-plot" id="{{data.id}}">Loading plot ...</div></div></td>
   </tr>
   {% endfor %}
   </table>
@@ -33,4 +30,5 @@
 
 {% block script %}
 {% include 'includes/_data_table.html' %}
+{% include 'includes/_ajax_plot.html' %}
 {% endblock script %}

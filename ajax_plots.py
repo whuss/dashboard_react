@@ -1,5 +1,6 @@
 import sys
-from db import get_cached_data, DatabaseDelay
+from datetime import datetime, timedelta, date
+from db import get_cached_data, DatabaseDelay, PresenceDetectorStatistics
 import plots
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -25,6 +26,22 @@ def plot_database_size(**kwargs):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+def plot_on_off_cycles(**kwargs):
+    device = kwargs['device']
+    start_date = date(2020, 3, 1)
+    data = PresenceDetectorStatistics().on_off_cycle_count(device, start_date)
+    if data is None:
+        return None
+
+    device_data = data.reset_index()
+
+    x_range = start_date - timedelta(days=1), date.today() + timedelta(days=1)
+
+    return plots.plot_on_off_cycles(device_data, x_range=x_range)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 def get_plot_per_name(plot_name: str, **kwargs):
     print(f"get_plot_per_name(): plot_name={plot_name}")
     current_module = sys.modules[__name__]
@@ -36,6 +53,10 @@ def get_plot_per_name(plot_name: str, **kwargs):
         print(f"Unknown: plot_name={plot_name}")
         print(e)
         return None
+    except Exception as e:
+        print(f"Error in plotting function: {str(e)}")
+        return None
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
