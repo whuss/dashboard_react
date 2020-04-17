@@ -1,3 +1,4 @@
+import sys
 from db import get_cached_data, DatabaseDelay
 import plots
 
@@ -18,20 +19,23 @@ def plot_database_size(**kwargs):
     data = DatabaseDelay().size()
     if data is None:
         return None
+
     return plots.plot_database_size(data)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 def get_plot_per_name(plot_name: str, **kwargs):
-    if plot_name == "plot_scene_durations":
-        return plot_scene_durations(**kwargs)
+    print(f"get_plot_per_name(): plot_name={plot_name}")
+    current_module = sys.modules[__name__]
 
-    if plot_name == "plot_database_size":
-        return plot_database_size(**kwargs)
-
-    print(f"Unknown: plot_name={plot_name}")
-    return None
+    try:
+        plot_fn = getattr(current_module, plot_name)
+        return plot_fn(**kwargs)
+    except AttributeError as e:
+        print(f"Unknown: plot_name={plot_name}")
+        print(e)
+        return None
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -44,6 +48,12 @@ def hash_id(value):
 
 
 def prepare_plot(plot_name: str, plot_parameters: dict):
+    current_module = sys.modules[__name__]
+    try:
+        plot_fn = getattr(current_module, plot_name)
+    except AttributeError as e:
+        print(f"Prepare_plot: Unknown: plot_name={plot_name}")
+
     data = dict(plotname=plot_name,
                 parameters=plot_parameters)
     plot_id = hash_id(data)
