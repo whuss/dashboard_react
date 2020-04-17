@@ -1366,23 +1366,49 @@ def test_plot():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+def hash_id(value):
+    from hashlib import md5
+    return "id_" + md5(repr(value).encode()).hexdigest()
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def _get_plot_per_name(plot_name: str, **kwargs):
+    if plot_name == "scene_durations":
+        scene_data = get_cached_data(kwargs['device'], None, plot_name)
+        if scene_data is None:
+            return None
+
+        return plot_scene_durations(scene_data)
+
+    print(f"Unknown: plot_name={plot_name}")
+    return None
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 @app.route('/_get_plot', methods=['POST'])
 def _get_plot():
     if request.method != 'POST':
         return ""
 
     data = request.get_json()
-    device = data['device']
-    plotname = data['plotname']
+    plot_id = data.get('id')
+    parameters = data.get('parameters')
+    plotname = data.get('plotname')
 
-    scene_data = get_cached_data(device, None, "scene_durations")
-    if scene_data is None:
-        return jsonify(html_plot=f"no data", device=device, plotname=plotname)
+    device = parameters.get('device')
 
-    fig = plot_scene_durations(scene_data)
-    script, div = components(fig)
+    print(f"_get_plot(): {data}")
+    print(f"device={device}")
+
+    plot = _get_plot_per_name(plotname, **parameters)
+    if plot is None:
+        return jsonify(html_plot=f"no data", id=plot_id)
+
+    script, div = components(plot)
     return jsonify(html_plot=render_template('bokeh_plot.html', div_plot=div, script_plot=script),
-                   device=device, plotname=plotname)
+                   id=plot_id)
 
 
 @app.route('/analytics/scenes')
@@ -1390,18 +1416,22 @@ def analytics_scenes():
     devices = get_devices()
 
     data_list = []
-    json_dict = {}
+    json_list = []
 
     @dataclass
     class Scenes:
+        id: str
         device: str
-        plot_parameters: str
 
     for device in devices:
-        scene = Scenes(device=device,
-                       plot_parameters=f"data-plotname=scene_durations data-device={device}")
+        parameters = {'plotname': 'scene_durations',
+                      'parameters': {'device': device}}
+        plot_id = hash_id(parameters)
+        parameters['id'] = plot_id
+        scene = Scenes(id=plot_id,
+                       device=device)
         data_list.append(scene)
-        json_dict[device] = {'data-plotname': 'scene_durations', 'data-device': device}
+        json_list.append(parameters)
 
     js_resources = INLINE.render_js()
     css_resources = INLINE.render_css()
@@ -1409,7 +1439,7 @@ def analytics_scenes():
     return render_template('analytics_scene.html', data_list=data_list,
                            js_resources=js_resources,
                            css_resources=css_resources,
-                           json_data=json.dumps(json_dict)
+                           json_data=json.dumps(json_list)
                            )
 
 # ----------------------------------------------------------------------------------------------------------------------
