@@ -35,7 +35,7 @@ from plots import plot_on_off_cycles, plot_lost_signal, plot_crashes, plot_error
 from plots import plot_database_size, plot_error_heatmap, color_palette, plot_connection_times
 from plots import plot_on_off_times
 
-from ajax_plots import get_plot_per_name, prepare_plot
+from ajax_plots import get_plot_per_name, prepare_plot, AjaxPlot
 
 import utils.date
 
@@ -88,6 +88,13 @@ db.Model.metadata.reflect(bind=db.engine)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Jinja customization
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.template_filter('ajax_plots_to_json')
+def ajax_plots_to_json(ajax_plots):
+    return json.dumps([plot.data for plot in ajax_plots])
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -766,64 +773,34 @@ def statistics_database_delay():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/_get_database_size', methods=['POST'])
-def _get_database_size():
-
-    data = DatabaseDelay().size()
-
-    fig = plot_database_size(data)
-
-    script, div = components(fig)
-    return jsonify(html_plot=render_template('bokeh_plot.html', div_plot=div, script_plot=script))
-
-# ----------------------------------------------------------------------------------------------------------------------
-
 @app.route('/database/size')
 def database_size():
-    # grab the static resources
-    js_resources = INLINE.render_js()
-    css_resources = INLINE.render_css()
+    def _plot(device):
+        return AjaxPlot('plot_database_size', plot_parameters={})
 
-    json_list = []
-    parameters = prepare_plot('plot_database_size', plot_parameters={})
-    plot_id = parameters['id']
-    json_list.append(parameters)
+    ajax_plot_list = [_plot(device) for device in get_devices()]
 
-    return render_template("database_size.html",
-                           js_resources=js_resources,
-                           css_resources=css_resources,
-                           plot_id=plot_id,
-                           json_data=json.dumps(json_list))
+    return render_template('database_size.html',
+                           plot=ajax_plot_list[0],
+                           ajax_plot_list=ajax_plot_list,
+                           js_resources=INLINE.render_js(),
+                           css_resources=INLINE.render_css()
+                           )
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.route('/statistics/switch_cycles')
 def statistics_switch_cycles():
-    devices = get_devices()
+    def _plot(device):
+        return AjaxPlot('plot_on_off_cycles', plot_parameters={'device': device})
 
-    data_list = []
-    json_list = []
+    ajax_plot_list = [_plot(device) for device in get_devices()]
 
-    @dataclass
-    class Scenes:
-        id: str
-        device: str
-
-    for device in devices:
-        parameters = prepare_plot('plot_on_off_cycles', plot_parameters={'device': device})
-        scene = Scenes(id=parameters['id'],
-                       device=device)
-        data_list.append(scene)
-        json_list.append(parameters)
-
-    js_resources = INLINE.render_js()
-    css_resources = INLINE.render_css()
-
-    return render_template('statistics_on_off.html', data_list=data_list,
-                           js_resources=js_resources,
-                           css_resources=css_resources,
-                           json_data=json.dumps(json_list)
+    return render_template('statistics_on_off.html',
+                           ajax_plot_list=ajax_plot_list,
+                           js_resources=INLINE.render_js(),
+                           css_resources=INLINE.render_css()
                            )
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -1323,33 +1300,17 @@ def _get_plot():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-
 @app.route('/analytics/scenes')
 def analytics_scenes():
-    devices = get_devices()
+    def _plot(device):
+        return AjaxPlot('plot_scene_durations', plot_parameters={'device': device})
 
-    data_list = []
-    json_list = []
+    ajax_plot_list = [_plot(device) for device in get_devices()]
 
-    @dataclass
-    class Scenes:
-        id: str
-        device: str
-
-    for device in devices:
-        parameters = prepare_plot('plot_scene_durations', plot_parameters={'device': device})
-        scene = Scenes(id=parameters['id'],
-                       device=device)
-        data_list.append(scene)
-        json_list.append(parameters)
-
-    js_resources = INLINE.render_js()
-    css_resources = INLINE.render_css()
-
-    return render_template('analytics_scene.html', data_list=data_list,
-                           js_resources=js_resources,
-                           css_resources=css_resources,
-                           json_data=json.dumps(json_list)
+    return render_template('analytics_scene.html',
+                           ajax_plot_list=ajax_plot_list,
+                           js_resources=INLINE.render_js(),
+                           css_resources=INLINE.render_css()
                            )
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -18,10 +18,10 @@
         <th>Scene durations</th>
     </tr>
     </thead>
-  {% for data in data_list %}
+  {% for plot in ajax_plot_list %}
   <tr>
-    <th scope="row">{{data.device}}</th>
-    <td><div align="center"><div class="bokeh-plot" id="{{data.id}}">Loading plot ...</div></div></td>
+    <th scope="row">{{plot.parameters.device}}</th>
+    <td><div align="center">{{plot.html|safe}}</div></td>
   </tr>
   {% endfor %}
   </table>

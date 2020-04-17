@@ -7,7 +7,7 @@ function drawPlot(data)
 
 function requestPlots(plot_url)
 {
-    var plot_data = {{json_data|safe}};
+    var plot_data = {{ajax_plot_list|ajax_plots_to_json|safe}};
     console.log(plot_data);
 
     for (const plot of plot_data)

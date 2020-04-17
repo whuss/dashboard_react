@@ -68,6 +68,38 @@ def hash_id(value):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class AjaxPlot:
+    def __init__(self, plot_name: str, plot_parameters: dict):
+        current_module = sys.modules[__name__]
+        try:
+            plot_fn = getattr(current_module, plot_name)
+        except AttributeError as e:
+            print(f"Prepare_plot: Unknown: plot_name={plot_name}")
+
+        self._data = dict(plotname=plot_name,
+                          parameters=plot_parameters)
+        self._plot_id = hash_id(self._data)
+        self._data['id'] = self._plot_id
+
+    @property
+    def id(self):
+        return self._plot_id
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def parameters(self):
+        return self._data['parameters']
+
+    @property
+    def html(self):
+        return f'<div class="bokeh-plot" id="{self.id}">Loading plot ...</div>'
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 def prepare_plot(plot_name: str, plot_parameters: dict):
     current_module = sys.modules[__name__]
     try:

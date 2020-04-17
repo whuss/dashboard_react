@@ -11,7 +11,7 @@
 
 {% block body %}
 <div id="content">
-  <div align="center"><div class="bokeh-plot" id="{{plot_id}}">Loading plot ...</div></div>
+  <div align="center">{{plot.html|safe}}</div>
 </div>
 {% endblock %}
 
