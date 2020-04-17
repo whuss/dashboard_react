@@ -404,26 +404,14 @@ def error_heatmap():
 
 @app.route('/system/crashes')
 def crashes():
-    crash_histogram = Errors().crash_histogram()
-    restart_histogram = Errors().restart_histogram()
-
-    combined_histogram = pd.merge(crash_histogram, restart_histogram,
-                                  left_index=True, right_index=True, how="outer") \
-        .fillna(value=0)
+    combined_histogram = Errors().crash_restart_histogram()
 
     # compute time range
     dates = combined_histogram.reset_index().date
     x_range = min(dates), max(dates)
 
     # compute range of y_axis
-    y_range = 0.1, max(combined_histogram.max())
-
-    # compute string of the end of the day for url creation
-    def end_of_day(row):
-        date = row.name[1]
-        return (date + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
-
-    combined_histogram['end_of_day'] = combined_histogram.apply(end_of_day, axis=1)
+    y_range = 0.1, max(combined_histogram.drop(columns=['end_of_day']).max())
 
     scripts = []
     data_dict = dict()

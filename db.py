@@ -779,6 +779,25 @@ class Errors(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
+    def crash_restart_histogram():
+        crash_histogram = Errors.crash_histogram()
+        restart_histogram = Errors.restart_histogram()
+
+        combined_histogram = pd.merge(crash_histogram, restart_histogram,
+                                      left_index=True, right_index=True, how="outer") \
+            .fillna(value=0)
+
+        # compute string of the end of the day for url creation
+        def end_of_day(row):
+            date = row.name[1]
+            return (date + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
+
+        combined_histogram['end_of_day'] = combined_histogram.apply(end_of_day, axis=1)
+        return combined_histogram
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @staticmethod
     def errors(device=None):
         lp = LoggerPackage
         query = db.session.query(lp.device, lp.source, lp.timestamp, lp.filename,

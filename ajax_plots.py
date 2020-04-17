@@ -1,10 +1,54 @@
 import sys
+import pandas as pd
 from datetime import datetime, timedelta, date
-from db import get_cached_data, DatabaseDelay, PresenceDetectorStatistics
+from db import get_cached_data, DatabaseDelay, PresenceDetectorStatistics, Errors
 import plots
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
+def plot_crashes(**kwargs):
+    combined_histogram = Errors().crash_restart_histogram()
+
+    # compute time range
+    dates = combined_histogram.reset_index().date
+    x_range = min(dates), max(dates)
+
+    # compute range of y_axis
+    y_range = 0.1, max(combined_histogram.drop(columns=['end_of_day']).max())
+
+    scripts = []
+    data_dict = dict()
+
+    for device in combined_histogram.index.levels[0]:
+        histogram_data = combined_histogram.loc[device].reset_index()
+        fig = plot_crashes(histogram_data, x_range=x_range, y_range=y_range, device=device)
+        script, div = components(fig)
+        try:
+            total_number_of_crashes = int(histogram_data.crash_count.sum())
+        except KeyError:
+            total_number_of_crashes = 0
+        try:
+            total_number_of_restarts = int(histogram_data.restart_count.sum())
+        except KeyError:
+            total_number_of_restarts = 0
+        data_dict[device] = dict(total_number_of_crashes=total_number_of_crashes,
+                                 total_number_of_restarts=total_number_of_restarts,
+                                 plot=div)
+        scripts.append(script)
+
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    return render_template("crashes.html",
+                           route='/system/crashes',
+                           data=data_dict,
+                           scripts=scripts,
+                           js_resources=js_resources,
+                           css_resources=css_resources)
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 def plot_scene_durations(**kwargs):
     scene_data = get_cached_data(kwargs['device'], None, "scene_durations")
