@@ -1371,18 +1371,16 @@ def _get_plot():
     if request.method != 'POST':
         return ""
 
-    device = request.form.get('device')
-    plotname = request.form.get('plotname')
-
-    print(f"_get_plot(device='{device}', plotname='{plotname}')")
+    data = request.get_json()
+    device = data['device']
+    plotname = data['plotname']
 
     scene_data = get_cached_data(device, None, "scene_durations")
     if scene_data is None:
-        return jsonify(html_plot=f"no data {device}", device=device, plotname=plotname)
+        return jsonify(html_plot=f"no data", device=device, plotname=plotname)
 
     fig = plot_scene_durations(scene_data)
     script, div = components(fig)
-    #return jsonify(html_plot=scene_data.to_html(), device=device, plotname=plotname)
     return jsonify(html_plot=render_template('bokeh_plot.html', div_plot=div, script_plot=script),
                    device=device, plotname=plotname)
 

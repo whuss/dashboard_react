@@ -31,6 +31,21 @@
 {% block script %}
 {% include 'includes/_data_table.html' %}
 <script>
+    function getDataAttributes(element) {
+        //var data = [].filter.call(element.attributes, at => /^data-/.test(at.name));
+        var data = {};
+        [].forEach.call(element.attributes, function(attr) {
+            if (/^data-/.test(attr.name)) {
+                var camelCaseName = attr.name.substr(5).replace(/-(.)/g, function ($0, $1) {
+                    return $1.toUpperCase();
+                });
+                data[camelCaseName] = attr.value;
+            }
+        });
+
+        return data;
+    }
+
     $(document).ready( function () {
         $('.error-table').DataTable({
             "paging": true,
@@ -46,16 +61,17 @@
         for (const plot of plots)
         {
             console.log('plot: ', plot);
-            $.ajax(
+
+            var data = getDataAttributes(plot)
+            console.log(data);
+
+            $.ajax({{ url_for('_get_plot')|tojson }},
             {
-                method: 'POST',
-                url: {{ url_for('_get_plot')|tojson }},
-                data:
-                {
-                    device: plot.dataset.device,
-                    plotname: plot.dataset.plotname
-                }
-            }).done(drawPlot);
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                type: 'POST'
+            }
+            ).done(drawPlot);
         }
 
         function drawPlot(data)
