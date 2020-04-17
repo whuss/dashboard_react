@@ -313,7 +313,7 @@ def error_statistics():
 
     error_histogram = error_histogram.set_index(['device', 'date'])
 
-    # combute range of y_axis
+    # compute range of y_axis
     y_range = 1, max(error_histogram.error_count)
 
     error_heatmap['location'] = error_heatmap.apply(
@@ -778,16 +778,31 @@ def _get_database_size():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+def prepare_plot(plot_name: str, plot_parameters: dict):
+    data = dict(plotname=plot_name,
+                parameters=plot_parameters)
+    plot_id = hash_id(data)
+    data['id'] = plot_id
+    return data
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 @app.route('/database/size')
 def database_size():
     # grab the static resources
     js_resources = INLINE.render_js()
     css_resources = INLINE.render_css()
 
+    json_list = []
+    parameters = prepare_plot('database_size', plot_parameters={})
+    plot_id = parameters['id']
+    json_list.append(parameters)
+
     return render_template("database_size.html",
                            js_resources=js_resources,
-                           css_resources=css_resources)
-
+                           css_resources=css_resources,
+                           plot_id=plot_id,
+                           json_data=json.dumps(json_list))
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1381,6 +1396,12 @@ def _get_plot_per_name(plot_name: str, **kwargs):
 
         return plot_scene_durations(scene_data)
 
+    if plot_name == "database_size":
+        data = DatabaseDelay().size()
+        if data is None:
+            return None
+        return plot_database_size(data)
+
     print(f"Unknown: plot_name={plot_name}")
     return None
 
@@ -1424,11 +1445,8 @@ def analytics_scenes():
         device: str
 
     for device in devices:
-        parameters = {'plotname': 'scene_durations',
-                      'parameters': {'device': device}}
-        plot_id = hash_id(parameters)
-        parameters['id'] = plot_id
-        scene = Scenes(id=plot_id,
+        parameters = prepare_plot('scene_durations', plot_parameters={'device': device})
+        scene = Scenes(id=parameters['id'],
                        device=device)
         data_list.append(scene)
         json_list.append(parameters)
@@ -1440,42 +1458,6 @@ def analytics_scenes():
                            js_resources=js_resources,
                            css_resources=css_resources,
                            json_data=json.dumps(json_list)
-                           )
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.route('/analytics/scenes_old')
-def analytics_scenes_old():
-    devices = get_devices()
-
-    full_data = dict()
-
-    @dataclass
-    class Scenes:
-        data: pd.DataFrame
-        plot: str
-
-    scripts = []
-
-    for device in devices:
-        scene_data = get_cached_data(device, None, "scene_durations")
-        if scene_data is not None:
-            fig = plot_scene_durations(scene_data)
-            script, div = components(fig)
-            scripts.append(script)
-            full_data[device] = Scenes(scene_data, div)
-        else:
-            div = "no data"
-            full_data[device] = Scenes(scene_data, div)
-
-    js_resources = INLINE.render_js()
-    css_resources = INLINE.render_css()
-
-    return render_template('analytics_scene.html', data=full_data,
-                           scripts=scripts,
-                           js_resources=js_resources,
-                           css_resources=css_resources,
                            )
 
 # ----------------------------------------------------------------------------------------------------------------------

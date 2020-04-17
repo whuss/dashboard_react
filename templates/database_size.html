@@ -11,28 +11,10 @@
 
 {% block body %}
 <div id="content">
-  <div align="center"><div id="plot">Load plot ...</div></div>
+  <div align="center"><div class="bokeh-plot" id="{{plot_id}}">Loading plot ...</div></div>
 </div>
 {% endblock %}
 
 {% block script %}
-<script type="text/javascript">
-    $(function()
-    {
-        $.ajax(
-        {
-            method: 'POST',
-            url: {{ url_for('_get_database_size')|tojson }},
-            data:
-            {
-                device: "not_needed_here",
-            }
-        }).done(drawPlot);
-
-        function drawPlot(data)
-        {
-            $('#plot').html(data.html_plot);
-        }
-    });
-</script>
+{% include 'includes/_ajax_plot.html' %}
 {% endblock script %}
