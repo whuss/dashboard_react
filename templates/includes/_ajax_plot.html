@@ -1,0 +1,29 @@
+<script>
+function drawPlot(data)
+{
+    console.log('drawPlot: ', data.id);
+    $(`#${data.id}`).html(data.html_plot);
+}
+
+function requestPlots(plot_url)
+{
+    var plot_data = {{json_data|safe}};
+    console.log(plot_data);
+
+    for (const plot of plot_data)
+    {
+        console.log('requestPlots: ', plot);
+        $.ajax(plot_url,
+        {
+            data: JSON.stringify(plot),
+            contentType: 'application/json',
+            type: 'POST'
+        }
+        ).done(drawPlot);
+    }
+}
+
+$(document).ready( function() {
+    requestPlots({{ url_for('_get_plot')|tojson }});
+});
+</script>

@@ -30,38 +30,5 @@
 
 {% block script %}
 {% include 'includes/_data_table.html' %}
-<script>
-    $(document).ready( function () {
-        $('.error-table').DataTable({
-            "paging": true,
-            "info": false,
-            "order": [[ 0, "desc" ]],
-            stateSave: false,
-        });
-    } );
-
-    $(document).ready( function()
-    {
-        var plot_data = {{json_data|safe}};
-        console.log(plot_data);
-
-        for (const plot of plot_data)
-        {
-            console.log('requestPlots: ', plot);
-            $.ajax({{ url_for('_get_plot')|tojson }},
-            {
-                data: JSON.stringify(plot),
-                contentType: 'application/json',
-                type: 'POST'
-            }
-            ).done(drawPlot);
-        }
-
-        function drawPlot(data)
-        {
-            console.log('drawPlot: ', data.id);
-            $(`#${data.id}`).html(data.html_plot);
-        }
-    });
-</script>
+{% include 'includes/_ajax_plot.html' %}
 {% endblock script %}
