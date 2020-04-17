@@ -35,6 +35,8 @@ from plots import plot_on_off_cycles, plot_lost_signal, plot_crashes, plot_error
 from plots import plot_database_size, plot_error_heatmap, color_palette, plot_connection_times
 from plots import plot_on_off_times
 
+from ajax_plots import get_plot_per_name, prepare_plot
+
 import utils.date
 
 from db import query_cache, get_devices, get_cached_data
@@ -774,17 +776,6 @@ def _get_database_size():
     script, div = components(fig)
     return jsonify(html_plot=render_template('bokeh_plot.html', div_plot=div, script_plot=script))
 
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-def prepare_plot(plot_name: str, plot_parameters: dict):
-    data = dict(plotname=plot_name,
-                parameters=plot_parameters)
-    plot_id = hash_id(data)
-    data['id'] = plot_id
-    return data
-
 # ----------------------------------------------------------------------------------------------------------------------
 
 @app.route('/database/size')
@@ -794,7 +785,7 @@ def database_size():
     css_resources = INLINE.render_css()
 
     json_list = []
-    parameters = prepare_plot('database_size', plot_parameters={})
+    parameters = prepare_plot('plot_database_size', plot_parameters={})
     plot_id = parameters['id']
     json_list.append(parameters)
 
@@ -1310,100 +1301,12 @@ def sensors_brightness():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def plot_scene_durations(data):
-    data.loc[:, 'total_time'] = data.sum(axis=1)
-    data.AUTO /= data.total_time
-    data.TASK_HORI /= data.total_time
-    data.TASK_VERT /= data.total_time
-    data.LIGHT_SHOWER /= data.total_time
 
-    data = data.drop(columns=['total_time'])
-
-    # add fake data to see something
-    # TODO: remove this
-    #day = data.index.min()
-    #data.loc[day, :] = [0.25, 0.25, 0.25, 0.25]
-
-    data = data.rename(columns=dict(AUTO="automatic",
-                                    TASK_HORI="horizontal task",
-                                    TASK_VERT="vertical task",
-                                    LIGHT_SHOWER="light shower"))
-
-    data_t = data.transpose()
-    data_t = data_t.rename(columns={date: str(date) for date in data_t.columns})
-    data_t['colors'] = palettes.Category10[4]
-
-    #x_range = (data.index.min() - timedelta(days=1),
-    #           data.index.max() + timedelta(days=1))
-    from datetime import date
-    x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
-
-    data_source = ColumnDataSource(data_t)
-
-    fig = figure(plot_height=200, plot_width=800,
-                 title=f"Scenes",
-                 x_axis_type='datetime',
-                 x_range=x_range,
-                 y_range=(0, 1),
-                 tools="")
-    fig.yaxis.formatter = NumeralTickFormatter(format='0 %')
-
-    for date in data.index:
-        fig.vbar(bottom=cumsum(str(date), include_zero=True),
-                 top=cumsum(str(date)),
-                 x=date,
-                 width=timedelta(days=1) / 2,
-                 source=data_source,
-                 fill_color='colors',
-                 line_color='black',
-                 line_width=0)
-
-    fig.output_backend = "svg"
-    fig.toolbar.logo = None
-
-    hover_tool = HoverTool(tooltips=[('scene', '@index')],
-                           formatters={'scene': 'printf'})
-
-    fig.add_tools(hover_tool)
-    fig.add_tools(SaveTool())
-    return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def test_plot():
-    p = figure(plot_width=400, plot_height=400)
 
-    # add a circle renderer with a size, color, and alpha
-    p.circle([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], size=20, color="navy", alpha=0.5)
-    return p
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-def hash_id(value):
-    from hashlib import md5
-    return "id_" + md5(repr(value).encode()).hexdigest()
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-def _get_plot_per_name(plot_name: str, **kwargs):
-    if plot_name == "scene_durations":
-        scene_data = get_cached_data(kwargs['device'], None, plot_name)
-        if scene_data is None:
-            return None
-
-        return plot_scene_durations(scene_data)
-
-    if plot_name == "database_size":
-        data = DatabaseDelay().size()
-        if data is None:
-            return None
-        return plot_database_size(data)
-
-    print(f"Unknown: plot_name={plot_name}")
-    return None
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1418,18 +1321,18 @@ def _get_plot():
     parameters = data.get('parameters')
     plotname = data.get('plotname')
 
-    device = parameters.get('device')
-
     print(f"_get_plot(): {data}")
-    print(f"device={device}")
 
-    plot = _get_plot_per_name(plotname, **parameters)
+    plot = get_plot_per_name(plotname, **parameters)
     if plot is None:
         return jsonify(html_plot=f"no data", id=plot_id)
 
     script, div = components(plot)
     return jsonify(html_plot=render_template('bokeh_plot.html', div_plot=div, script_plot=script),
                    id=plot_id)
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.route('/analytics/scenes')
@@ -1445,7 +1348,7 @@ def analytics_scenes():
         device: str
 
     for device in devices:
-        parameters = prepare_plot('scene_durations', plot_parameters={'device': device})
+        parameters = prepare_plot('plot_scene_durations', plot_parameters={'device': device})
         scene = Scenes(id=parameters['id'],
                        device=device)
         data_list.append(scene)
