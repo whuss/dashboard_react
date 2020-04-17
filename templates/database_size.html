@@ -3,7 +3,6 @@
 {% block head %}
 {{ js_resources|indent(4)|safe }}
 {{ css_resources|indent(4)|safe }}
-{{ script|indent(4)|safe }}
 {% endblock %}
 
 {% block page_title %}
@@ -12,6 +11,28 @@
 
 {% block body %}
 <div id="content">
-  <div align="center">{{figure|safe}}</div>
+  <div align="center"><div id="plot">Load plot ...</div></div>
 </div>
 {% endblock %}
+
+{% block script %}
+<script type="text/javascript">
+    $(function()
+    {
+        $.ajax(
+        {
+            method: 'POST',
+            url: {{ url_for('_get_database_size')|tojson }},
+            data:
+            {
+                device: "not_needed_here",
+            }
+        }).done(drawPlot);
+
+        function drawPlot(data)
+        {
+            $('#plot').html(data.html_plot);
+        }
+    });
+</script>
+{% endblock script %}

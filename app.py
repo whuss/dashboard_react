@@ -761,25 +761,30 @@ def statistics_database_delay():
                            js_resources=js_resources,
                            css_resources=css_resources)
 
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/_get_database_size', methods=['POST'])
+def _get_database_size():
+
+    data = DatabaseDelay().size()
+
+    fig = plot_database_size(data)
+
+    script, div = components(fig)
+    return jsonify(html_plot=render_template('bokeh_plot.html', div_plot=div, script_plot=script))
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.route('/database/size')
 def database_size():
-    data = DatabaseDelay().size()
-
-    fig = plot_database_size(data)
-
-    script, div = components(fig)
-
     # grab the static resources
     js_resources = INLINE.render_js()
     css_resources = INLINE.render_css()
 
     return render_template("database_size.html",
-                           figure=div,
-                           script=script,
                            js_resources=js_resources,
                            css_resources=css_resources)
 
