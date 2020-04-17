@@ -21,7 +21,7 @@
   {% for data in data_list %}
   <tr>
     <th scope="row">{{data.device}}</th>
-    <td><div align="center"><div class="bokeh-plot" {{data.plot_parameters|safe}}>{{data.plot_parameters}}</div></div></td>
+    <td><div align="center"><div class="bokeh-plot" {{data.plot_parameters|safe}}>Loading plot ...</div></div></td>
   </tr>
   {% endfor %}
   </table>
@@ -46,6 +46,12 @@
         return data;
     }
 
+    function buildDataAttributeSelector(data) {
+        Object.keys(data).forEach(function(key, index) {
+            console.log(key);
+        });
+    }
+
     $(document).ready( function () {
         $('.error-table').DataTable({
             "paging": true,
@@ -57,6 +63,9 @@
 
     $(document).ready( function()
     {
+        //var plot_data = {test: 'test_data'};
+        var plot_data = {{json_data|safe}};
+        console.log(plot_data);
         const plots = document.querySelectorAll(".bokeh-plot");
         for (const plot of plots)
         {
@@ -77,11 +86,12 @@
         function drawPlot(data)
         {
             console.log('drawPlot: ', data.device, data.plotname);
+            buildDataAttributeSelector(data);
             console.log(`div[data-device='${data.device}']`);
             //plot_element = document.querySelector(`div[data-device='${data.device}']`);
             //console.log('drawPlot: ', plot_element);
             //plot_element.html(data.html_plot);
-            $(`div[data-device='${data.device}'][data-plotname='${data.plotname}']`).html(data.html_plot);
+            $(`div.bokeh-plot[data-device='${data.device}'][data-plotname='${data.plotname}']`).html(data.html_plot);
         }
     });
 </script>

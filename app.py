@@ -3,7 +3,7 @@ import re
 import pandas as pd
 import numpy as np
 
-from flask import Flask, render_template, jsonify, request, url_for
+from flask import Flask, render_template, jsonify, request, url_for, json
 
 from db import db
 from db import Errors, Dashboard, DatabaseDelay, ModeStatistics, MouseData, PresenceDetectorStatistics, SensorData
@@ -1390,6 +1390,7 @@ def analytics_scenes():
     devices = get_devices()
 
     data_list = []
+    json_dict = {}
 
     @dataclass
     class Scenes:
@@ -1400,6 +1401,7 @@ def analytics_scenes():
         scene = Scenes(device=device,
                        plot_parameters=f"data-plotname=scene_durations data-device={device}")
         data_list.append(scene)
+        json_dict[device] = {'data-plotname': 'scene_durations', 'data-device': device}
 
     js_resources = INLINE.render_js()
     css_resources = INLINE.render_css()
@@ -1407,6 +1409,7 @@ def analytics_scenes():
     return render_template('analytics_scene.html', data_list=data_list,
                            js_resources=js_resources,
                            css_resources=css_resources,
+                           json_data=json.dumps(json_dict)
                            )
 
 # ----------------------------------------------------------------------------------------------------------------------
