@@ -42,26 +42,7 @@ def plot_on_off_cycles(**kwargs):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def get_plot_per_name(plot_name: str, **kwargs):
-    print(f"get_plot_per_name(): plot_name={plot_name}")
-    current_module = sys.modules[__name__]
-
-    try:
-        plot_fn = getattr(current_module, plot_name)
-        return plot_fn(**kwargs)
-    except AttributeError as e:
-        print(f"Unknown: plot_name={plot_name}")
-        print(e)
-        return None
-    except Exception as e:
-        print(f"Error in plotting function: {str(e)}")
-        return None
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-def hash_id(value):
+def _hash_id(value):
     from hashlib import md5
     return "id_" + md5(repr(value).encode()).hexdigest()
 
@@ -72,45 +53,49 @@ class AjaxPlot:
     def __init__(self, plot_name: str, plot_parameters: dict):
         current_module = sys.modules[__name__]
         try:
-            plot_fn = getattr(current_module, plot_name)
+            self._plot_fn = getattr(current_module, plot_name)
         except AttributeError as e:
             print(f"Prepare_plot: Unknown: plot_name={plot_name}")
 
-        self._data = dict(plotname=plot_name,
+        self._plot_name = plot_name
+        self._plot_parameters = plot_parameters
+        self._data = dict(plot_name=plot_name,
                           parameters=plot_parameters)
-        self._plot_id = hash_id(self._data)
+        self._plot_id = _hash_id(self._data)
         self._data['id'] = self._plot_id
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def render(self):
+        print(f"AjaxPlot::render(): plot_name={self._plot_name}")
+        try:
+            return self._plot_fn(**self._plot_parameters)
+        except Exception as e:
+            print(f"Error in plotting function: {str(e)}")
+            return None
+
+    # ------------------------------------------------------------------------------------------------------------------
 
     @property
     def id(self):
         return self._plot_id
 
+    # ------------------------------------------------------------------------------------------------------------------
+
     @property
     def data(self):
         return self._data
+
+    # ------------------------------------------------------------------------------------------------------------------
 
     @property
     def parameters(self):
         return self._data['parameters']
 
+    # ------------------------------------------------------------------------------------------------------------------
+
     @property
     def html(self):
         return f'<div class="bokeh-plot" id="{self.id}">Loading plot ...</div>'
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-def prepare_plot(plot_name: str, plot_parameters: dict):
-    current_module = sys.modules[__name__]
-    try:
-        plot_fn = getattr(current_module, plot_name)
-    except AttributeError as e:
-        print(f"Prepare_plot: Unknown: plot_name={plot_name}")
-
-    data = dict(plotname=plot_name,
-                parameters=plot_parameters)
-    plot_id = hash_id(data)
-    data['id'] = plot_id
-    return data
 
 # ----------------------------------------------------------------------------------------------------------------------

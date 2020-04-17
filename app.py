@@ -17,25 +17,19 @@ from bokeh.embed import components
 from bokeh.layouts import column
 from bokeh.resources import INLINE
 from bokeh.util.string import encode_utf8
-from bokeh.models import ColumnDataSource
-from bokeh.plotting import figure
-from bokeh import palettes
-from bokeh.transform import cumsum
-from bokeh.models import NumeralTickFormatter
-from bokeh.models import HoverTool, SaveTool
+
 from typing import Tuple
 
-from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 import humanfriendly
 
 from plots import plot_histogram, plot_duration_histogram, plot_time_series
-from plots import plot_on_off_cycles, plot_lost_signal, plot_crashes, plot_errors
-from plots import plot_database_size, plot_error_heatmap, color_palette, plot_connection_times
+from plots import plot_lost_signal, plot_crashes, plot_errors
+from plots import plot_error_heatmap, color_palette, plot_connection_times
 from plots import plot_on_off_times
 
-from ajax_plots import get_plot_per_name, prepare_plot, AjaxPlot
+from ajax_plots import AjaxPlot
 
 import utils.date
 
@@ -1285,11 +1279,11 @@ def _get_plot():
     data = request.get_json()
     plot_id = data.get('id')
     parameters = data.get('parameters')
-    plotname = data.get('plotname')
+    plot_name = data.get('plot_name')
 
-    print(f"_get_plot(): {data}")
+    # print(f"_get_plot(): {data}")
 
-    plot = get_plot_per_name(plotname, **parameters)
+    plot = AjaxPlot(plot_name, plot_parameters=parameters).render()
     if plot is None:
         return jsonify(html_plot=f"no data", id=plot_id)
 
