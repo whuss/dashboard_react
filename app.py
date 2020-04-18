@@ -29,7 +29,7 @@ from plots import plot_lost_signal, plot_crashes, plot_errors
 from plots import plot_error_heatmap, color_palette, plot_connection_times
 from plots import plot_on_off_times
 
-from ajax_plots import AjaxPlot
+from ajax_plots import AjaxFactory, PlotCrashes, PlotDatabaseSize, PlotOnOffCycles, PlotSceneDurations
 
 import utils.date
 
@@ -405,7 +405,7 @@ def error_heatmap():
 @app.route('/system/crashes')
 def crashes():
     def _plot(device):
-        return AjaxPlot('plot_crashes', plot_parameters={'device': device})
+        return PlotCrashes('PlotCrashes', plot_parameters={'device': device})
 
     ajax_plot_list = [_plot(device) for device in get_devices()]
 
@@ -729,7 +729,7 @@ def statistics_database_delay():
 @app.route('/database/size')
 def database_size():
     def _plot(device):
-        return AjaxPlot('plot_database_size', plot_parameters={})
+        return PlotDatabaseSize('PlotDatabaseSize', plot_parameters={})
 
     ajax_plot_list = [_plot(device) for device in get_devices()]
 
@@ -746,7 +746,7 @@ def database_size():
 @app.route('/statistics/switch_cycles')
 def statistics_switch_cycles():
     def _plot(device):
-        return AjaxPlot('plot_on_off_cycles', plot_parameters={'device': device})
+        return PlotOnOffCycles('PlotOnOffCycles', plot_parameters={'device': device})
 
     ajax_plot_list = [_plot(device) for device in get_devices()]
 
@@ -1242,7 +1242,7 @@ def _get_plot():
 
     # print(f"_get_plot(): {data}")
 
-    plot = AjaxPlot(plot_name, plot_parameters=parameters).render()
+    plot = AjaxFactory.create_plot(plot_name, plot_parameters=parameters).render()
     if plot is None:
         return jsonify(html_plot=f"no data", id=plot_id)
 
@@ -1256,7 +1256,7 @@ def _get_plot():
 @app.route('/analytics/scenes')
 def analytics_scenes():
     def _plot(device):
-        return AjaxPlot('plot_scene_durations', plot_parameters={'device': device})
+        return PlotSceneDurations('PlotSceneDurations', plot_parameters={'device': device})
 
     ajax_plot_list = [_plot(device) for device in get_devices()]
 
