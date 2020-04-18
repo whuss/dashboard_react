@@ -1,8 +1,11 @@
 <script>
 function drawPlot(data)
 {
-    console.log('drawPlot: ', data.id);
-    $(`#${data.id}`).html(data.html_plot);
+    console.log('drawPlot: ', data);
+    for (const field of data.fields)
+    {
+        $(`div[data-ajaxid="${data.id}"][data-fieldname="${field.fieldname}"]`).html(field.html);
+    }
 }
 
 function requestPlots(plot_url)

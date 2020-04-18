@@ -728,13 +728,10 @@ def statistics_database_delay():
 
 @app.route('/database/size')
 def database_size():
-    def _plot(device):
-        return PlotDatabaseSize(plot_parameters={})
-
-    ajax_plot_list = [_plot(device) for device in get_devices()]
+    ajax_plot_list = [PlotDatabaseSize(plot_parameters={})]
 
     return render_template('database_size.html',
-                           plot=ajax_plot_list[0],
+                           database_plot=ajax_plot_list[0],
                            ajax_plot_list=ajax_plot_list,
                            js_resources=INLINE.render_js(),
                            css_resources=INLINE.render_css()
@@ -1242,14 +1239,9 @@ def _get_plot():
 
     # print(f"_get_plot(): {data}")
 
-    plot = AjaxFactory.create_plot(plot_name, plot_parameters=parameters).render()
-    if plot is None:
-        return jsonify(html_plot=f"no data", id=plot_id)
-
-    script, div = components(plot)
-    return jsonify(html_plot=render_template('bokeh_plot.html', div_plot=div, script_plot=script),
-                   id=plot_id)
-
+    plot = AjaxFactory.create_plot(plot_name, plot_parameters=parameters)
+    plot.render()
+    return plot.json_data()
 
 # ----------------------------------------------------------------------------------------------------------------------
 
