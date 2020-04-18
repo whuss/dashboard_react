@@ -27,23 +27,23 @@ class AjaxFactory:
     @staticmethod
     def create_plot(plot_name: str, plot_parameters: dict):
         if plot_name == "PlotCrashes":
-            return PlotCrashes(plot_name, plot_parameters)
+            return PlotCrashes(plot_parameters)
         if plot_name == "PlotSceneDurations":
-            return PlotSceneDurations(plot_name, plot_parameters)
+            return PlotSceneDurations(plot_parameters)
         if plot_name == "PlotDatabaseSize":
-            return PlotDatabaseSize(plot_name, plot_parameters)
+            return PlotDatabaseSize(plot_parameters)
         if plot_name == "PlotOnOffCycles":
-            return PlotOnOffCycles(plot_name, plot_parameters)
+            return PlotOnOffCycles(plot_parameters)
         raise ValueError(f"Unknown plot_name: {plot_name}")
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class Ajax:
-    def __init__(self, plot_name: str, plot_parameters: dict):
-        self._plot_name = plot_name
+    def __init__(self, plot_parameters: dict):
+        self._plot_name = self.__class__.__name__
         self._plot_parameters = plot_parameters
-        self._data = dict(plot_name=plot_name,
+        self._data = dict(plot_name=self._plot_name,
                           parameters=plot_parameters)
         self._plot_id = _hash_id(self._data)
         self._data['id'] = self._plot_id

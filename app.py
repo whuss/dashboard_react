@@ -405,7 +405,7 @@ def error_heatmap():
 @app.route('/system/crashes')
 def crashes():
     def _plot(device):
-        return PlotCrashes('PlotCrashes', plot_parameters={'device': device})
+        return PlotCrashes(plot_parameters={'device': device})
 
     ajax_plot_list = [_plot(device) for device in get_devices()]
 
@@ -729,7 +729,7 @@ def statistics_database_delay():
 @app.route('/database/size')
 def database_size():
     def _plot(device):
-        return PlotDatabaseSize('PlotDatabaseSize', plot_parameters={})
+        return PlotDatabaseSize(plot_parameters={})
 
     ajax_plot_list = [_plot(device) for device in get_devices()]
 
@@ -746,7 +746,7 @@ def database_size():
 @app.route('/statistics/switch_cycles')
 def statistics_switch_cycles():
     def _plot(device):
-        return PlotOnOffCycles('PlotOnOffCycles', plot_parameters={'device': device})
+        return PlotOnOffCycles(plot_parameters={'device': device})
 
     ajax_plot_list = [_plot(device) for device in get_devices()]
 
@@ -1256,7 +1256,7 @@ def _get_plot():
 @app.route('/analytics/scenes')
 def analytics_scenes():
     def _plot(device):
-        return PlotSceneDurations('PlotSceneDurations', plot_parameters={'device': device})
+        return PlotSceneDurations(plot_parameters={'device': device})
 
     ajax_plot_list = [_plot(device) for device in get_devices()]
 
