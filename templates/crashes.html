@@ -18,12 +18,16 @@
     <thead class="thead-dark">
     <tr>
         <th>Device ID</th>
+        <th>Total crashes</th>
+        <th>Total restarts</th>
         <th>Stability</th>
     </tr>
     </thead>
   {% for plot in ajax_plot_list %}
   <tr>
     <th scope="row"> <a href="{{url_for('crash_for_device', device=plot.parameters.device)}}">{{plot.parameters.device}}</a></th>
+    <td>{{plot.field.total_number_of_crashes|safe}}</td>
+    <td>{{plot.field.total_number_of_restarts|safe}}</td>
     <td><div align="center">{{plot.field.plot|safe}}</div></td>
   </tr>
   {% endfor %}

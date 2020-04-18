@@ -91,10 +91,10 @@ class AjaxFieldPlot(AjaxField):
         self._value = value
 
         if self._value is None:
-            self._final_html=f"no data"
-
-        script, div = components(self._value)
-        self._final_html=render_template('bokeh_plot.html', div_plot=div, script_plot=script)
+            self._final_html = f"no data"
+        else:
+            script, div = components(self._value)
+            self._final_html = render_template('bokeh_plot.html', div_plot=div, script_plot=script)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -184,6 +184,11 @@ class AjaxPlot(Ajax, ABC):
 
 
 class PlotCrashes(AjaxPlot):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self.add_field(AjaxField(name='total_number_of_crashes'))
+        self.add_field(AjaxField(name='total_number_of_restarts'))
+
     def _plot(self):
         start_date = start_of_day(date(2020, 3, 1))
         device = self.parameters.get('device')
@@ -199,6 +204,19 @@ class PlotCrashes(AjaxPlot):
         y_range = 0.1, max(combined_histogram.drop(columns=['end_of_day']).max())
 
         histogram_data = combined_histogram.reset_index()
+
+        try:
+            total_number_of_crashes = int(histogram_data.crash_count.sum())
+        except KeyError:
+            total_number_of_crashes = 0
+        try:
+            total_number_of_restarts = int(histogram_data.restart_count.sum())
+        except KeyError:
+            total_number_of_restarts = 0
+
+        self.field['total_number_of_crashes'].set_value(total_number_of_crashes)
+        self.field['total_number_of_restarts'].set_value(total_number_of_restarts)
+
         return plots.plot_crashes(histogram_data, x_range=x_range, y_range=y_range, device=device)
 
 # ----------------------------------------------------------------------------------------------------------------------
