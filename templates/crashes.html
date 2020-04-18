@@ -18,17 +18,13 @@
     <thead class="thead-dark">
     <tr>
         <th>Device ID</th>
-        <th>Total crashes</th>
-        <th>Total restarts</th>
         <th>Stability</th>
     </tr>
     </thead>
-  {% for device, rows in data.items() %}
+  {% for plot in ajax_plot_list %}
   <tr>
-    <th scope="row"> <a href="{{url_for('crash_for_device', device=device)}}">{{device}}</a></th>
-    <td>{{rows.total_number_of_crashes}}</td>
-    <td>{{rows.total_number_of_restarts}}</td>
-    <td><div align="center">{{rows.plot|safe}}</div></td>
+    <th scope="row"> <a href="{{url_for('crash_for_device', device=plot.parameters.device)}}">{{plot.parameters.device}}</a></th>
+    <td><div align="center">{{plot.html|safe}}</div></td>
   </tr>
   {% endfor %}
   </table>
@@ -37,14 +33,5 @@
 
 {% block script %}
 {% include 'includes/_data_table.html' %}
-<script>
-    $(document).ready( function () {
-        $('.error-table').DataTable({
-            "paging": true,
-            "info": false,
-            "order": [[ 0, "desc" ]],
-            stateSave: false,
-        });
-    } );
-</script>
+{% include 'includes/_ajax_plot.html' %}
 {% endblock script %}

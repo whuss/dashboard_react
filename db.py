@@ -742,7 +742,7 @@ class Errors(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def crash_histogram():
+    def crash_histogram(device: str, since: datetime):
         from sqlalchemy import Date
         lp = LoggerPackage
         query = db.session \
@@ -755,45 +755,40 @@ class Errors(object):
             .group_by(lp.device)
 
         data = pd.DataFrame(query.all())
-        data = data.set_index(['device', 'date'])
-        return data
+        data = data.set_index(['device']).loc[device]
+        return data[data.date >= since.date()].reset_index(drop=True)
 
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def restart_histogram():
+    def restart_histogram(device: str, since: datetime):
         from sqlalchemy import Date
         vp = VersionPackage
         query = db.session \
-            .query(vp.device,
-                   vp.timestamp.cast(Date).label('date'),
+            .query(vp.timestamp.cast(Date).label('date'),
                    db.func.count(vp.timestamp).label('restart_count')) \
-            .filter(vp.device != "PTL_DEFAULT") \
-            .group_by('date') \
-            .group_by(vp.device)
+            .filter(vp.timestamp >= since) \
+            .filter(vp.device == device) \
+            .group_by('date')
 
         data = pd.DataFrame(query.all())
-        data = data.set_index(['device', 'date'])
         return data
 
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def crash_restart_histogram():
-        crash_histogram = Errors.crash_histogram()
-        restart_histogram = Errors.restart_histogram()
+    def crash_restart_histogram(device: str, since: datetime):
+        crash_histogram = Errors.crash_histogram(device, since)
+        restart_histogram = Errors.restart_histogram(device, since)
 
-        combined_histogram = pd.merge(crash_histogram, restart_histogram,
-                                      left_index=True, right_index=True, how="outer") \
-            .fillna(value=0)
+        combined_histogram = crash_histogram.merge(restart_histogram, on='date', how='outer').fillna(value=0)
 
         # compute string of the end of the day for url creation
         def end_of_day(row):
-            date = row.name[1]
-            return (date + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
+            return (row.date + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
 
         combined_histogram['end_of_day'] = combined_histogram.apply(end_of_day, axis=1)
-        return combined_histogram
+        return combined_histogram.set_index(['date'])
 
     # ------------------------------------------------------------------------------------------------------------------
 

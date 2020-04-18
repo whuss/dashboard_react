@@ -1,14 +1,20 @@
+import traceback
 import sys
 import pandas as pd
 from datetime import datetime, timedelta, date
 from db import get_cached_data, DatabaseDelay, PresenceDetectorStatistics, Errors
 import plots
+from utils.date import start_of_day
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 def plot_crashes(**kwargs):
-    combined_histogram = Errors().crash_restart_histogram()
+    start_date = start_of_day(date(2020, 3, 1))
+    device = kwargs.get('device')
+    combined_histogram = Errors().crash_restart_histogram(device, start_date)
+    if combined_histogram is None:
+        return None
 
     # compute time range
     dates = combined_histogram.reset_index().date
@@ -17,38 +23,11 @@ def plot_crashes(**kwargs):
     # compute range of y_axis
     y_range = 0.1, max(combined_histogram.drop(columns=['end_of_day']).max())
 
-    scripts = []
-    data_dict = dict()
-
-    for device in combined_histogram.index.levels[0]:
-        histogram_data = combined_histogram.loc[device].reset_index()
-        fig = plot_crashes(histogram_data, x_range=x_range, y_range=y_range, device=device)
-        script, div = components(fig)
-        try:
-            total_number_of_crashes = int(histogram_data.crash_count.sum())
-        except KeyError:
-            total_number_of_crashes = 0
-        try:
-            total_number_of_restarts = int(histogram_data.restart_count.sum())
-        except KeyError:
-            total_number_of_restarts = 0
-        data_dict[device] = dict(total_number_of_crashes=total_number_of_crashes,
-                                 total_number_of_restarts=total_number_of_restarts,
-                                 plot=div)
-        scripts.append(script)
-
-    # grab the static resources
-    js_resources = INLINE.render_js()
-    css_resources = INLINE.render_css()
-
-    return render_template("crashes.html",
-                           route='/system/crashes',
-                           data=data_dict,
-                           scripts=scripts,
-                           js_resources=js_resources,
-                           css_resources=css_resources)
+    histogram_data = combined_histogram.reset_index()
+    return plots.plot_crashes(histogram_data, x_range=x_range, y_range=y_range, device=device)
 
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 def plot_scene_durations(**kwargs):
     scene_data = get_cached_data(kwargs['device'], None, "scene_durations")
@@ -72,7 +51,7 @@ def plot_database_size(**kwargs):
 
 def plot_on_off_cycles(**kwargs):
     device = kwargs['device']
-    start_date = date(2020, 3, 1)
+    start_date = start_of_day(date(2020, 3, 1))
     data = PresenceDetectorStatistics().on_off_cycle_count(device, start_date)
     if data is None:
         return None
@@ -111,11 +90,14 @@ class AjaxPlot:
     # ------------------------------------------------------------------------------------------------------------------
 
     def render(self):
-        print(f"AjaxPlot::render(): plot_name={self._plot_name}")
+        print(f"AjaxPlot::render(): plot_name={self._plot_name}, parameters={self._plot_parameters}")
         try:
             return self._plot_fn(**self._plot_parameters)
-        except Exception as e:
-            print(f"Error in plotting function: {str(e)}")
+        except Exception:
+            tb = traceback.format_exc()
+            print(f"Error in plotting function:\n"
+                  f"plot_name={self._plot_name}, "
+                  f"parameters={self._plot_parameters}\n{tb}")
             return None
 
     # ------------------------------------------------------------------------------------------------------------------
