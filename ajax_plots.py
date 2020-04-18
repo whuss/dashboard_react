@@ -26,15 +26,13 @@ class AjaxFactory:
 
     @staticmethod
     def create_plot(plot_name: str, plot_parameters: dict):
-        if plot_name == "PlotCrashes":
-            return PlotCrashes(plot_parameters)
-        if plot_name == "PlotSceneDurations":
-            return PlotSceneDurations(plot_parameters)
-        if plot_name == "PlotDatabaseSize":
-            return PlotDatabaseSize(plot_parameters)
-        if plot_name == "PlotOnOffCycles":
-            return PlotOnOffCycles(plot_parameters)
-        raise ValueError(f"Unknown plot_name: {plot_name}")
+        try:
+            ajax_class = globals()[plot_name]
+        except KeyError:
+            raise TypeError(f"AjaxFactory: {plot_name} does not name a class.")
+        if not issubclass(ajax_class, Ajax):
+            raise TypeError(f"class {ajax_class} does not inherit from Ajax.")
+        return ajax_class(plot_parameters)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
