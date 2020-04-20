@@ -4,6 +4,7 @@ from datetime import timedelta, date
 from typing import Dict
 
 from bokeh.embed import components
+from bokeh.layouts import column
 from flask import render_template, jsonify
 
 import plots
@@ -251,11 +252,14 @@ class PlotSceneDurations(AjaxPlot):
         device = self.parameters.get('device')
         start_date = start_of_day(date(2020, 3, 1))
         scene_data = get_scene_durations(device, start_date)
-        # scene_data = get_cached_data(device, None, "scene_durations")
         if scene_data is None:
             return None
 
-        return plots.plot_scene_durations(scene_data)
+        fig1 = plots.plot_scene_duration_percentage(scene_data)
+
+        scene_data = get_scene_durations(device, start_date)
+        fig2 = plots.plot_on_duration(scene_data)
+        return column([fig1, fig2])
 
 # ----------------------------------------------------------------------------------------------------------------------
 

@@ -612,7 +612,7 @@ def plot_on_off_times(device_data, **kwargs):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def plot_scene_durations(data):
+def plot_scene_duration_percentage(data):
     data.loc[:, 'total_time'] = data.sum(axis=1)
     data.AUTO /= data.total_time
     data.TASK_HORI /= data.total_time
@@ -642,7 +642,7 @@ def plot_scene_durations(data):
 
     data_source = ColumnDataSource(data_t)
 
-    fig = figure(plot_height=200, plot_width=800,
+    fig = figure(plot_height=200, plot_width=1000,
                  title=f"Scenes",
                  x_axis_type='datetime',
                  x_range=x_range,
@@ -665,6 +665,49 @@ def plot_scene_durations(data):
 
     hover_tool = HoverTool(tooltips=[('scene', '@index')],
                            formatters={'scene': 'printf'})
+
+    fig.add_tools(hover_tool)
+    fig.add_tools(SaveTool())
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_on_duration(data):
+    data.loc[:, 'total_time'] = data.sum(axis=1)
+
+    data = data.reset_index().rename(columns=dict(index="date"))
+    data = data[['date', 'total_time']]
+    data.loc[:, 'total_time_readable'] = data.total_time.apply(lambda x: utils.date.format_time_span(x))
+    data.total_time = data.total_time.apply(lambda x: x.total_seconds() / 60 / 60)
+
+    from datetime import date
+    x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    data_source = ColumnDataSource(data)
+
+    fig = figure(plot_height=200, plot_width=1000,
+                 title=f"Total on time",
+                 x_axis_type='datetime',
+                 x_range=x_range,
+                 y_range=(0, 24),
+                 tools="")
+    # fig.yaxis.formatter = NumeralTickFormatter(format='0 %')
+
+    fig.vbar(bottom=0,
+             top='total_time',
+             x='date',
+             width=timedelta(days=1) / 2,
+             source=data_source,
+             fill_color='red',
+             line_color='black',
+             line_width=0)
+
+    fig.output_backend = "svg"
+    fig.toolbar.logo = None
+
+    hover_tool = HoverTool(tooltips=[('On time', '@total_time_readable')],
+                           formatters={'total_time_readable': 'printf'})
 
     fig.add_tools(hover_tool)
     fig.add_tools(SaveTool())
