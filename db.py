@@ -1,3 +1,6 @@
+import functools
+import inspect
+
 from datetime import datetime, timedelta, date, time
 from typing import Optional
 
@@ -26,6 +29,16 @@ class PickleTypeMedium(db.PickleType):
 # Define DB Model
 # ----------------------------------------------------------------------------------------------------------------------
 
+
+class CachePackage(db.Model):
+    __bind_key__ = "cache"
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    query = db.Column(db.String(100), index=True, nullable=False)
+    sha256 = db.Column(db.String(64), index=True, nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    data = db.Column(PickleTypeMedium, nullable=False)
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 class DataFramePackage(db.Model):
     __bind_key__ = "cache"
@@ -294,6 +307,80 @@ class LoudnessPackage(db.Model):
     unit = db.Column('unit_sn', key='unit')
     create_dtm = db.Column('create_dtm')
 
+# ----------------------------------------------------------------------------------------------------------------------
+# DB Cache
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def _hash_id(value):
+    from hashlib import sha256
+    return sha256(repr(value).encode()).hexdigest()
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def find_in_cache(query_name: str, parameter_digest: str) -> Optional[CachePackage]:
+    cp = CachePackage
+    query = db.session.query(cp) \
+        .filter(cp.query == query_name) \
+        .filter(cp.sha256 == parameter_digest)
+
+    return query.first()
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def db_cached(fn):
+    @functools.wraps(fn)
+    def wrapped(*args, **kwargs):
+        # Collect function arguments by chaining together positional,
+        # defaulted, extra positional and keyword arguments.
+        f_name = f"{fn.__module__}.{fn.__name__}"
+        # signature = inspect.signature(fn)
+        parameter_repr = f"args: {args} kwargs: {kwargs}"
+        parameter_digest = _hash_id(parameter_repr)
+
+        print(f"db_cached: name={f_name}, parameter_digest={parameter_digest}")
+        cached_data = find_in_cache(f_name, parameter_digest)
+
+        if cached_data:
+            print(f"db_cached: found cached value.")
+            expiration_time = timedelta(days=1)
+            if datetime.now() - cached_data.timestamp < expiration_time:
+                # no update needed
+                print(f"db_cached: no update needed: return cached data.")
+                return cached_data.data
+            print(f"db_cached: cached value expired.")
+        else:
+            print(f"db_cached: no cached value found.")
+
+        # Calculate data
+        print(f"db_cached: Calculate data.")
+        data = fn(*args, **kwargs)
+
+        if cached_data:
+            print(f"db_cached: update cached data.")
+            # update cached_data
+            CachePackage.update() \
+                .where(CachePackage.id == cached_data.id) \
+                .values(timestamp=datetime.now(),
+                        data=data)
+            db.session.commit()
+        else:
+            # insert data into cache
+            print(f"db_cached: insert data into cache.")
+            data_package = CachePackage(query=f_name,
+                                        sha256=parameter_digest,
+                                        timestamp=datetime.now(),
+                                        data=data)
+            db.session.add(data_package)
+            db.session.commit()
+
+        print(f"db_cached: return data.")
+        return data
+
+    return wrapped
 
 # ----------------------------------------------------------------------------------------------------------------------
 # DB Queries
@@ -693,6 +780,7 @@ class PresenceDetectorStatistics(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
+    @db_cached
     def on_off_cycle_count(device: str, since: date):
         ip = InstructionPackage
 
@@ -777,6 +865,7 @@ class Errors(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
+    @db_cached
     def crash_restart_histogram(device: str, since: datetime):
         crash_histogram = Errors.crash_histogram(device, since)
         restart_histogram = Errors.restart_histogram(device, since)
@@ -1256,7 +1345,6 @@ def dataframe_from_query(query):
     return pd.read_sql(query.statement, query.session.bind)
 
 # ----------------------------------------------------------------------------------------------------------------------
-
 
 def query_cache(device: str, data_date: Optional[date], query_name: str) -> bool:
     if data_date:

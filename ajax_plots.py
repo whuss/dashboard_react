@@ -7,6 +7,7 @@ from bokeh.embed import components
 from typing import Dict
 from datetime import datetime, timedelta, date
 from db import get_cached_data, DatabaseDelay, PresenceDetectorStatistics, Errors
+from analytics.scenes import get_scene_durations
 import plots
 from utils.date import start_of_day
 
@@ -189,10 +190,13 @@ class PlotCrashes(AjaxPlot):
         self.add_field(AjaxField(name='total_number_of_crashes'))
         self.add_field(AjaxField(name='total_number_of_restarts'))
 
+    # ------------------------------------------------------------------------------------------------------------------
+
     def _plot(self):
         start_date = start_of_day(date(2020, 3, 1))
         device = self.parameters.get('device')
         combined_histogram = Errors().crash_restart_histogram(device, start_date)
+        #combined_histogram = get_cached_data(device, None, "error_restart_histogram")
         if combined_histogram is None:
             return None
 
@@ -225,7 +229,9 @@ class PlotCrashes(AjaxPlot):
 class PlotSceneDurations(AjaxPlot):
     def _plot(self):
         device = self.parameters.get('device')
-        scene_data = get_cached_data(device, None, "scene_durations")
+        start_date = start_of_day(date(2020, 3, 1))
+        scene_data = get_scene_durations(device, start_date)
+        # scene_data = get_cached_data(device, None, "scene_durations")
         if scene_data is None:
             return None
 

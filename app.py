@@ -25,7 +25,7 @@ from datetime import datetime, timedelta
 import humanfriendly
 
 from plots import plot_histogram, plot_duration_histogram, plot_time_series
-from plots import plot_lost_signal, plot_crashes, plot_errors
+from plots import plot_errors
 from plots import plot_error_heatmap, color_palette, plot_connection_times
 from plots import plot_on_off_times
 
@@ -33,7 +33,7 @@ from ajax_plots import AjaxFactory, PlotCrashes, PlotDatabaseSize, PlotOnOffCycl
 
 import utils.date
 
-from db import query_cache, get_devices, get_cached_data
+from db import get_devices
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Configuration

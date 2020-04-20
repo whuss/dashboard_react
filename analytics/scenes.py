@@ -1,6 +1,8 @@
 import pandas as pd
 from datetime import date, timedelta
+from typing import Optional
 
+from db import db_cached
 from .instruction import get_state_data
 
 from utils.interval import find_intervals
@@ -9,7 +11,10 @@ from utils.date import start_of_day, end_of_day
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def get_scene_durations(device: str, since: date, until: date):
+@db_cached
+def get_scene_durations(device: str, since: date, until: Optional[date] = None):
+    if until is None:
+        until = date.today()
     interval = (start_of_day(since), end_of_day(until))
     state_data = get_state_data(device, interval, resample_rule='1S')
 
@@ -27,7 +32,9 @@ def get_scene_durations(device: str, since: date, until: date):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def get_settings_durations(device: str, since: date, until: date):
+def get_settings_durations(device: str, since: date, until: Optional[date] = None):
+    if until is None:
+        until = date.today()
     interval = (start_of_day(since), end_of_day(until))
     state_data = get_state_data(device, interval, resample_rule='1S')
 

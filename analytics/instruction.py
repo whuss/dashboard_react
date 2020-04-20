@@ -4,8 +4,7 @@ from typing import Optional
 import pandas as pd
 from dataclasses import dataclass
 
-from app import db
-from db import InstructionPackage, VersionPackage
+from db import db, InstructionPackage, VersionPackage
 from utils.interval import TimeInterval, Interval, parse_interval
 
 

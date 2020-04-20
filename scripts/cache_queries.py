@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import signal
+import traceback
 import os
 from typing import Optional
 from datetime import datetime, date, timedelta, time
@@ -9,10 +10,10 @@ from plumbum.cli.terminal import get_terminal_size
 import pandas as pd
 
 from app import db
-from db import query_cache, Dashboard, DataFramePackage, DeviceDataFramePackage
+from db import query_cache, Dashboard, DataFramePackage, DeviceDataFramePackage, Errors
 from analytics.sensors import get_sensor_data
 from analytics.scenes import get_scene_durations
-from utils.date import parse_date, date_range
+from utils.date import parse_date, date_range, start_of_day
 from dataclasses import dataclass
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -61,10 +62,14 @@ def clear_device_query(query: str) -> None:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def update_scene_data(device: str, start_date: date, end_date: date) -> None:
-    query = "scene_durations"
-    data = get_scene_durations(device, start_date, end_date)
-    print(data)
+def update_scene_data(query: str, device: str, start_date: date, end_date: date) -> None:
+    if query == "scene_durations":
+        data = get_scene_durations(device, start_date, end_date)
+    elif query == "error_restart_histogram":
+        data = Errors().crash_restart_histogram(device, start_of_day(start_date))
+    else:
+        raise ValueError(f"Unknown query: {query}.")
+    # print(data)
     data_package = DeviceDataFramePackage(device=device, query=query, data=data)
     db.session.add(data_package)
     db.session.commit()
@@ -115,14 +120,13 @@ def clear_cache():
 @click.command(name="update", help="update query cache")
 @click.argument("start_date", type=str)
 def update_cache(start_date: date):
-    query_keys = ["scene_durations"]
+    query_keys = ["scene_durations", "error_restart_histogram"]
     devices = get_devices()
 
     start_date = parse_date(start_date)
     end_date: date = date.today()
 
-    number_of_days = (end_date - start_date).days
-    number_of_queries = number_of_days * len(devices)
+    number_of_queries = len(query_keys) * len(devices)
     progress = 1
 
     print(f"Cache queries for dates: {start_date} - {end_date}.")
@@ -141,10 +145,13 @@ def update_cache(start_date: date):
         print(colors.bold | f"[{progress:>4}/{len(queries)}]", end=" ")
         print(f"Fetch {query.device:<13} {query.name}...", end=" ", flush=True)
         try:
-            update_scene_data(query.device, start_date, end_date)
+            update_scene_data(query.name, query.device, start_date, end_date)
             print(colors.green | "done")
         except:
             print(colors.red | "failed")
+            hline()
+            print(traceback.format_exc())
+            hline()
         progress += 1
 
 # ----------------------------------------------------------------------------------------------------------------------
