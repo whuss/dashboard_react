@@ -29,7 +29,7 @@ from plots import plot_errors
 from plots import plot_error_heatmap, color_palette, plot_connection_times
 from plots import plot_on_off_times
 
-from ajax_plots import AjaxFactory, PlotCrashes, PlotDatabaseSize, PlotOnOffCycles, PlotSceneDurations
+from ajax_plots import AjaxFactory, PlotCrashes, PlotDatabaseSize, PlotOnOffCycles, PlotSceneDurations, DashboardInfo
 
 import utils.date
 
@@ -238,8 +238,23 @@ app.jinja_env.globals['url_for_self'] = url_for_self
 
 @app.route('/')
 def index():
-    data = Dashboard.info()
-    return render_template('home.html', data=data)
+    # def _plot(device):
+    #     return PlotSceneDurations(plot_parameters={'device': device})
+    #
+    # ajax_plot_list = [_plot(device) for device in get_devices()]
+    #
+    # return render_template('analytics_scene.html',
+    #                        ajax_plot_list=ajax_plot_list,
+    #                        js_resources=INLINE.render_js(),
+    #                        css_resources=INLINE.render_css()
+    #                        )
+
+    def _info(device):
+        return DashboardInfo(plot_parameters={'device': device})
+
+    ajax_plot_list = [_info(device) for device in get_devices()]
+
+    return render_template('home.html', ajax_plot_list=ajax_plot_list)
 
 
 # ----------------------------------------------------------------------------------------------------------------------

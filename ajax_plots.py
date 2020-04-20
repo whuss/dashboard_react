@@ -1,15 +1,15 @@
-from abc import abstractmethod, ABC
 import traceback
-import sys
-import pandas as pd
-from flask import render_template, jsonify
-from bokeh.embed import components
+from abc import abstractmethod
+from datetime import timedelta, date
 from typing import Dict
-from datetime import datetime, timedelta, date
-from db import get_cached_data, DatabaseDelay, PresenceDetectorStatistics, Errors
-from analytics.scenes import get_scene_durations
+
+from bokeh.embed import components
+from flask import render_template, jsonify
+
 import plots
-from utils.date import start_of_day
+from analytics.scenes import get_scene_durations
+from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
+from utils.date import start_of_day, format_time_span
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -57,6 +57,15 @@ class AjaxField:
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    @property
+    def value(self):
+        if self._value is None:
+            return ""
+
+        return self._value
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def __str__(self):
         return self.html
 
@@ -75,8 +84,17 @@ class AjaxField:
     # ------------------------------------------------------------------------------------------------------------------
 
     def set_value(self, value):
+        print(f"AjaxField.set_value: id={self._id}, name={self.name}, value={value}")
         self._value = value
-        self._final_html = repr(value)
+        if value is None:
+            self._final_html = "no data"
+            return
+        if isinstance(value, str):
+            self._final_html = value
+        elif isinstance(value, timedelta):
+            self._final_html = format_time_span(value)
+        else:
+            self._final_html = repr(value)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -116,15 +134,11 @@ class Ajax:
         field.set_id(self._plot_id)
         self._fields[field.name] = field
 
+    # ------------------------------------------------------------------------------------------------------------------
+
     @property
     def field(self):
         return self._fields
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    @abstractmethod
-    def _plot(self):
-        pass
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -161,7 +175,7 @@ class Ajax:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class AjaxPlot(Ajax, ABC):
+class AjaxPlot(Ajax):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self.add_field(AjaxFieldPlot(name='plot'))
@@ -180,6 +194,12 @@ class AjaxPlot(Ajax, ABC):
             plot = None
 
         self.field['plot'].set_value(plot)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @abstractmethod
+    def _plot(self):
+        pass
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -264,5 +284,45 @@ class PlotOnOffCycles(AjaxPlot):
         x_range = start_date - timedelta(days=1), date.today() + timedelta(days=1)
 
         return plots.plot_on_off_cycles(device_data, x_range=x_range)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class DashboardInfo(Ajax):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self.add_field(AjaxField(name='study_mode'))
+        self.add_field(AjaxField(name='offline_duration'))
+        self.add_field(AjaxField(name='health_status'))
+        self.add_field(AjaxField(name='sick_reason'))
+
+        self.field['study_mode'].initial_value = "Loading ..."
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def render(self):
+        device = self.parameters.get('device')
+        print(f"Ajax::render(): plot_name={self._plot_name}, parameters={self._plot_parameters}")
+        try:
+            data = Dashboard.info(device)
+
+            study_mode = data['study_mode']
+
+            html = f'<div class ="deviceMode {study_mode}" data-id="{device}" data-mode="{study_mode}">' \
+                   f'{study_mode}' \
+                   f'</div>'
+
+            self.field['study_mode'].set_value(html)
+            self.field['offline_duration'].set_value(data['offline_duration'])
+            health_status = data['health_status']
+            self.field['health_status'].set_value(f'<i class="fa fa-heartbeat {health_status}"></i>')
+            self.field['sick_reason'].set_value(data['sick_reason'])
+
+        except Exception:
+            tb = traceback.format_exc()
+            print(f"Error in plotting function:\n"
+                  f"plot_name={self._plot_name}, "
+                  f"parameters={self._plot_parameters}\n{tb}")
+            data = None
 
 # ----------------------------------------------------------------------------------------------------------------------

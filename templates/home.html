@@ -16,17 +16,13 @@
     </tr>
     </thead>
     <tbody>
-        {% for index, ptl in data.iterrows() %}
+        {% for ptl in ajax_plot_list %}
         <tr>
-            <th scope="row"> {{ptl.device}}</th>
-            <td>
-                <div class="deviceMode {{'NORM' if ptl.study_mode == 'NORM' else 'FULL'}}" data-id="{{ptl.device}}" data-mode="{{ptl.study_mode}}">
-                    {{ptl.study_mode}}
-                </div>
-            </td>
-            <td>{{ ptl.offline_duration|none }}</td>
-            <td><i class="fa fa-heartbeat {{ ptl.health_status}}"></i></td>
-            <td>{{ ptl.sick_reason }}</td>
+            <th scope="row"> {{ptl.parameters.device}}</th>
+            <td>{{ ptl.field.study_mode|safe}}</td>
+            <td>{{ ptl.field.offline_duration|safe}}</td>
+            <td>{{ ptl.field.health_status|safe}}</td>
+            <td>{{ ptl.field.sick_reason|safe}}</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -36,4 +32,5 @@
 
 {% block script %}
 {% include 'includes/_data_table.html' %}
+{% include 'includes/_ajax_plot.html' %}
 {% endblock script %}

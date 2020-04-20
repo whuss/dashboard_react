@@ -9,6 +9,7 @@ import pandas as pd
 from dataclasses import dataclass, field
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects import mysql
+from utils.date import format_timespan_sloppy
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Setup
@@ -417,103 +418,60 @@ class Dashboard(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def query_light(start_date):
-        """number of lighting changes since start_date per PTL-device"""
-        lp = LightingPackage
-        light_count = db.func.count(lp.id).label('light_count')
-        return db.session.query(lp.device, light_count) \
-            .filter(lp.timestamp >= start_date) \
-            .group_by(lp.device)
+    def info(device: str):
+        print(f"Dashboard.device_info(device={device})")
+        query_study_mode = db.session.query(DeviceInfo.mode.label('study_mode')) \
+            .filter(DeviceInfo.device == device)
 
-    # ------------------------------------------------------------------------------------------------------------------
+        data = query_study_mode.first()
+        print(f"data={data}")
+        if data:
+            study_mode = data.study_mode
+        else:
+            study_mode = ""
 
-    @staticmethod
-    def query_mouse(start_date):
-        """number of mouse gestures since start_date per PTL-device"""
-        mp = MouseGesturePackage
-        mouse_count = db.func.count(mp.id).label('mouse_count')
-        return db.session.query(mp.device, mouse_count) \
-            .filter(mp.timestamp >= start_date) \
-            .group_by(mp.device)
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    @staticmethod
-    def query_last_connection():
-        tp = TemperaturePackage
-        last_connection = db.func.max(tp.id).label('last_index')
-        last_index = db.session.query(tp.device, last_connection) \
-            .group_by(tp.device) \
-            .subquery()
-
-        return db.session.query(tp.device, tp.id, tp.timestamp.label('last_update')) \
-            .join(last_index, tp.id == last_index.c.last_index)
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def query_dashboard(self, start_date):
-        """database query for main information dashboard"""
-        sq_mode = self.query_mode.subquery()
-        sq_last_connection = self.query_last_connection().subquery()
-
-        since = db.func.timediff(db.func.now(), sq_mode.c.timestamp).label('since')
-
-        return self.query_info \
-            .outerjoin(sq_mode, DeviceInfo.device == sq_mode.c.device) \
-            .outerjoin(sq_last_connection, DeviceInfo.device == sq_last_connection.c.device) \
-            .add_columns(sq_mode.c.mode,
-                         since,
-                         sq_last_connection.c.last_update) \
-            .order_by(DeviceInfo.device)
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def dashboard(self, start_date):
-        query = self.query_dashboard(start_date)
-        return query.all()
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    @staticmethod
-    def info():
-        query_device = db.session.query(DeviceInfo.device, DeviceInfo.mode.label('study_mode')) \
-            .order_by(DeviceInfo.device) \
-            .filter(DeviceInfo.device != "PTL_DEFAULT")
+        print(f"study_mode={study_mode}")
 
         dmp = DeadManPackage
-        sq_connection = db.session.query(dmp.device, db.func.max(dmp.timestamp).label('last_connection')) \
-            .group_by(dmp.device) \
-            .filter(DeviceInfo.device != "PTL_DEFAULT") \
-            .subquery()
+        query_connection = db.session.query(db.func.max(dmp.timestamp).label('last_connection')) \
+            .filter(dmp.device == device) \
 
-        query = query_device.outerjoin(sq_connection, sq_connection.c.device == DeviceInfo.device) \
-            .add_columns(sq_connection.c.last_connection)
+        data = query_connection.first()[0]
+        print(f"query_connection data = {data}")
+        if data:
+            last_connection = data
+            offline_duration = datetime.now() - last_connection
+        else:
+            last_connection = None
+            offline_duration = None
 
-        data = pd.DataFrame(query.all())
-        now = datetime.now()
-        data['offline_duration'] = data.last_connection.apply(lambda x: now - x)
-
-        def health_status(offline_duration):
-            if offline_duration < timedelta(minutes=2):
+        def _health_status(_offline_duration):
+            if _offline_duration and _offline_duration < timedelta(minutes=2):
                 return "HEALTHY"
             else:
                 return "SICK"
 
-        data['health_status'] = data.offline_duration.apply(health_status)
+        health_status = _health_status(offline_duration)
 
-        def sick_reason(row):
-            if pd.isna(row.last_connection):
+        def _sick_reason(_health_status, _last_connection, _offline_duration):
+            if not _last_connection:
                 return "Never online"
 
-            if row.health_status == "SICK":
-                return f"Offline for {row.offline_duration}"
+            if _health_status == "SICK":
+                return f"Offline for {_offline_duration}"
             else:
                 return ""
 
-        data['sick_reason'] = data.apply(sick_reason, axis=1)
+        sick_reason = _sick_reason(health_status, last_connection, offline_duration)
 
-        return data
+        print(f"db: sick_reason={sick_reason}, last_connection={last_connection}")
 
+        return dict(device=device,
+                    study_mode=study_mode,
+                    last_connection=last_connection,
+                    offline_duration=format_timespan_sloppy(offline_duration) if offline_duration else "",
+                    health_status=health_status,
+                    sick_reason=sick_reason)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -843,7 +801,12 @@ class Errors(object):
             .group_by(lp.device)
 
         data = pd.DataFrame(query.all())
-        data = data.set_index(['device']).loc[device]
+        data = data.set_index(['device'])
+
+        if device not in data.index:
+            return pd.DataFrame(columns=['date', 'crash_count'])
+
+        data = data.loc[device]
         return data[data.date >= since.date()].reset_index(drop=True)
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -870,7 +833,15 @@ class Errors(object):
         crash_histogram = Errors.crash_histogram(device, since)
         restart_histogram = Errors.restart_histogram(device, since)
 
-        combined_histogram = crash_histogram.merge(restart_histogram, on='date', how='outer').fillna(value=0)
+        if crash_histogram.empty and restart_histogram.empty:
+            return pd.DataFrame()
+
+        if crash_histogram.empty:
+            combined_histogram = restart_histogram
+        elif restart_histogram.empty:
+            combined_histogram = crash_histogram
+        else:
+            combined_histogram = crash_histogram.merge(restart_histogram, on='date', how='outer').fillna(value=0)
 
         # compute string of the end of the day for url creation
         def end_of_day(row):

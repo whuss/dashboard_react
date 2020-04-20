@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, date, time
 from typing import Union
+import humanfriendly
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -25,6 +26,17 @@ def format_time_span(td: timedelta) -> str:
     hours = minutes // 60
     minutes = minutes % 60
     return f"{hours:02}:{minutes:02}:{seconds:02}"
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def format_timespan_sloppy(td: timedelta) -> str:
+    if td < timedelta(minutes=1):
+        return f"{int(td.total_seconds())} seconds"
+    if td < timedelta(hours=1):
+        return humanfriendly.format_timespan(td, max_units=1)
+
+    return humanfriendly.format_timespan(td, max_units=2)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
