@@ -5,7 +5,7 @@ from typing import Dict
 
 from bokeh.embed import components
 from bokeh.layouts import column
-from flask import render_template, jsonify
+from flask import render_template, jsonify, url_for
 
 import plots
 from analytics.scenes import get_scene_durations
@@ -103,6 +103,24 @@ class AjaxField:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class AjaxFieldDownload(AjaxField):
+    def __init__(self, name: str):
+        super().__init__(name)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @property
+    def final_html(self):
+        if self._value:
+            return f'<a href="{url_for("_download_data")}" role="button" class="btn btn-secondary bokeh-plot"' \
+                   f' data-ajaxid="{self._id}" data-fieldname="{self.name}">' \
+                   f'Download' \
+                   f'</a>'
+        return ""
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class AjaxFieldPlot(AjaxField):
     def __init__(self, name: str):
         super().__init__(name)
@@ -182,6 +200,7 @@ class AjaxPlot(Ajax):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self.add_field(AjaxFieldPlot(name='plot'))
+        self.add_field(AjaxFieldDownload(name='download'))
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -199,6 +218,8 @@ class AjaxPlot(Ajax):
                 raise
 
         self.field['plot'].set_value(plot)
+        # TODO:
+        self.field['download'].set_value(True)
 
     # ------------------------------------------------------------------------------------------------------------------
 

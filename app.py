@@ -3,7 +3,7 @@ import re
 import pandas as pd
 import numpy as np
 
-from flask import Flask, render_template, jsonify, request, url_for, json
+from flask import Flask, render_template, jsonify, request, url_for, json, Response
 
 from config import Config
 
@@ -1258,6 +1258,25 @@ def _get_plot():
     plot = AjaxFactory.create_plot(plot_name, plot_parameters=parameters)
     plot.render()
     return plot.json_data()
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/_download_data')
+def _download_data():
+    print("Download data ...")
+    data = "1,2,3\n4,5,6"
+    from datetime import date
+    from utils.date import start_of_day
+    from analytics.scenes import get_scene_durations
+    device = "PTL_RD_AT_001"
+    start_date = start_of_day(date(2020, 3, 1))
+    data = get_scene_durations(device, start_date)
+    from utils.excel import convert_to_excel
+    return Response(convert_to_excel(data),
+                    mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-disposition":
+                             "attachment; filename=data.xlsx"})
 
 # ----------------------------------------------------------------------------------------------------------------------
 

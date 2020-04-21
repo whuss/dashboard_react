@@ -16,12 +16,14 @@
     <tr>
         <th>Device ID</th>
         <th>Scene durations</th>
+        <th>Download</th>
     </tr>
     </thead>
   {% for plot in ajax_plot_list %}
   <tr>
     <th scope="row">{{plot.parameters.device}}</th>
     <td><div align="center">{{plot.field.plot|safe}}</div></td>
+    <td>{{plot.field.download|safe}}</td>
   </tr>
   {% endfor %}
   </table>
