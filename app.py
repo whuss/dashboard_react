@@ -1262,23 +1262,31 @@ def _get_plot():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/_download_data')
+@app.route('/_download_data', methods=['POST'])
 def _download_data():
-    print("Download data ...")
-    data = "1,2,3\n4,5,6"
-    from datetime import date
-    from utils.date import start_of_day
-    from analytics.scenes import get_scene_durations
-    device = "PTL_RD_AT_001"
-    start_date = start_of_day(date(2020, 3, 1))
-    data = get_scene_durations(device, start_date)
+    if request.method != 'POST':
+        return ""
+
+    data = request.get_json()
+    plot_id = data.get('id')
+    parameters = data.get('parameters')
+    plot_name = data.get('plot_name')
+
+    plot = AjaxFactory.create_plot(plot_name, plot_parameters=parameters)
+    data = plot.fetch_data()
     from utils.excel import convert_to_excel
-    return Response(convert_to_excel(data),
-                    mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    headers={"Content-disposition":
-                             "attachment; filename=data.xlsx"})
+    from base64 import b64encode
+    json_data = dict(filename="data.xlsx",
+                     mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                     bytes=b64encode(convert_to_excel(data)).decode('ascii'))
+    return jsonify(json_data)
+    #return Response(b64encode(convert_to_excel(data)),
+    #                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    #                headers={"Content-disposition":
+    #                         "attachment; filename=data.xlsx"})
 
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 @app.route('/analytics/scenes')
 def analytics_scenes():

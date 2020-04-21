@@ -107,15 +107,21 @@ class AjaxFieldDownload(AjaxField):
     def __init__(self, name: str):
         super().__init__(name)
 
+    def set_value(self, value):
+        if value is not None:
+            super().set_value(1)
+        else:
+            super().set_value(None)
+
     # ------------------------------------------------------------------------------------------------------------------
 
     @property
     def final_html(self):
-        if self._value:
-            return f'<a href="{url_for("_download_data")}" role="button" class="btn btn-secondary bokeh-plot"' \
-                   f' data-ajaxid="{self._id}" data-fieldname="{self.name}">' \
+        if self._value is not None:
+            return f'<button role="button" class="btn btn-secondary bokeh-plot"' \
+                   f' data-ajaxid="{self._id}" data-click="download" data-fieldname="{self.name}">' \
                    f'Download' \
-                   f'</a>'
+                   f'</button>'
         return ""
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -204,10 +210,21 @@ class AjaxPlot(Ajax):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def fetch_data(self):
+        data = self._fetch()
+        self.field['download'].set_value(data)
+        return data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def render(self):
         print(f"Ajax::render(): plot_name={self._plot_name}, parameters={self._plot_parameters}")
         try:
-            plot = self._plot()
+            data = self.fetch_data()
+            if data is None:
+                plot = None
+            else:
+                plot = self._plot(data)
         except Exception:
             tb = traceback.format_exc()
             print(f"Error in plotting function:\n"
@@ -218,8 +235,12 @@ class AjaxPlot(Ajax):
                 raise
 
         self.field['plot'].set_value(plot)
-        # TODO:
-        self.field['download'].set_value(True)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @abstractmethod
+    def _fetch(self):
+        pass
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -236,18 +257,25 @@ class PlotCrashes(AjaxPlot):
         self.add_field(AjaxField(name='total_number_of_crashes'))
         self.add_field(AjaxField(name='total_number_of_restarts'))
 
+        self._start_date = start_of_day(date(2020, 3, 1))
+
     # ------------------------------------------------------------------------------------------------------------------
 
-    def _plot(self):
-        start_date = start_of_day(date(2020, 3, 1))
+    def _fetch(self):
         device = self.parameters.get('device')
-        combined_histogram = Errors().crash_restart_histogram(device, start_date)
+        combined_histogram = Errors().crash_restart_histogram(device, self._start_date)
         if combined_histogram is None or combined_histogram.empty:
             return None
 
+        return combined_histogram
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, combined_histogram):
+
         # compute time range
         dates = combined_histogram.reset_index().date
-        x_range = start_date, date.today()
+        x_range = self._start_date, date.today()
 
         # compute range of y_axis
         y_range = 0, max(combined_histogram.drop(columns=['end_of_day']).max())
@@ -266,13 +294,23 @@ class PlotCrashes(AjaxPlot):
 
 
 class PlotSceneDurations(AjaxPlot):
-    def _plot(self):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = start_of_day(date(2020, 3, 1))
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
         device = self.parameters.get('device')
-        start_date = start_of_day(date(2020, 3, 1))
-        scene_data = get_scene_durations(device, start_date)
+        scene_data = get_scene_durations(device, self._start_date)
         if scene_data is None or scene_data.empty:
             return None
 
+        return scene_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, scene_data):
         fig1 = plots.plot_scene_duration_percentage(scene_data.copy())
         fig2 = plots.plot_on_duration(scene_data.copy())
         fig3 = plots.plot_sporadic_scenes_duration(scene_data)
@@ -282,27 +320,42 @@ class PlotSceneDurations(AjaxPlot):
 
 
 class PlotDatabaseSize(AjaxPlot):
-    def _plot(self):
+    def _fetch(self):
         data = DatabaseDelay().size()
         if data is None or data.empty:
             return None
 
+        return data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, data):
         return plots.plot_database_size(data)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class PlotOnOffCycles(AjaxPlot):
-    def _plot(self):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = start_of_day(date(2020, 3, 1))
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
         device = self.parameters.get('device')
-        start_date = start_of_day(date(2020, 3, 1))
-        data = PresenceDetectorStatistics().on_off_cycle_count(device, start_date)
+        data = PresenceDetectorStatistics().on_off_cycle_count(device, self._start_date)
         if data is None or data.empty:
             return None
 
+        return data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, data):
         device_data = data.reset_index()
 
-        x_range = start_date - timedelta(days=1), date.today() + timedelta(days=1)
+        x_range = self._start_date - timedelta(days=1), date.today() + timedelta(days=1)
 
         return plots.plot_on_off_cycles(device_data, x_range=x_range)
 

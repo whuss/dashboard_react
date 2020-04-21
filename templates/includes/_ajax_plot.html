@@ -8,11 +8,31 @@ function drawPlot(data)
     }
 }
 
-function requestPlots(plot_url)
+function finishedDownload(data)
 {
-    var plot_data = {{ajax_plot_list|ajax_plots_to_json|safe}};
-    console.log(plot_data);
+    console.log('finishedDownload: ', data.filename);
+    var bytes = atob(data.bytes);
+    var byte_array = new Uint8Array(bytes.length)
+    for (var i = 0; i < bytes.length; i++)
+    {
+        byte_array[i] = bytes.charCodeAt(i)
+    }
+    var blob=new Blob([byte_array.buffer], {type: data.mimetype});
+    const link=document.createElement('a');
+    document.body.appendChild(link)
+    link.href=window.URL.createObjectURL(blob);
+    link.download=data.filename;
+    link.mimetype=data.mimetype;
+    link.click();
+    setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+        console.log("Remove link");
+    }, 100);
+}
 
+function requestPlots(plot_url, plot_data)
+{
     for (const plot of plot_data)
     {
         console.log('requestPlots: ', plot);
@@ -26,7 +46,29 @@ function requestPlots(plot_url)
     }
 }
 
+function requestDownload(download_url, plot_data)
+{
+    for (const plot of plot_data)
+    {
+        console.log('requestDownload: ', plot);
+        $(`[data-ajaxid="${plot.id}"]`).click(function()
+        {
+              console.log("button clicked: ", plot.id);
+              $(this).attr('class', 'btn btn-danger');
+              $.ajax(download_url,
+              {
+                  data: JSON.stringify(plot),
+                  contentType: 'application/json',
+                  type: 'POST'
+              }).done(finishedDownload);
+        });
+    }
+}
+
 $(document).ready( function() {
-    requestPlots({{ url_for('_get_plot')|tojson }});
+    var plot_data = {{ajax_plot_list|ajax_plots_to_json|safe}};
+    console.log(plot_data);
+    requestPlots({{ url_for('_get_plot')|tojson }}, plot_data);
+    requestDownload({{ url_for('_download_data')|tojson }}, plot_data);
 });
 </script>
