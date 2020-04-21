@@ -5,6 +5,8 @@ import numpy as np
 
 from flask import Flask, render_template, jsonify, request, url_for, json
 
+from config import Config
+
 from db import db
 from db import Errors, Dashboard, DatabaseDelay, ModeStatistics, MouseData, PresenceDetectorStatistics, SensorData
 from db import Connectivity
@@ -16,7 +18,6 @@ import babel
 from bokeh.embed import components
 from bokeh.layouts import column
 from bokeh.resources import INLINE
-from bokeh.util.string import encode_utf8
 
 from typing import Tuple
 
@@ -826,7 +827,7 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
         css_resources=css_resources,
     )
 
-    return encode_utf8(html)
+    return html
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -913,7 +914,7 @@ def sensors_device(device):
         css_resources=css_resources,
     )
 
-    return encode_utf8(html)
+    return html
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -978,7 +979,7 @@ def debug_sensors_presence():
         css_resources=css_resources,
     )
 
-    return encode_utf8(html)
+    return html
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1030,7 +1031,7 @@ def sensors_presence():
         css_resources=css_resources,
     )
 
-    return encode_utf8(html)
+    return html
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -1221,7 +1222,7 @@ def create_timeseries_brightness(sensor_data,
         css_resources=css_resources,
     )
 
-    return encode_utf8(html)
+    return html
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -1279,4 +1280,4 @@ def analytics_scenes():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=Config.debug)

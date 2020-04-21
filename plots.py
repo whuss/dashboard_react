@@ -450,6 +450,7 @@ def plot_error_heatmap(data, device="PTL_DEFAULT", **kwargs):
 
 def plot_database_size(data):
     x_range = (min(data.date) - timedelta(days=1), max(data.date) + timedelta(days=1))
+    data.loc[:, 'bottom'] = 0
     data_source = ColumnDataSource(data)
 
     fig = figure(x_axis_type="datetime", plot_height=300, plot_width=800, x_range=x_range, tools="",
@@ -477,13 +478,26 @@ def plot_database_size(data):
              color='#8c8c8c',
              source=data_source,
              name="db_size")
-    fig.vbar(x='date',
-             width=vbar_width,
-             bottom='data_size_in_mb',
-             top='total_size',
+    # fig.vbar(x='date',
+    #          width=vbar_width,
+    #          bottom='data_size_in_mb',
+    #          top='total_size',
+    #          color='#c8c8c8',
+    #          source=data_source,
+    #          name="db_size")
+
+    fig.varea(x='date',
+             y1='bottom',
+             y2='data_size_in_mb',
+             color='#8c8c8c',
+             source=data_source,
+             name="db_size_a")
+    fig.varea(x='date',
+             y1='data_size_in_mb',
+             y2='total_size',
              color='#c8c8c8',
              source=data_source,
-             name="db_size")
+             name="db_size_a")
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -692,7 +706,7 @@ def plot_on_duration(data):
                  x_range=x_range,
                  y_range=(0, 24),
                  tools="")
-    # fig.yaxis.formatter = NumeralTickFormatter(format='0 %')
+    fig.yaxis.axis_label = "Hours"
 
     fig.vbar(bottom=0,
              top='total_time',
@@ -706,8 +720,78 @@ def plot_on_duration(data):
     fig.output_backend = "svg"
     fig.toolbar.logo = None
 
-    hover_tool = HoverTool(tooltips=[('On time', '@total_time_readable')],
-                           formatters={'total_time_readable': 'printf'})
+    hover_tool = HoverTool(tooltips=[('Date', '@date{%F}'),
+                                     ('On time', '@total_time_readable')],
+                           formatters={'total_time_readable': 'printf',
+                                       'date': 'datetime'})
+
+    fig.add_tools(hover_tool)
+    fig.add_tools(SaveTool())
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_sporadic_scenes_duration(data):
+    data = data.reset_index().rename(columns=dict(index="date"))
+
+    data.TASK_HORI = data.TASK_HORI / 1000 / 60
+    data.TASK_VERT = data.TASK_VERT / 1000 / 60
+    data.LIGHT_SHOWER = data.LIGHT_SHOWER / 1000 / 60
+
+    from datetime import date
+    x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    data_source = ColumnDataSource(data)
+
+    fig = figure(plot_height=200, plot_width=1000,
+                 title=f"Total special scene durations",
+                 x_axis_type='datetime',
+                 x_range=x_range,
+                 tools="")
+    fig.yaxis.axis_label = "Minutes"
+
+    vbar_width = timedelta(days=1) / 5
+    vbar_shift = vbar_width.total_seconds() * 1000
+
+    p = palettes.Category10[4]
+
+    fig.vbar(bottom=0,
+             top='TASK_VERT',
+             x=dodge('date', -vbar_shift, range=fig.x_range),
+             width=vbar_width,
+             source=data_source,
+             fill_color=p[1],
+             line_color='black',
+             line_width=0)
+    fig.vbar(bottom=0,
+             top='TASK_HORI',
+             x=dodge('date', 0, range=fig.x_range),
+             width=vbar_width,
+             source=data_source,
+             fill_color=p[2],
+             line_color='black',
+             line_width=0)
+    fig.vbar(bottom=0,
+             top='LIGHT_SHOWER',
+             x=dodge('date', vbar_shift, range=fig.x_range),
+             width=vbar_width,
+             source=data_source,
+             fill_color=p[3],
+             line_color='black',
+             line_width=0)
+
+    fig.output_backend = "svg"
+    fig.toolbar.logo = None
+
+    hover_tool = HoverTool(tooltips=[('Date', '@date{%F}'),
+                                     ('Horizontal task', '@TASK_HORI minutes'),
+                                     ('Vertical task', '@TASK_VERT minutes'),
+                                     ('Light shower', '@LIGHT_SHOWER minutes')],
+                           formatters={'date': 'datetime',
+                                       'TASK_HORI': 'printf',
+                                       'TASK_VERT': 'printf',
+                                       'LIGHT_SHOWER': 'printf'})
 
     fig.add_tools(hover_tool)
     fig.add_tools(SaveTool())

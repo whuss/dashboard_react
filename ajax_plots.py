@@ -11,6 +11,7 @@ import plots
 from analytics.scenes import get_scene_durations
 from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
 from utils.date import start_of_day, format_time_span
+from config import Config
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -53,8 +54,8 @@ class AjaxField:
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def set_id(self, id):
-        self._id = id
+    def set_id(self, field_id):
+        self._id = field_id
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -74,7 +75,9 @@ class AjaxField:
 
     @property
     def html(self):
-        return f'<div class="bokeh-plot" data-ajaxid="{self._id}" data-fieldname="{self.name}">{self.initial_value}</div>'
+        return f'<div class="bokeh-plot" data-ajaxid="{self._id}" data-fieldname="{self.name}">' \
+               f'{self.initial_value}' \
+               f'</div>'
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -168,9 +171,8 @@ class Ajax:
     # ------------------------------------------------------------------------------------------------------------------
 
     def json_data(self):
-        data = dict(id=self.id,
-                    fields=[dict(fieldname=fieldname, html=field.final_html) for fieldname, field in self._fields.items()]
-                    )
+        fields = [dict(fieldname=name, html=field.final_html) for name, field in self._fields.items()]
+        data = dict(id=self.id, fields=fields)
         return jsonify(data)
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -193,6 +195,8 @@ class AjaxPlot(Ajax):
                   f"plot_name={self._plot_name}, "
                   f"parameters={self._plot_parameters}\n{tb}")
             plot = None
+            if Config.debug:
+                raise
 
         self.field['plot'].set_value(plot)
 
@@ -217,27 +221,20 @@ class PlotCrashes(AjaxPlot):
         start_date = start_of_day(date(2020, 3, 1))
         device = self.parameters.get('device')
         combined_histogram = Errors().crash_restart_histogram(device, start_date)
-        #combined_histogram = get_cached_data(device, None, "error_restart_histogram")
-        if combined_histogram is None:
+        if combined_histogram is None or combined_histogram.empty:
             return None
 
         # compute time range
         dates = combined_histogram.reset_index().date
-        x_range = min(dates), max(dates)
+        x_range = start_date, date.today()
 
         # compute range of y_axis
         y_range = 0.1, max(combined_histogram.drop(columns=['end_of_day']).max())
 
         histogram_data = combined_histogram.reset_index()
 
-        try:
-            total_number_of_crashes = int(histogram_data.crash_count.sum())
-        except KeyError:
-            total_number_of_crashes = 0
-        try:
-            total_number_of_restarts = int(histogram_data.restart_count.sum())
-        except KeyError:
-            total_number_of_restarts = 0
+        total_number_of_crashes = int(histogram_data.crash_count.sum())
+        total_number_of_restarts = int(histogram_data.restart_count.sum())
 
         self.field['total_number_of_crashes'].set_value(total_number_of_crashes)
         self.field['total_number_of_restarts'].set_value(total_number_of_restarts)
@@ -252,14 +249,13 @@ class PlotSceneDurations(AjaxPlot):
         device = self.parameters.get('device')
         start_date = start_of_day(date(2020, 3, 1))
         scene_data = get_scene_durations(device, start_date)
-        if scene_data is None:
+        if scene_data is None or scene_data.empty:
             return None
 
-        fig1 = plots.plot_scene_duration_percentage(scene_data)
-
-        scene_data = get_scene_durations(device, start_date)
-        fig2 = plots.plot_on_duration(scene_data)
-        return column([fig1, fig2])
+        fig1 = plots.plot_scene_duration_percentage(scene_data.copy())
+        fig2 = plots.plot_on_duration(scene_data.copy())
+        fig3 = plots.plot_sporadic_scenes_duration(scene_data)
+        return column([fig1, fig2, fig3])
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -267,7 +263,7 @@ class PlotSceneDurations(AjaxPlot):
 class PlotDatabaseSize(AjaxPlot):
     def _plot(self):
         data = DatabaseDelay().size()
-        if data is None:
+        if data is None or data.empty:
             return None
 
         return plots.plot_database_size(data)
@@ -280,7 +276,7 @@ class PlotOnOffCycles(AjaxPlot):
         device = self.parameters.get('device')
         start_date = start_of_day(date(2020, 3, 1))
         data = PresenceDetectorStatistics().on_off_cycle_count(device, start_date)
-        if data is None:
+        if data is None or data.empty:
             return None
 
         device_data = data.reset_index()
@@ -328,5 +324,7 @@ class DashboardInfo(Ajax):
                   f"plot_name={self._plot_name}, "
                   f"parameters={self._plot_parameters}\n{tb}")
             data = None
+            if Config.debug:
+                raise
 
 # ----------------------------------------------------------------------------------------------------------------------

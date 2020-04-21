@@ -72,30 +72,32 @@ def get_instructions_data(device: str, interval) -> pd.DataFrame:
     data_instructions = pd.concat([data_since, data_between], axis=0) \
         .rename(columns=dict(value="status"))
 
-    # Remove "None@" from column source
-    def format_source(source):
-        try:
-            return source.split("@")[1]
-        except IndexError:
-            return source
-    data_instructions.source = data_instructions.source.apply(format_source)
+    if not data_instructions.empty:
+        # Remove "None@" from column source
+        def format_source(source):
+            try:
+                return source.split("@")[1]
+            except IndexError:
+                return source
 
-    # Distinguish between manual power commands and power commands based on presence detection.
-    def power(row):
-        if row['target'] == "POWER":
-            if row['source'] == "Lullaby":
-                return "POWER_PRESENCE"
-            if row['source'] == "DataDock":
-                return "POWER_MANUAL"
+        data_instructions.source = data_instructions.source.apply(format_source)
 
-            raise ValueError(f"Unknown combination of source={row['source']} and target={row['target']}.")
+        # Distinguish between manual power commands and power commands based on presence detection.
+        def power(row):
+            if row['target'] == "POWER":
+                if row['source'] == "Lullaby":
+                    return "POWER_PRESENCE"
+                if row['source'] == "DataDock":
+                    return "POWER_MANUAL"
 
-        return row['target']
+                raise ValueError(f"Unknown combination of source={row['source']} and target={row['target']}.")
 
-    data_instructions.target = data_instructions.apply(power, axis=1)
+            return row['target']
 
-    # select columns
-    data_instructions = data_instructions[['timestamp', 'target', 'status']]
+        data_instructions.target = data_instructions.apply(power, axis=1)
+
+        # select columns
+        data_instructions = data_instructions[['timestamp', 'target', 'status']]
 
     # find all restarts in the selected time interval
     vp = VersionPackage
@@ -113,8 +115,9 @@ def get_instructions_data(device: str, interval) -> pd.DataFrame:
     data = pd.concat([data_instructions, data_restart], axis=0)
 
     # sort and set index
-    data = data.sort_values(by="timestamp").set_index("timestamp")
-    data.index.name = "timestamp"
+    if not data.empty:
+        data = data.sort_values(by="timestamp").set_index("timestamp")
+        data.index.name = "timestamp"
 
     return data
 
@@ -244,6 +247,11 @@ def get_state_data(device: str, interval, resample_rule: Optional[str] = None) -
         The dataframe is sorted by its datetime index column named timestamp.
     """
     data = get_instructions_data(device, interval)
+    if data.empty:
+        empty_data = pd.DataFrame(columns=['power', 'scene', 'settings'])
+        empty_data.index.name = "timestamp"
+        return empty_data
+
     interval = parse_interval(interval)
     since, until = interval.begin, interval.end
 
@@ -290,7 +298,7 @@ def get_state_data(device: str, interval, resample_rule: Optional[str] = None) -
         # resample data
         data = data.resample(resample_rule).ffill().dropna()
 
-    data.index.name = "timestamp"
+        data.index.name = "timestamp"
     return data
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -146,6 +146,9 @@ def find_intervals(data: pd.DataFrame) -> pd.DataFrame:
         end: datetime is the end time of each interval
         duration: timedelta is the duration of each interval
     """
+    if data.empty:
+        return pd.DataFrame(columns=['begin', 'end', 'duration'])
+
     # The minimal length of an interval.
     # All delays bigger than this are assumed to start a new interval
     min_timedelta = timedelta(seconds=1)
