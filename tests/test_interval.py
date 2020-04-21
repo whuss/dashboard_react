@@ -3,7 +3,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from utils.interval import intersect_intervals, is_intersecting, Interval
+from utils.interval import intersect_intervals, is_intersecting, Interval, find_intervals
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -172,5 +172,12 @@ def test_intersect_interval(data):
 
     assert intersect_intervals(a, b).to_dict() == c.to_dict()
     assert intersect_intervals(b, a).to_dict() == c.to_dict()
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def test_find_intervals_empty():
+    data = find_intervals(pd.DataFrame())
+    assert data.empty
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -293,13 +293,20 @@ def plot_crashes(data, device="PTL_DEFAULT", **kwargs):
         x_range = (min(dates) - timedelta(days=1), max(dates) + timedelta(days=1))
 
     y_range = kwargs.get('y_range', None)
+    if y_range and y_range[1] >= 1000:
+        bottom = 0.1
+        y_range = bottom, y_range[1]
+        y_axis_type = "log"
+    else:
+        bottom = 0
+        y_axis_type = "linear"
 
     data_source = ColumnDataSource(data)
 
     vbar_width = timedelta(days=1) / 2.5
     vbar_shift = vbar_width.total_seconds() * 1000
 
-    fig = figure(x_axis_type="datetime", y_axis_type="log",
+    fig = figure(x_axis_type="datetime", y_axis_type=y_axis_type,
                  x_range=x_range, y_range=y_range, plot_height=200, plot_width=800,
                  title="Crashes/Restarts per day", tools="tap")
     fig.output_backend = "svg"
@@ -326,7 +333,7 @@ def plot_crashes(data, device="PTL_DEFAULT", **kwargs):
     fig.vbar(x=dodge('date', -vbar_shift / 2, range=fig.x_range),
              width=vbar_width,
              top='restart_count',
-             bottom=0.1,
+             bottom=bottom,
              color='#478c06',
              source=data_source,
              name="restarts",
@@ -334,7 +341,7 @@ def plot_crashes(data, device="PTL_DEFAULT", **kwargs):
     fig.vbar(x=dodge('date', +vbar_shift / 2, range=fig.x_range),
              width=vbar_width,
              top='crash_count',
-             bottom=0.1,
+             bottom=bottom,
              color="#ff3d06",
              source=data_source,
              name="crashes",

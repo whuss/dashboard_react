@@ -229,7 +229,7 @@ class PlotCrashes(AjaxPlot):
         x_range = start_date, date.today()
 
         # compute range of y_axis
-        y_range = 0.1, max(combined_histogram.drop(columns=['end_of_day']).max())
+        y_range = 0, max(combined_histogram.drop(columns=['end_of_day']).max())
 
         histogram_data = combined_histogram.reset_index()
 
