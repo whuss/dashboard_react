@@ -475,7 +475,8 @@ def plot_database_size(data):
                                        'data_size_in_mb': 'printf',
                                        'index_size_in_mb': 'printf',
                                        'total_size': 'printf',
-                                      })
+                                      },
+                           mode='vline')
     fig.add_tools(hover_tool)
     fig.add_tools(SaveTool())
 
@@ -689,6 +690,9 @@ def plot_scene_duration_percentage(data):
 
     fig.add_tools(hover_tool)
     fig.add_tools(SaveTool())
+    fig.add_tools(WheelZoomTool(dimensions=Dimensions.width))
+    fig.add_tools(PanTool(dimensions=Dimensions.width))
+    fig.add_tools(ResetTool())
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -728,12 +732,16 @@ def plot_on_duration(data):
     fig.toolbar.logo = None
 
     hover_tool = HoverTool(tooltips=[('Date', '@date{%F}'),
-                                     ('On time', '@total_time_readable')],
+                                     ('On time', '@total_time_readable hours')],
                            formatters={'total_time_readable': 'printf',
-                                       'date': 'datetime'})
+                                       'date': 'datetime'},
+                           mode='vline')
 
     fig.add_tools(hover_tool)
     fig.add_tools(SaveTool())
+    fig.add_tools(WheelZoomTool(dimensions=Dimensions.width))
+    fig.add_tools(PanTool(dimensions=Dimensions.width))
+    fig.add_tools(ResetTool())
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -792,16 +800,17 @@ def plot_sporadic_scenes_duration(data):
     fig.toolbar.logo = None
 
     hover_tool = HoverTool(tooltips=[('Date', '@date{%F}'),
-                                     ('Horizontal task', '@TASK_HORI minutes'),
-                                     ('Vertical task', '@TASK_VERT minutes'),
-                                     ('Light shower', '@LIGHT_SHOWER minutes')],
-                           formatters={'date': 'datetime',
-                                       'TASK_HORI': 'printf',
-                                       'TASK_VERT': 'printf',
-                                       'LIGHT_SHOWER': 'printf'})
+                                     ('Horizontal task', '@TASK_HORI{0.00} minutes'),
+                                     ('Vertical task', '@TASK_VERT{0.00} minutes'),
+                                     ('Light shower', '@LIGHT_SHOWER{0.00} minutes')],
+                           formatters={'date': 'datetime'},
+                           mode='vline')
 
     fig.add_tools(hover_tool)
     fig.add_tools(SaveTool())
+    fig.add_tools(WheelZoomTool(dimensions=Dimensions.width))
+    fig.add_tools(PanTool(dimensions=Dimensions.width))
+    fig.add_tools(ResetTool())
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
