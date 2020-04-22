@@ -15,7 +15,7 @@
     </thead>
   {% for device, error_table in data.items() %}
   <tr>
-    <th scope="row"> <a href="{{route}}?id={{device}}">{{device}}</a></th>
+    <th scope="row"> <a href="{{url_for_self(device=device)}}">{{device}}</a></th>
     <td><div class="pandas_describe" align="left">{{error_table}}</div></td>
   </tr>
   {% endfor %}

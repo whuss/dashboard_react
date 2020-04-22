@@ -285,7 +285,6 @@ def error_statistics():
     ajax_plot_list = [_plot(device) for device in get_devices()]
 
     return render_template("error_statistics.html",
-                           route='/system/errors',
                            ajax_plot_list=ajax_plot_list,
                            js_resources=INLINE.render_js(),
                            css_resources=INLINE.render_css()
@@ -319,7 +318,7 @@ def error_heatmap():
         device_data['device'] = device
         data_dict[device] = HeatmapTable(device_data.to_dict(orient='records'))
 
-    return render_template("errors.html", route='/system/errors', data=data_dict, messages="Errors by file location")
+    return render_template("errors.html", data=data_dict, messages="Errors by file location")
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -334,7 +333,6 @@ def crashes():
 
     return render_template('crashes.html',
                            ajax_plot_list=ajax_plot_list,
-                           route='/system/crashes',
                            js_resources=INLINE.render_js(),
                            css_resources=INLINE.render_css()
                            )
@@ -386,7 +384,7 @@ def show_logs(device, duration=5, timestamp=None, log_level="TRACE"):
 
 @app.route('/system/version', methods=['GET'])
 def version_messages():
-    device_id = request.args.get('id', default="", type=str)
+    device_id = request.args.get('device', default="", type=str)
     errors = Errors()
     data = errors.version(device_id=device_id)
 
@@ -410,7 +408,7 @@ def version_messages():
         device_data['device'] = device
         data_dict[device] = VersionTable(device_data.to_dict(orient='records'))
 
-    return render_template("errors.html", route='/system/version', data=data_dict, messages="System start")
+    return render_template("errors.html", data=data_dict, messages="System start")
 
 
 # ----------------------------------------------------------------------------------------------------------------------
