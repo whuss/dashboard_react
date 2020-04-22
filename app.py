@@ -247,18 +247,6 @@ def index():
 
     return render_template('home.html', ajax_plot_list=ajax_plot_list)
 
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.route('/dashboard')
-def index_old():
-    dash = Dashboard()
-    start_date = datetime.now() - timedelta(days=1)
-    dashboard = dash.dashboard(start_date)
-    return render_template('home_old.html', dashboard=dashboard)
-
-
 # ----------------------------------------------------------------------------------------------------------------------
 
 
