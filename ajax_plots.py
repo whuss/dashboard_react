@@ -272,6 +272,7 @@ class PlotCrashes(AjaxPlot):
     # ------------------------------------------------------------------------------------------------------------------
 
     def _plot(self, combined_histogram):
+        device = self.parameters.get('device')
 
         # compute time range
         dates = combined_histogram.reset_index().date

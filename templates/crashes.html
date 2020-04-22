@@ -21,6 +21,7 @@
         <th>Total crashes</th>
         <th>Total restarts</th>
         <th>Stability</th>
+        <th>Download</th>
     </tr>
     </thead>
   {% for plot in ajax_plot_list %}
@@ -29,6 +30,7 @@
     <td>{{plot.field.total_number_of_crashes|safe}}</td>
     <td>{{plot.field.total_number_of_restarts|safe}}</td>
     <td><div align="center">{{plot.field.plot|safe}}</div></td>
+    <td>{{plot.field.download|safe}}</td>
   </tr>
   {% endfor %}
   </table>
