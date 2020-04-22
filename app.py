@@ -31,6 +31,7 @@ from plots import plot_error_heatmap, color_palette, plot_connection_times
 from plots import plot_on_off_times
 
 from ajax_plots import AjaxFactory, PlotCrashes, PlotDatabaseSize, PlotOnOffCycles, PlotSceneDurations, DashboardInfo
+from ajax_plots import PlotErrors
 
 import utils.date
 
@@ -239,17 +240,6 @@ app.jinja_env.globals['url_for_self'] = url_for_self
 
 @app.route('/')
 def index():
-    # def _plot(device):
-    #     return PlotSceneDurations(plot_parameters={'device': device})
-    #
-    # ajax_plot_list = [_plot(device) for device in get_devices()]
-    #
-    # return render_template('analytics_scene.html',
-    #                        ajax_plot_list=ajax_plot_list,
-    #                        js_resources=INLINE.render_js(),
-    #                        css_resources=INLINE.render_css()
-    #                        )
-
     def _info(device):
         return DashboardInfo(plot_parameters={'device': device})
 
@@ -318,71 +308,17 @@ def crash_for_device(device):
 
 @app.route('/system/errors')
 def error_statistics():
-    error_heatmap = Errors().error_heatmap()
-    error_histogram = error_heatmap.groupby(['device', 'date']).error_count.sum().reset_index()
+    def _plot(device):
+        return PlotErrors(plot_parameters={'device': device})
 
-    def _format_next_day(date):
-        return (date + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
-
-    error_histogram['end_of_day'] = error_histogram.date.apply(_format_next_day)
-
-    # compute time range
-    dates = error_histogram.date
-    x_range = min(dates), max(dates)
-
-    error_histogram = error_histogram.set_index(['device', 'date'])
-
-    # compute range of y_axis
-    y_range = 1, max(error_histogram.error_count)
-
-    error_heatmap['location'] = error_heatmap.apply(
-        lambda row: f"{os.path.basename(row['filename'])}:{row['line_number']}", axis=1)
-    # all errors locations in the dataset
-    locations = pd.DataFrame(error_heatmap.location.unique(), columns=['location'])
-    # assign a unique color for each error location
-    locations['colors'] = color_palette(len(locations.location))
-    locations
-
-    eh = error_heatmap.reset_index()
-    errors_by_day = eh.drop(columns=['filename', 'line_number']) \
-        .groupby(['device', 'date']) \
-        .sum() \
-        .rename(columns=dict(error_count='errors_by_day'))
-    eh = eh.join(errors_by_day, on=['device', 'date'])
-    eh['error_count_normalized'] = eh.error_count / eh.errors_by_day
-    eh = eh.merge(locations, on=['location'])
-    eh['date_label'] = eh.date
-    eh['end_of_day'] = eh.date.apply(_format_next_day)
-    eh = eh.set_index(['device', 'date', eh.index]).sort_index()
-    error_heatmap = eh
-
-    scripts = []
-    data_dict = dict()
-
-    for device in error_histogram.index.levels[0]:
-        histogram_data = error_histogram.loc[device].reset_index()
-        fig = plot_errors(histogram_data, x_range=x_range, y_range=y_range, device=device)
-        fig_heatmap = plot_error_heatmap(error_heatmap.loc[device], x_range=x_range, device=device)
-        script, div = components(column(fig, fig_heatmap))
-        try:
-            total_number_of_errors = histogram_data.error_count.sum()
-        except KeyError:
-            total_number_of_errors = 0
-        data_dict[device] = dict(total_number_of_errors=total_number_of_errors,
-                                 plot=div)
-        scripts.append(script)
-
-    # grab the static resources
-    js_resources = INLINE.render_js()
-    css_resources = INLINE.render_css()
+    ajax_plot_list = [_plot(device) for device in get_devices()]
 
     return render_template("error_statistics.html",
                            route='/system/errors',
-                           data=data_dict,
-                           scripts=scripts,
-                           js_resources=js_resources,
-                           css_resources=css_resources)
-
+                           ajax_plot_list=ajax_plot_list,
+                           js_resources=INLINE.render_js(),
+                           css_resources=INLINE.render_css()
+                           )
 
 # ----------------------------------------------------------------------------------------------------------------------
 

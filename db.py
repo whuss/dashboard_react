@@ -933,6 +933,36 @@ class Errors(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
+    @db_cached
+    def error_heatmap_device(device: str, since: datetime) -> pd.DataFrame:
+        from sqlalchemy import Date
+        lp = LoggerPackage
+        query = db.session \
+            .query(lp.device,
+                   lp.filename,
+                   lp.line_number,
+                   lp.timestamp.cast(Date).label('date'),
+                   db.func.count(lp.timestamp).label('error_count')) \
+            .filter(lp.log_level.in_(["ERROR", "CRITICAL"])) \
+            .filter(lp.device != "PTL_DEFAULT") \
+            .group_by('date') \
+            .group_by(lp.filename) \
+            .group_by(lp.line_number) \
+            .group_by(lp.device)
+
+        data = pd.DataFrame(query.all())
+        data['end_of_day'] = data.date.apply(lambda x: x + timedelta(days=1))
+        data = data.set_index(['device'])
+
+        if device not in data.index:
+            return pd.DataFrame(columns=['filename', 'line_number', 'date', 'error_count', 'end_of_day'])
+
+        data = data.loc[device]
+        return data[data.date >= since.date()]
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @staticmethod
     def crash_at_time(device, time):
         lp = LoggerPackage
         query = db.session.query(lp.device, lp.id, lp.log_level, lp.timestamp) \

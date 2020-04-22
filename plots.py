@@ -366,13 +366,20 @@ def plot_errors(data, device="PTL_DEFAULT", **kwargs):
         x_range = (min(dates) - timedelta(days=1), max(dates) + timedelta(days=1))
 
     y_range = kwargs.get('y_range', None)
+    if y_range and y_range[1] >= 1000:
+        bottom = 0.1
+        y_range = bottom, y_range[1]
+        y_axis_type = "log"
+    else:
+        bottom = 0
+        y_axis_type = "linear"
 
     data_source = ColumnDataSource(data)
 
     vbar_width = timedelta(days=1) / 2
 
     fig = figure(x_axis_type="datetime", x_range=x_range,
-                 y_axis_type="log", y_range=y_range,
+                 y_axis_type=y_axis_type, y_range=y_range,
                  plot_height=200, plot_width=800,
                  title="Errors per day", tools="tap")
     fig.output_backend = "svg"
@@ -390,7 +397,7 @@ def plot_errors(data, device="PTL_DEFAULT", **kwargs):
 
     fig.vbar(x='date',
              width=vbar_width,
-             bottom=0.01,
+             bottom=bottom,
              top='error_count',
              color='#c61803',
              source=data_source,

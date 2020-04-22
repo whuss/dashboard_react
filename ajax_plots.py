@@ -1,7 +1,10 @@
+import os
 import traceback
 from abc import abstractmethod
 from datetime import timedelta, date
 from typing import Dict
+
+import pandas as pd
 
 from bokeh.embed import components
 from bokeh.layouts import column
@@ -401,5 +404,76 @@ class DashboardInfo(Ajax):
             data = None
             if Config.debug:
                 raise
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotErrors(AjaxPlot):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self.add_field(AjaxField(name='total_number_of_errors'))
+        self._start_date = start_of_day(date(2020, 3, 1))
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @staticmethod
+    def _format_next_day(_date):
+        return (_date + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        device = self.parameters.get('device')
+        error_heatmap = Errors().error_heatmap_device(device, self._start_date)
+
+        error_heatmap['location'] = error_heatmap.apply(
+            lambda row: f"{os.path.basename(row['filename'])}:{row['line_number']}", axis=1)
+        # all errors locations in the dataset
+        locations = pd.DataFrame(error_heatmap.location.unique(), columns=['location'])
+        # assign a unique color for each error location
+        locations['colors'] = plots.color_palette(len(locations.location))
+        # locations
+        #
+        eh = error_heatmap.reset_index()
+        errors_by_day = eh.drop(columns=['filename', 'line_number']) \
+            .groupby(['date']) \
+            .sum() \
+            .rename(columns=dict(error_count='errors_by_day'))
+        eh = eh.join(errors_by_day, on=['date'])
+        eh['error_count_normalized'] = eh.error_count / eh.errors_by_day
+        eh = eh.merge(locations, on=['location'])
+        eh['date_label'] = eh.date
+        eh['end_of_day'] = eh.date.apply(PlotErrors._format_next_day)
+        eh = eh.set_index(['date', eh.index]).sort_index()
+        error_heatmap = eh
+
+        if error_heatmap is None or error_heatmap.empty:
+            self.field['total_number_of_errors'].set_value(0)
+            return None
+
+        return error_heatmap
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, error_heatmap):
+        device = self.parameters.get('device')
+        x_range = self._start_date, date.today()
+
+        error_histogram = error_heatmap.groupby(['date']).error_count.sum().reset_index()
+
+        self.field['total_number_of_errors'].set_value(error_histogram.error_count.sum())
+
+        error_histogram['end_of_day'] = error_histogram.date.apply(PlotErrors._format_next_day)
+
+        error_histogram = error_histogram.set_index(['date'])
+
+        # compute range of y_axis
+        y_range = 0, max(error_histogram.error_count)
+
+        histogram_data = error_histogram.reset_index()
+        fig = plots.plot_errors(histogram_data, x_range=x_range, y_range=y_range, device=device)
+        fig_heatmap = plots.plot_error_heatmap(error_heatmap, x_range=x_range, device=device)
+
+        return column([fig, fig_heatmap])
 
 # ----------------------------------------------------------------------------------------------------------------------
