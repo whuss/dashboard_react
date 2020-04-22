@@ -3,9 +3,6 @@
 {% block head %}
 {{ js_resources|indent(4)|safe }}
 {{ css_resources|indent(4)|safe }}
-{% for plot_script in scripts %}
-{{ plot_script|indent(4)|safe }}
-{% endfor %}
 {% endblock %}
 
 {% block page_title %}
@@ -24,13 +21,15 @@
         <th>Device ID</th>
         <th>Number of packages</th>
         <th>Package Delay</th>
+        <th>Download</th>
     </tr>
     </thead>
-  {% for device, figure in figures.items() %}
+    {% for plot in ajax_plot_list %}
   <tr>
-    <th scope="row"> {{device}}</th>
-    <td>{{ figure.total_packages }}</td>
-    <td><div align="center">{{figure.div|safe}}</div></td>
+    <th scope="row"> {{plot.parameters.device}}</th>
+    <td>{{ plot.field.total_packages|safe }}</td>
+    <td><div align="center">{{plot.field.plot|safe }}</div></td>
+    <td>{{plot.field.download|safe}}</td>
   </tr>
   {% endfor %}
   </table>
@@ -39,5 +38,6 @@
 
 {% block script %}
 {% include 'includes/_data_table.html' %}
+{% include 'includes/_ajax_plot.html' %}
 <script src={{ url_for('static', filename = 'js/date_range.js') }}></script>
 {% endblock script %}

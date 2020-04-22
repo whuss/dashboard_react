@@ -31,7 +31,7 @@ from plots import plot_error_heatmap, color_palette, plot_connection_times
 from plots import plot_on_off_times
 
 from ajax_plots import AjaxFactory, PlotCrashes, PlotDatabaseSize, PlotOnOffCycles, PlotSceneDurations, DashboardInfo
-from ajax_plots import PlotErrors
+from ajax_plots import PlotErrors, PlotDatabaseDelay
 
 import utils.date
 
@@ -89,7 +89,7 @@ db.Model.metadata.reflect(bind=db.engine)
 
 @app.template_filter('ajax_plots_to_json')
 def ajax_plots_to_json(ajax_plots):
-    return json.dumps([plot.data for plot in ajax_plots])
+    return json.dumps([plot.encode_json_data() for plot in ajax_plots])
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -629,39 +629,20 @@ def parse_date_range(request):
 @app.route('/statistics/database_delay', methods=['GET'])
 def statistics_database_delay():
     start_date, end_date = parse_date_range(request)
-    data = DatabaseDelay().package_delay(start_date, end_date)
 
-    print("Query finished")
+    def _plot(device):
+        return PlotDatabaseDelay(plot_parameters={'start_date': start_date,
+                                                  'end_date': end_date,
+                                                  'device': device})
 
-    figures = {}
-    scripts = []
-
-    # compute time range
-    x_range = min(data.delay), max(data.delay)
-
-    for device in data.index.levels[0]:
-        device_data = data.loc[device].delay.dropna()
-
-        total_packages = device_data.count()
-
-        fig = plot_duration_histogram(device_data, time_scale="s",
-                                      x_axis_label="Package delay", y_axis_label="Amount",
-                                      plot_width=600, plot_height=400
-                                      )
-        script, div = components(fig)
-        figures[device] = dict(div=div, total_packages=total_packages)
-        scripts.append(script)
-
-    # grab the static resources
-    js_resources = INLINE.render_js()
-    css_resources = INLINE.render_css()
+    ajax_plot_list = [_plot(device) for device in get_devices()]
 
     return render_template("statistics_database_delay.html",
                            timespan=humanfriendly.format_timespan(end_date - start_date, max_units=2),
-                           figures=figures,
-                           scripts=scripts,
-                           js_resources=js_resources,
-                           css_resources=css_resources)
+                           ajax_plot_list=ajax_plot_list,
+                           js_resources=INLINE.render_js(),
+                           css_resources=INLINE.render_css()
+                           )
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1173,12 +1154,13 @@ def _get_plot():
         return ""
 
     data = request.get_json()
-    plot_id = data.get('id')
-    parameters = data.get('parameters')
-    plot_name = data.get('plot_name')
+    #plot_id = data.get('id')
+    #parameters = data.get('parameters')
+    #plot_name = data.get('plot_name')
 
     # print(f"_get_plot(): {data}")
 
+    plot_name, parameters = AjaxFactory.decode_json_data(data)
     plot = AjaxFactory.create_plot(plot_name, plot_parameters=parameters)
     plot.render()
     return plot.json_data()
@@ -1192,10 +1174,7 @@ def _download_data():
         return ""
 
     data = request.get_json()
-    plot_id = data.get('id')
-    parameters = data.get('parameters')
-    plot_name = data.get('plot_name')
-
+    plot_name, parameters = AjaxFactory.decode_json_data(data)
     plot = AjaxFactory.create_plot(plot_name, plot_parameters=parameters)
     data = plot.fetch_data()
     from utils.excel import convert_to_excel

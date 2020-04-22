@@ -44,6 +44,19 @@ class AjaxFactory:
             raise TypeError(f"class {ajax_class} does not inherit from Ajax.")
         return ajax_class(plot_parameters)
 
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @staticmethod
+    def decode_json_data(json_data):
+        plot_id = json_data.get('id')
+        plot_name = json_data.get('plot_name')
+        parameters_encoded = json_data.get('parameters')
+        import pickle
+        from base64 import b64decode
+        parameters_decoded = pickle.loads(b64decode(parameters_encoded))
+        print(f"decode_json_data: {parameters_decoded}")
+        return plot_name, parameters_decoded
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -191,6 +204,14 @@ class Ajax:
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def encode_json_data(self):
+        import pickle
+        from base64 import b64encode
+        encoded_parameters = b64encode(pickle.dumps(self._plot_parameters)).decode('ascii')
+        return dict(plot_name=self._plot_name, id=self._plot_id, parameters=encoded_parameters)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     @property
     def parameters(self):
         return self._plot_parameters
@@ -227,6 +248,9 @@ class AjaxPlot(Ajax):
             if data is None:
                 plot = None
             else:
+                print("----------------")
+                print(f"data: \n{data}")
+                print("----------------")
                 plot = self._plot(data)
         except Exception:
             tb = traceback.format_exc()
@@ -475,5 +499,41 @@ class PlotErrors(AjaxPlot):
         fig_heatmap = plots.plot_error_heatmap(error_heatmap, x_range=x_range, device=device)
 
         return column([fig, fig_heatmap])
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+class PlotDatabaseDelay(AjaxPlot):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self.add_field(AjaxField(name='number_of_packages'))
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        start_date = self.parameters.get('start_date')
+        end_date = self.parameters.get('end_date')
+        device = self.parameters.get('device')
+        data = DatabaseDelay().package_delay(start_date, end_date)
+
+        if data.empty:
+            return None
+
+        if device in data.index:
+            device_data = data.loc[device].dropna()
+        else:
+            return None
+
+        total_packages = device_data.delay.count()
+        self.field['number_of_packages'].set_value(total_packages)
+        return device_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, device_data):
+        fig = plots.plot_duration_histogram(device_data.delay, time_scale="s",
+                                            x_axis_label="Package delay", 
+                                            y_axis_label="Amount",
+                                            plot_width=600, plot_height=400)
+        return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
