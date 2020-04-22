@@ -51,16 +51,23 @@ function requestDownload(download_url, plot_data)
     for (const plot of plot_data)
     {
         console.log('requestDownload: ', plot);
-        $(`[data-ajaxid="${plot.id}"]`).click(function()
+        $(`[data-ajaxid="${plot.id}"][data-fieldname="download"]`).click(function()
         {
-              console.log("button clicked: ", plot.id);
-              $(this).attr('class', 'btn btn-danger');
-              $.ajax(download_url,
-              {
-                  data: JSON.stringify(plot),
-                  contentType: 'application/json',
-                  type: 'POST'
-              }).done(finishedDownload);
+            console.log("button clicked: ", plot.id);
+            $(this).find('button').attr('class', 'btn btn-success');
+
+            function clear_button()
+            {
+                $(this).find('button').attr('class', 'btn btn-secondary');
+            }
+            setTimeout(clear_button(), 500);
+
+            $.ajax(download_url,
+            {
+                data: JSON.stringify(plot),
+                contentType: 'application/json',
+                type: 'POST'
+            }).done(finishedDownload);
         });
     }
 }
