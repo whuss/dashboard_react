@@ -42,6 +42,8 @@ def format_timespan_sloppy(td: timedelta) -> str:
 
 
 def parse_date(date_str: str) -> date:
+    if " " in date_str:
+        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").date()
     return datetime.strptime(date_str, "%Y-%m-%d").date()
 
 # ----------------------------------------------------------------------------------------------------------------------
