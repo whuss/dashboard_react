@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects import mysql
 from utils.date import format_timespan_sloppy
+from config import Config
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Setup
@@ -359,7 +360,7 @@ def db_cached(fn):
                 # update when the cache value is from last day
                 current_day = datetime.now().date()
                 cache_day = cached_data.timestamp.date()
-                if current_day <= cache_day:
+                if current_day <= cache_day and not Config.update_cache == "always":
                     # no update needed
                     print(f"db_cached: no update needed: return cached data.")
                     return cached_data.data
@@ -907,6 +908,7 @@ class Errors(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
+    @db_cached
     def error_heatmap():
         from sqlalchemy import Date
         lp = LoggerPackage
