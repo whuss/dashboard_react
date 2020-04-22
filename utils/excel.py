@@ -20,6 +20,7 @@ import os
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 def int_to_alpha(x: int) -> str:
     if x >= 26:
         raise NotImplementedError("Column names bigger than Z are not implemented.")
@@ -58,12 +59,12 @@ def dataframe_to_excel(data: pd.DataFrame, filename: str) -> None:
     columns = data.columns
 
     for c_index, header in enumerate(columns):
-        worksheet.write(cell(0, c_index), header)
+        worksheet.write(0, c_index, header)
     for r_index, (index, row) in enumerate(data.iterrows()):
-        worksheet.write(cell(r_index+1, 0), index, excel_format(index))
+        worksheet.write(r_index+1, 0, index, excel_format(index))
         for c_index, c_name in enumerate(columns):
             entry = row[c_name]
-            worksheet.write(cell(r_index+1, c_index), entry, excel_format(entry))
+            worksheet.write(r_index+1, c_index, entry, excel_format(entry))
     workbook.close()
 
 # ----------------------------------------------------------------------------------------------------------------------
