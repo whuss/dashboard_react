@@ -37,8 +37,13 @@ def get_scene_durations(device: str, since: date, until: Optional[date] = None) 
     else:
         scene_data = {scene: find_intervals(on_data[on_data.scene == scene].reset_index()) for scene in scenes}
 
+        def compute_total_duration(data_) -> timedelta:
+            if data_.empty:
+                return timedelta(0)
+            return data_.groupby([data_.begin.dt.date]).duration.sum()
+
         # Compute sum of interval durations for each day
-        duration_dict = {scene: data.groupby([data.begin.dt.date]).duration.sum() for scene, data in scene_data.items()}
+        duration_dict = {scene: compute_total_duration(data) for scene, data in scene_data.items()}
         duration_data = pd.DataFrame(duration_dict).fillna(timedelta(seconds=0))
     duration_data.index.name = 'date'
     return duration_data
