@@ -1,28 +1,30 @@
+import hashlib
+import hmac
 import os
+import pickle
 import traceback
 from abc import abstractmethod
+from base64 import b64encode, b64decode
 from datetime import timedelta, date
 from typing import Dict
 
 import pandas as pd
-
 from bokeh.embed import components
 from bokeh.layouts import column
-from flask import render_template, jsonify, url_for
+from flask import render_template, jsonify
 
 import plots
 from analytics.scenes import get_scene_durations
+from config import Config
 from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
 from utils.date import start_of_day, format_time_span
-from config import Config
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 def _hash_id(value):
-    from hashlib import md5
-    return "id_" + md5(repr(value).encode()).hexdigest()
+    return "id_" + hashlib.md5(repr(value).encode()).hexdigest()
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -52,14 +54,9 @@ class AjaxFactory:
         plot_name = json_data.get('plot_name')
         parameters_encoded = json_data.get('parameters')
         digest = json_data.get('digest')
-        import pickle
-        from base64 import b64decode
 
         # check digest
-        import hmac
-        import hashlib
-
-        client_digest = hmac.new(b'dfasdfljalskfjalsdkfjasdf', bytes(parameters_encoded, encoding="ascii"), hashlib.sha1).hexdigest()
+        client_digest = hmac.new(Config.secret, bytes(parameters_encoded, encoding="ascii"), hashlib.sha1).hexdigest()
         if client_digest != digest:
             raise ValueError(f"The pickle has been tempered with: {digest} != {client_digest}")
 
@@ -215,12 +212,8 @@ class Ajax:
     # ------------------------------------------------------------------------------------------------------------------
 
     def encode_json_data(self):
-        import pickle
-        from base64 import b64encode
-        import hashlib
-        import hmac
         encoded_parameters = b64encode(pickle.dumps(self._plot_parameters)).decode('ascii')
-        digest = hmac.new(b'dfasdfljalskfjalsdkfjasdf', bytes(encoded_parameters, encoding="ascii"), hashlib.sha1).hexdigest()
+        digest = hmac.new(Config.secret, bytes(encoded_parameters, encoding="ascii"), hashlib.sha1).hexdigest()
         return dict(plot_name=self._plot_name, id=self._plot_id, parameters=encoded_parameters, digest=digest)
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -261,9 +254,6 @@ class AjaxPlot(Ajax):
             if data is None:
                 plot = None
             else:
-                print("----------------")
-                print(f"data: \n{data}")
-                print("----------------")
                 plot = self._plot(data)
         except Exception:
             tb = traceback.format_exc()
@@ -514,6 +504,7 @@ class PlotErrors(AjaxPlot):
         return column([fig, fig_heatmap])
 
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 class PlotDatabaseDelay(AjaxPlot):
     def __init__(self, plot_parameters: dict):
