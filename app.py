@@ -163,11 +163,6 @@ def _format_duration(_input):
 
 @app.context_processor
 def utility_processor():
-    def _get_current_page():
-        return request.args.get('page', default=1, type=int)
-
-    # ------------------------------------------------------------------------------------------------------------------
-
     def _str(_input):
         return str(_input) if _input else ""
 
@@ -201,8 +196,7 @@ def utility_processor():
     return dict(_str=_str,
                 _time_span=_time_span,
                 _number=_number,
-                _unit=_unit,
-                get_current_page=_get_current_page)
+                _unit=_unit)
 
 
 # ----------------------------------------------------------------------------------------------------------------------<
