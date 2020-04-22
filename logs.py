@@ -1,7 +1,7 @@
 import re
 import os
 from flask import url_for
-from utils.date import parse_date
+from utils.date import parse_datetime
 from datetime import timedelta
 
 from db import Errors
@@ -69,7 +69,7 @@ def format_logs(logs, device=None):
 
 
 def fetch_logs(device_id, timestamp, log_level="TRACE", before=2, after=2, page=None, filename=None, line_number=None):
-    restart_time = parse_date(timestamp)
+    restart_time = parse_datetime(timestamp)
     start_date = restart_time - timedelta(minutes=before)
     end_date = restart_time + timedelta(minutes=after)
 

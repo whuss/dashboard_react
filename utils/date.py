@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, date, time
 from typing import Union
 import humanfriendly
+import dateutil.parser
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -41,10 +42,16 @@ def format_timespan_sloppy(td: timedelta) -> str:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+def parse_datetime(datetime_str: str) -> datetime:
+    dt = dateutil.parser.parse(datetime_str)
+    return dt
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 def parse_date(date_str: str) -> date:
-    if " " in date_str:
-        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").date()
-    return datetime.strptime(date_str, "%Y-%m-%d").date()
+    dt = dateutil.parser.parse(date_str)
+    return dt.date()
 
 # ----------------------------------------------------------------------------------------------------------------------
 

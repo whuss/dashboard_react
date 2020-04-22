@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 
 from flask import Flask, render_template, jsonify, request, url_for, json
+import dateutil.parser
 
 from config import Config
 
@@ -514,17 +515,16 @@ def statistics_mouse():
 def parse_date_range(request):
     start_str = request.args.get('start', default="", type=str)
     end_str = request.args.get('end', default="", type=str)
-    from dateutil.parser import parse
 
     if not end_str:
         end_date = datetime.now()
     else:
-        end_date = parse(end_str)
+        end_date = dateutil.parser.parse(end_str)
 
     if not start_str:
         start_date = end_date - timedelta(days=1)
     else:
-        start_date = parse(start_str)
+        start_date = dateutil.parser.parse(start_str)
 
     print(f"Date range: {start_str} -- {end_str}")
     print(f"Parsed Date range: {start_date} -- {end_date}")
