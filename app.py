@@ -3,12 +3,12 @@ import re
 import pandas as pd
 import numpy as np
 
-from flask import Flask, render_template, jsonify, request, url_for, json, Response
+from flask import Flask, render_template, jsonify, request, url_for, json
 
 from config import Config
 
 from db import db
-from db import Errors, Dashboard, DatabaseDelay, ModeStatistics, MouseData, PresenceDetectorStatistics, SensorData
+from db import Errors, Dashboard, ModeStatistics, MouseData, PresenceDetectorStatistics, SensorData
 from db import Connectivity
 
 # from flask_basicauth import BasicAuth
@@ -25,13 +25,13 @@ from datetime import datetime, timedelta
 
 import humanfriendly
 
-from plots import plot_histogram, plot_duration_histogram, plot_time_series
-from plots import plot_errors
-from plots import plot_error_heatmap, color_palette, plot_connection_times
-from plots import plot_on_off_times
+from plots import plot_histogram, plot_time_series, plot_connection_times, plot_on_off_times
 
 from ajax_plots import AjaxFactory, PlotCrashes, PlotDatabaseSize, PlotOnOffCycles, PlotSceneDurations, DashboardInfo
 from ajax_plots import PlotErrors, PlotDatabaseDelay
+
+from utils.excel import convert_to_excel
+from base64 import b64encode
 
 import utils.date
 
@@ -1153,15 +1153,8 @@ def _get_plot():
     if request.method != 'POST':
         return ""
 
-    data = request.get_json()
-    #plot_id = data.get('id')
-    #parameters = data.get('parameters')
-    #plot_name = data.get('plot_name')
-
-    # print(f"_get_plot(): {data}")
-
-    plot_name, parameters = AjaxFactory.decode_json_data(data)
-    plot = AjaxFactory.create_plot(plot_name, plot_parameters=parameters)
+    json_data = request.get_json()
+    plot = AjaxFactory.create_plot(json_data)
     plot.render()
     return plot.json_data()
 
@@ -1173,20 +1166,13 @@ def _download_data():
     if request.method != 'POST':
         return ""
 
-    data = request.get_json()
-    plot_name, parameters = AjaxFactory.decode_json_data(data)
-    plot = AjaxFactory.create_plot(plot_name, plot_parameters=parameters)
+    json_data = request.get_json()
+    plot = AjaxFactory.create_plot(json_data)
     data = plot.fetch_data()
-    from utils.excel import convert_to_excel
-    from base64 import b64encode
     json_data = dict(filename="data.xlsx",
                      mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                      bytes=b64encode(convert_to_excel(data)).decode('ascii'))
     return jsonify(json_data)
-    #return Response(b64encode(convert_to_excel(data)),
-    #                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    #                headers={"Content-disposition":
-    #                         "attachment; filename=data.xlsx"})
 
 # ----------------------------------------------------------------------------------------------------------------------
 

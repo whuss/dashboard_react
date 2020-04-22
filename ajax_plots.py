@@ -36,7 +36,14 @@ class AjaxFactory:
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def create_plot(plot_name: str, plot_parameters: dict):
+    def create_plot(json_data: dict):
+        plot_name, plot_parameters = AjaxFactory._decode_json_data(json_data)
+        return AjaxFactory._create_plot(plot_name, plot_parameters)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @staticmethod
+    def _create_plot(plot_name: str, plot_parameters: dict):
         print(f"AjaxFactory::create_plot: plot_name={plot_name}")
         try:
             ajax_class = globals()[plot_name]
@@ -49,7 +56,7 @@ class AjaxFactory:
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def decode_json_data(json_data):
+    def _decode_json_data(json_data):
         plot_id = json_data.get('id')
         plot_name = json_data.get('plot_name')
         parameters_encoded = json_data.get('parameters')
