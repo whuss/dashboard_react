@@ -37,21 +37,6 @@ import utils.date
 
 from db import get_devices
 
-# ----------------------------------------------------------------------------------------------------------------------
-# Configuration
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-_host: str = "83.175.125.85"
-# _host: str = "localhost"
-_user: str = "infinity"
-_password: str = "iGe9kH9j"
-_dbname: str = "bbf_inf_rep"
-
-_db_url: str = f'mysql://{_user}:{_password}@{_host}/{_dbname}'
-
-_db_cache_url: str = f'mysql://{_user}:{_password}@localhost/bbf_inf_cache'
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Setup
@@ -60,11 +45,9 @@ _db_cache_url: str = f'mysql://{_user}:{_password}@localhost/bbf_inf_cache'
 
 def create_app():
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = _db_url
+    app.config['SQLALCHEMY_DATABASE_URI'] = Config.db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SQLALCHEMY_BINDS'] = {
-        'cache': _db_cache_url
-    }
+    app.config['SQLALCHEMY_BINDS'] = dict(cache=Config.db_cache_url)
     # app.config['BASIC_AUTH_USERNAME'] = "ReproLight"
     # app.config['BASIC_AUTH_PASSWORD'] = "infinity"
     # app.config['BASIC_AUTH_FORCE'] = True
