@@ -909,7 +909,7 @@ class Errors(object):
 
     @staticmethod
     @db_cached
-    def error_heatmap():
+    def error_heatmap(since: Optional[datetime] = None):
         from sqlalchemy import Date
         lp = LoggerPackage
         query = db.session \
@@ -927,6 +927,8 @@ class Errors(object):
 
         data = pd.DataFrame(query.all())
         data['end_of_day'] = data.date.apply(lambda x: x + timedelta(days=1))
+        if since:
+            data = data[data.date >= since.date()]
         data = data.set_index(['device', 'date'])
         return data
 

@@ -432,9 +432,9 @@ class PlotErrors(AjaxPlot):
         locations = pd.DataFrame(error_heatmap.location.unique(), columns=['location'])
         # assign a unique color for each error location
         locations['colors'] = plots.color_palette(len(locations.location))
-        # locations
+
         #
-        eh = error_heatmap.reset_index()
+        eh = error_heatmap.loc[device].reset_index()
         errors_by_day = eh.drop(columns=['filename', 'line_number']) \
             .groupby(['date']) \
             .sum() \
