@@ -39,6 +39,32 @@ import utils.date
 from db import get_devices
 from logs import fetch_logs
 
+import logging
+import coloredlogs
+from logging.config import dictConfig
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Logging configuration
+# ----------------------------------------------------------------------------------------------------------------------
+
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.StreamHandler',
+        'stream': 'ext://flask.logging.wsgi_errors_stream',
+        'formatter': 'default'
+    }},
+    'root': {
+        'level': 'DEBUG',
+        'handlers': ['wsgi']
+    }
+})
+
+coloredlogs.install(level='DEBUG', fmt='[%(asctime)s] %(levelname)s(%(name)s) in %(module)s: %(message)s')
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Setup
@@ -344,7 +370,7 @@ def show_logs(device, duration=5, timestamp=None, log_level="TRACE"):
     try:
         page = int(request.args.get('page', default=1, type=int))
     except ValueError:
-        print(f"get value page={page} is not an integer")
+        logging.error(f"get value page={page} is not an integer")
         page = 1
 
     filename = request.args.get('filename', default=None)
@@ -353,7 +379,7 @@ def show_logs(device, duration=5, timestamp=None, log_level="TRACE"):
     if not timestamp:
         timestamp = datetime.now()
     log_text, pagination = fetch_logs(device, timestamp, log_level, before=duration, after=2, page=page,
-                                 filename=filename, line_number=line_number)
+                                      filename=filename, line_number=line_number)
     devices = Dashboard().devices()
     return render_template("device_log.html", devices=devices, log_text=log_text, device=device, pagination=pagination)
 
@@ -407,7 +433,7 @@ def _monitor_device():
         else:
             limit = False
 
-    print(f"_monitor: device={device}, limit={limit}, log_level={log_level}")
+    logging.info(f"_monitor: device={device}, limit={limit}, log_level={log_level}")
     if limit:
         num_lines = 35
     else:
@@ -432,8 +458,6 @@ def _monitor_device():
 @app.route('/monitor')
 def monitor():
     devices = Dashboard().devices()
-    for device in devices:
-        print(device)
     return render_template("monitor.html", devices=devices)
 
 
@@ -520,8 +544,8 @@ def parse_date_range(request):
     else:
         start_date = dateutil.parser.parse(start_str)
 
-    print(f"Date range: {start_str} -- {end_str}")
-    print(f"Parsed Date range: {start_date} -- {end_date}")
+    logging.debug(f"Date range: {start_str} -- {end_str}\n"
+                  f"Parsed Date range: {start_date} -- {end_date}")
     return start_date, end_date
 
 
@@ -611,7 +635,7 @@ def create_timeseries(sensor_data, sensor: str, unit: str, time_range: Tuple[dat
                     connectivity_fig = plot_connection_times(device_data, x_range=fig.x_range)
                     fig = column(fig, connectivity_fig)
                 except KeyError:
-                    print(f"Warning: No connectivity data for device {device}.")
+                    logging.warning(f"No connectivity data for device {device}.")
             figures.append(fig)
             devices.append(device)
 
@@ -761,7 +785,7 @@ def debug_sensors_presence():
                     figures_device.append(connectivity_fig)
 
                 except KeyError:
-                    print(f"Warning: No connectivity data for device {device}.")
+                    logging.warning(f"No connectivity data for device {device}.")
             if len(figures_device) > 1:
                 fig = column(*figures_device)
             figures.append(fig)
@@ -813,11 +837,11 @@ def sensors_presence():
                     connectivity_fig = plot_connection_times(device_data, x_range=x_range)
                     fig = column(fig, connectivity_fig)
                 except KeyError:
-                    print(f"Warning: No connectivity data for device {device}.")
+                    logging.warning(f"No connectivity data for device {device}.")
             figures.append(fig)
             devices.append(device)
         except KeyError:
-            print(f"Warning: No on_of_data for device: {device}")
+            logging.warning(f"No on_of_data for device: {device}")
 
     plot_script, divs = components(figures)
     plot_divs = dict(zip(devices, divs))
@@ -1005,7 +1029,7 @@ def create_timeseries_brightness(sensor_data,
                 connectivity_fig = plot_connection_times(device_data, x_range=x_range)
                 figures_device.append(connectivity_fig)
             except KeyError:
-                print(f"Warning: No connectivity data for device {device}.")
+                logging.warning(f"No connectivity data for device {device}.")
 
         figures.append(column(*figures_device))
         devices_list.append(device)

@@ -1,3 +1,4 @@
+import logging
 import hashlib
 import hmac
 import os
@@ -44,7 +45,7 @@ class AjaxFactory:
 
     @staticmethod
     def _create_plot(plot_name: str, plot_parameters: dict):
-        print(f"AjaxFactory::create_plot: plot_name={plot_name}")
+        logging.info(f"AjaxFactory::create_plot: plot_name={plot_name}")
         try:
             ajax_class = globals()[plot_name]
         except KeyError:
@@ -68,7 +69,7 @@ class AjaxFactory:
             raise ValueError(f"The pickle has been tempered with: {digest} != {client_digest}")
 
         parameters_decoded = pickle.loads(b64decode(parameters_encoded))
-        print(f"decode_json_data: {parameters_decoded}")
+        logging.debug(f"decode_json_data: {parameters_decoded}")
         return plot_name, parameters_decoded
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -118,7 +119,7 @@ class AjaxField:
     # ------------------------------------------------------------------------------------------------------------------
 
     def set_value(self, value):
-        print(f"AjaxField.set_value: id={self._id}, name={self.name}, value={value}")
+        logging.info(f"AjaxField.set_value: id={self._id}, name={self.name}, value={value}")
         self._value = value
         if value is None:
             self._final_html = "no data"
@@ -255,7 +256,7 @@ class AjaxPlot(Ajax):
     # ------------------------------------------------------------------------------------------------------------------
 
     def render(self):
-        print(f"Ajax::render(): plot_name={self._plot_name}, parameters={self._plot_parameters}")
+        logging.info(f"Ajax::render(): plot_name={self._plot_name}, parameters={self._plot_parameters}")
         try:
             data = self.fetch_data()
             if data is None:
@@ -264,9 +265,9 @@ class AjaxPlot(Ajax):
                 plot = self._plot(data)
         except Exception:
             tb = traceback.format_exc()
-            print(f"Error in plotting function:\n"
-                  f"plot_name={self._plot_name}, "
-                  f"parameters={self._plot_parameters}\n{tb}")
+            logging.error(f"Error in plotting function:\n"
+                          f"plot_name={self._plot_name}, "
+                          f"parameters={self._plot_parameters}\n{tb}")
             plot = None
             if Config.debug:
                 raise
@@ -414,7 +415,7 @@ class DashboardInfo(Ajax):
 
     def render(self):
         device = self.parameters.get('device')
-        print(f"Ajax::render(): plot_name={self._plot_name}, parameters={self._plot_parameters}")
+        logging.info(f"Ajax::render(): plot_name={self._plot_name}, parameters={self._plot_parameters}")
         try:
             data = Dashboard.info(device)
 
@@ -432,9 +433,9 @@ class DashboardInfo(Ajax):
 
         except Exception:
             tb = traceback.format_exc()
-            print(f"Error in plotting function:\n"
-                  f"plot_name={self._plot_name}, "
-                  f"parameters={self._plot_parameters}\n{tb}")
+            logging.error(f"Error in plotting function:\n"
+                          f"plot_name={self._plot_name}, "
+                          f"parameters={self._plot_parameters}\n{tb}")
             data = None
             if Config.debug:
                 raise

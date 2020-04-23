@@ -1,3 +1,4 @@
+import logging
 import sys
 import functools
 import inspect
@@ -339,7 +340,7 @@ def db_cached(fn):
     def wrapped(*args, **kwargs):
         in_test: bool = "pytest" in sys.modules
         if in_test:
-            print("Test: db_cache disabled")
+            logging.info("db_cache disabled during test")
 
         if not in_test:
             # Collect function arguments by chaining together positional,
@@ -349,11 +350,11 @@ def db_cached(fn):
             parameter_repr = f"args: {args} kwargs: {kwargs}"
             parameter_digest = _hash_id(parameter_repr)
 
-            print(f"db_cached: name={f_name}, parameter_digest={parameter_digest}")
+            logging.debug(f"db_cached: name={f_name}, parameter_digest={parameter_digest}")
             cached_data = find_in_cache(f_name, parameter_digest)
 
             if cached_data:
-                print(f"db_cached: found cached value.")
+                logging.debug(f"db_cached: found cached value.")
                 #expiration_time = timedelta(days=1)
                 #if datetime.now() - cached_data.timestamp < expiration_time:
 
@@ -362,19 +363,19 @@ def db_cached(fn):
                 cache_day = cached_data.timestamp.date()
                 if current_day <= cache_day and not Config.update_cache == "always":
                     # no update needed
-                    print(f"db_cached: no update needed: return cached data.")
+                    logging.debug(f"db_cached: no update needed: return cached data.")
                     return cached_data.data
-                print(f"db_cached: cached value expired.")
+                logging.debug(f"db_cached: cached value expired.")
             else:
-                print(f"db_cached: no cached value found.")
+                logging.debug(f"db_cached: no cached value found.")
 
         # Calculate data
-        print(f"db_cached: Calculate data.")
+        logging.debug(f"db_cached: Calculate data.")
         data = fn(*args, **kwargs)
 
         if not in_test:
             if cached_data:
-                print(f"db_cached: update cached data.")
+                logging.debug(f"db_cached: update cached data.")
                 # update cached_data
                 cp = CachePackage
                 query = db.session.query(cp) \
@@ -383,7 +384,7 @@ def db_cached(fn):
                 db.session.commit()
             else:
                 # insert data into cache
-                print(f"db_cached: insert data into cache.")
+                logging.debug(f"db_cached: insert data into cache.")
                 data_package = CachePackage(query=f_name,
                                             sha256=parameter_digest,
                                             timestamp=datetime.now(),
@@ -391,7 +392,7 @@ def db_cached(fn):
                 db.session.add(data_package)
                 db.session.commit()
 
-        print(f"db_cached: return data.")
+        logging.debug(f"db_cached: return data.")
         return data
 
     return wrapped
@@ -432,25 +433,25 @@ class Dashboard(object):
 
     @staticmethod
     def info(device: str):
-        print(f"Dashboard.device_info(device={device})")
+        logging.debug(f"Dashboard.device_info(device={device})")
         query_study_mode = db.session.query(DeviceInfo.mode.label('study_mode')) \
             .filter(DeviceInfo.device == device)
 
         data = query_study_mode.first()
-        print(f"data={data}")
+        logging.debug(f"data={data}")
         if data:
             study_mode = data.study_mode
         else:
             study_mode = ""
 
-        print(f"study_mode={study_mode}")
+        logging.debug(f"study_mode={study_mode}")
 
         dmp = DeadManPackage
         query_connection = db.session.query(db.func.max(dmp.timestamp).label('last_connection')) \
             .filter(dmp.device == device) \
 
         data = query_connection.first()[0]
-        print(f"query_connection data = {data}")
+        logging.debug(f"query_connection data = {data}")
         if data:
             last_connection = data
             offline_duration = datetime.now() - last_connection
@@ -477,7 +478,7 @@ class Dashboard(object):
 
         sick_reason = _sick_reason(health_status, last_connection, offline_duration)
 
-        print(f"db: sick_reason={sick_reason}, last_connection={last_connection}")
+        logging.debug(f"db: sick_reason={sick_reason}, last_connection={last_connection}")
 
         return dict(device=device,
                     study_mode=study_mode,
@@ -984,14 +985,15 @@ class Errors(object):
     def logs(device_id=None, since=None, until=None, num_lines=None, log_level="TRACE", page=None,
              filename=None, line_number=None):
 
-        print(f"device_id={device_id}")
-        print(f"since={since}")
-        print(f"until={until}")
-        print(f"num_lines={num_lines}")
-        print(f"log_level={log_level}")
-        print(f"page={page}")
-        print(f"filename={filename}")
-        print(f"line_number={line_number}")
+        logging.debug(f"Retrieve logs:\n"
+                      f"device_id={device_id}\n"
+                      f"    since={since}\n"
+                      f"    until={until}\n"
+                      f"num_lines={num_lines}\n"
+                      f"log_level={log_level}\n"
+                      f"     page={page}\n"
+                      f"filename={filename}\n"
+                      f"line_number={line_number}")
         MAX_LOG_ITEMS_PER_PAGE = 50
         lp = LoggerPackage
 
@@ -1040,7 +1042,7 @@ class Errors(object):
                 .slice(1, num_lines)
 
         if page is not None:
-            print(f"Pageinate: page={page}")
+            logging.info(f"Pageinate: page={page}")
             pagination = query.paginate(page, MAX_LOG_ITEMS_PER_PAGE, False)
             data = pagination.items
         else:
