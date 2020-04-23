@@ -813,22 +813,29 @@ def debug_sensors_presence():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def create_sensor_view(start_date: date, end_date: date, sensors: Iterable[str]):
+def create_sensor_view(device: str, start_date: date, end_date: date, active_sensors: Iterable[str]):
     def _plot(device):
         return PlotSensors(plot_parameters={'start_date': start_date,
                                             'end_date': end_date,
                                             'device': device,
-                                            'sensors': sensors})
+                                            'sensors': active_sensors})
 
-    ajax_plot_list = [_plot(device) for device in get_devices()]
+    if device == "ALL":
+        devices = get_devices()
+    else:
+        devices = [device]
+
+    ajax_plot_list = [_plot(device) for device in devices]
 
     all_sensors = ["temperature", "humidity", "pressure", "brightness", "gas"]
 
     return render_template("sensors_timeseries_new.html",
+                           device=device,
                            start_date=format_datetime(start_date),
                            end_date=format_datetime(end_date),
                            all_sensors=all_sensors,
-                           active_sensors=sensors,
+                           all_devices=get_devices(),
+                           active_sensors=active_sensors,
                            ajax_plot_list=ajax_plot_list,
                            js_resources=INLINE.render_js(),
                            css_resources=INLINE.render_css()
@@ -838,9 +845,9 @@ def create_sensor_view(start_date: date, end_date: date, sensors: Iterable[str])
 
 
 @app.route('/analytics/sensor')
-@app.route('/analytics/sensor/<start_date>/<end_date>')
-@app.route('/analytics/sensor/<start_date>/<end_date>/<sensor>')
-def analytics_sensor(start_date: Optional[str] = None, end_date: Optional[str] = None, sensor: str = "temperature"):
+@app.route('/analytics/sensor/<device>/<start_date>/<end_date>')
+@app.route('/analytics/sensor/<device>/<start_date>/<end_date>/<sensor>')
+def analytics_sensor(device: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, sensor: str = "temperature"):
     logging.warning(f"{start_date} - {end_date}")
     if not end_date or not start_date:
         start_date = date.today() - timedelta(days=1)
@@ -850,9 +857,16 @@ def analytics_sensor(start_date: Optional[str] = None, end_date: Optional[str] =
         start_date = parse_date(start_date)
         end_date = parse_date(end_date)
 
-    sensors = sensor.split(",")
+    if not device:
+        device="ALL"
+    
+    if sensor == "ALL":
+        sensors = ["temperature", "humidity", "pressure", "brightness", "gas"]
+    else:
+        sensors = sensor.split(",")
 
-    return create_sensor_view(start_date,
+    return create_sensor_view(device,
+                              start_date,
                               end_date,
                               sensors)
 

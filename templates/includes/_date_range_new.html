@@ -1,4 +1,18 @@
 <div class="container-fluid toolbar">
+    
+    <div class="btn-group" style="align-items: center;">
+        <span class="label">Device:</span>
+        <button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown">
+            <span id="sensor_type">{{request.view_args.device|or_else("ALL")}}</span>
+        </button>
+        <div class="dropdown-menu">
+            <a class="dropdown-item" href="{{url_for_self(device='ALL', start_date=start_date, end_date=end_date, sensor=request.view_args.sensor)}}">ALL</a>
+            {% for device in all_devices %}
+            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor=request.view_args.sensor)}}">{{device}}</a>
+            {% endfor%}
+        </div>
+    </div>
+
     <span class="label">Time range:</span>
     <span id="reportrange">
         <i class="fa fa-calendar"></i>&nbsp;
@@ -6,17 +20,18 @@
         <i class="fa fa-caret-down"></i>
     </span>
 
+
     <!--<div class="btn-group" style="align-items: center;">
         <span class="label">Sensor:</span>
         <button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown">
             <span id="sensor_type">{{request.view_args.sensor|or_else("Temperature")|capitalize}}</span>
         </button>
         <div class="dropdown-menu">
-            <a class="dropdown-item" href="{{url_for_self(start_date=start_date, end_date=end_date, sensor='temperature')}}">Temperature</a>
-            <a class="dropdown-item" href="{{url_for_self(start_date=start_date, end_date=end_date, sensor='pressure')}}">Pressure</a>
-            <a class="dropdown-item" href="{{url_for_self(start_date=start_date, end_date=end_date, sensor='humidity')}}">Humidity</a>
-            <a class="dropdown-item" href="{{url_for_self(start_date=start_date, end_date=end_date, sensor='brightness')}}">Brightness</a>
-            <a class="dropdown-item" href="{{url_for_self(start_date=start_date, end_date=end_date, sensor='gas')}}">Gas</a>
+            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor='temperature')}}">Temperature</a>
+            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor='pressure')}}">Pressure</a>
+            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor='humidity')}}">Humidity</a>
+            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor='brightness')}}">Brightness</a>
+            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor='gas')}}">Gas</a>
         </div>
     </div>-->
 
