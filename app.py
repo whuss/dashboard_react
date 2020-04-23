@@ -2,6 +2,7 @@ import os
 import re
 import pandas as pd
 import numpy as np
+from typing import Optional
 
 from flask import Flask, render_template, jsonify, request, url_for, json
 import dateutil.parser
@@ -20,16 +21,16 @@ from bokeh.embed import components
 from bokeh.layouts import column
 from bokeh.resources import INLINE
 
-from typing import Tuple
+from typing import Tuple, Iterable
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 import humanfriendly
 
 from plots import plot_histogram, plot_time_series, plot_connection_times, plot_on_off_times
 
 from ajax_plots import AjaxFactory, PlotCrashes, PlotDatabaseSize, PlotOnOffCycles, PlotSceneDurations, DashboardInfo
-from ajax_plots import PlotErrors, PlotDatabaseDelay
+from ajax_plots import PlotErrors, PlotDatabaseDelay, PlotSensors
 
 from utils.excel import convert_to_excel
 from base64 import b64encode
@@ -133,6 +134,13 @@ def _str(_input):
 @app.template_filter('or_else')
 def _or_else(_input, else_input):
     return str(_input) if _input else str(else_input)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.template_filter('capitalize')
+def capitalize(_input):
+    return str(_input).capitalize() if _input else ""
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -530,7 +538,7 @@ def statistics_mouse():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def parse_date_range(request):
+def parse_date_range(request) -> Tuple[datetime, datetime]:
     start_str = request.args.get('start', default="", type=str)
     end_str = request.args.get('end', default="", type=str)
 
@@ -599,16 +607,6 @@ def statistics_switch_cycles():
                            js_resources=INLINE.render_js(),
                            css_resources=INLINE.render_css()
                            )
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.route('/sensors')
-def sensors():
-    sensor_data = SensorData().current_sensor_data()
-
-    return render_template('sensors.html', sensors=sensor_data)
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -811,6 +809,60 @@ def debug_sensors_presence():
     )
 
     return html
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def create_sensor_view(start_date: date, end_date: date, sensors: Iterable[str], sensor_name: str, unit: str):
+    def _plot(device):
+        return PlotSensors(plot_parameters={'start_date': start_date,
+                                            'end_date': end_date,
+                                            'device': device,
+                                            'sensors': sensors,
+                                            'unit': unit})
+
+    ajax_plot_list = [_plot(device) for device in get_devices()]
+
+    return render_template("sensors_timeseries_new.html",
+                           start_date=start_date,
+                           end_date=end_date,
+                           sensor=sensor_name,
+                           ajax_plot_list=ajax_plot_list,
+                           js_resources=INLINE.render_js(),
+                           css_resources=INLINE.render_css()
+                           )
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/analytics/sensor', methods=['GET'])
+@app.route('/analytics/sensor/<start_date>/<end_date>', methods=['GET'])
+@app.route('/analytics/sensor/<start_date>/<end_date>/<sensor>', methods=['GET'])
+def analytics_sensor(start_date: Optional[str] = None, end_date: Optional[str] = None, sensor: str = "temperature"):
+    logging.warning(f"{start_date} - {end_date}")
+    if not end_date or not start_date:
+        start_date = date.today() - timedelta(days=1)
+        end_date = date.today() - timedelta(days=1)
+    else:
+        from utils.date import parse_date
+        start_date = parse_date(start_date)
+        end_date = parse_date(end_date)
+
+    if sensor == "brightness":
+        sensors = ["brightness_lh", "brightness_lv", "brightness_rh", "brightness_rv"]
+    else:
+        sensors = [sensor]
+
+    unit = dict(temperature="°C",
+                humidity="%RH",
+                pressure="hPa",
+                brightness="lx",
+                gas="VOC kOhm")
+
+    return create_sensor_view(start_date, end_date,
+                              sensors=sensors,
+                              sensor_name=sensor.capitalize(),
+                              unit=unit.get(sensor, ""))
 
 # ----------------------------------------------------------------------------------------------------------------------
 

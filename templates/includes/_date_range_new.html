@@ -1,0 +1,22 @@
+<div class="container-fluid toolbar">
+    <span class="label">Time range:</span>
+    <span id="reportrange">
+        <i class="fa fa-calendar"></i>&nbsp;
+        <span></span>
+        <i class="fa fa-caret-down"></i>
+    </span>
+
+    <div class="btn-group" style="align-items: center;">
+        <span class="label">Sensor:</span>
+        <button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown">
+            <span id="sensor_type">{{request.view_args.sensor|or_else("Temperature")|capitalize}}</span>
+        </button>
+        <div class="dropdown-menu">
+            <a class="dropdown-item" href="{{url_for_self(sensor='temperature')}}">Temperature</a>
+            <a class="dropdown-item" href="{{url_for_self(sensor='pressure')}}">Pressure</a>
+            <a class="dropdown-item" href="{{url_for_self(sensor='humidity')}}">Humidity</a>
+            <a class="dropdown-item" href="{{url_for_self(sensor='brightness')}}">Brightness</a>
+            <a class="dropdown-item" href="{{url_for_self(sensor='gas')}}">Gas</a>
+        </div>
+    </div>
+</div>

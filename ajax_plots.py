@@ -18,7 +18,7 @@ import plots
 from analytics.scenes import get_scene_durations
 from config import Config
 from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
-from utils.date import start_of_day, format_time_span
+from utils.date import start_of_day, end_of_day, format_time_span
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -547,5 +547,44 @@ class PlotDatabaseDelay(AjaxPlot):
                                             y_axis_label="Amount",
                                             plot_width=600, plot_height=400)
         return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotSensors(AjaxPlot):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self.start_date = self.parameters.get('start_date')
+        self.end_date = self.parameters.get('end_date')
+        self.sensors = self.parameters.get('sensors')
+        self.unit = self.parameters.get('unit')
+        self.device = self.parameters.get('device')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        # TODO
+        from analytics.sensors import get_sensor_data_for_day
+        sensor_data = get_sensor_data_for_day(self.device, self.start_date)
+        if sensor_data.empty:
+            return None
+
+        return sensor_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, sensor_data):
+        x_range = (start_of_day(self.start_date), end_of_day(self.end_date))
+        data = sensor_data.resample("1Min").mean()
+        figures = list()
+        for sensor in self.sensors:
+            fig = plots.plot_time_series(data.index,
+                                         data[sensor],
+                                         x_range=x_range,
+                                         y_axis_label=self.unit,
+                                         mode='line')
+            x_range = fig.x_range
+            figures.append(fig)
+        return column(figures)
 
 # ----------------------------------------------------------------------------------------------------------------------

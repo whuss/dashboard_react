@@ -2,7 +2,7 @@ import logging
 import pandas as pd
 import numpy as np
 import itertools
-from datetime import timedelta
+from datetime import timedelta, datetime, date
 from bokeh.core.enums import Dimensions, StepMode
 from bokeh.transform import dodge, cumsum
 from bokeh.plotting import figure
@@ -832,3 +832,13 @@ def test_plot():
     return p
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+
+def create_x_range(start_date: date, end_date: date):
+    x_range = (utils.date.start_of_day(start_date), utils.date.end_of_day(end_date))
+    fig = figure(plot_width=800, plot_height=400, x_range=x_range, x_axis_type='datetime')
+    fig.line(x=[x_range[0], x_range[1]], y=[0, 0])
+    return fig.x_range, fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+

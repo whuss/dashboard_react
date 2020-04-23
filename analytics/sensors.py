@@ -1,13 +1,13 @@
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, date
 from enum import Enum
 from typing import Optional
 
 import pandas as pd
 
 from app import db, app
-from db import TemperaturePackage, PressurePackage, HumidityPackage, BrightnessPackage, GasPackage
+from db import TemperaturePackage, PressurePackage, HumidityPackage, BrightnessPackage, GasPackage, db_cached
 from utils.interval import TimeInterval, Interval
+from utils.date import start_of_day, end_of_day
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -98,7 +98,10 @@ def _get_sensor_data(device: str, sensor: Sensor, interval: TimeInterval) -> pd.
         .filter(dbp.device == device) \
         .filter(dbp.timestamp == sq_last_timestamp.c.timestamp)
 
-    first_sensor_value = getattr(query_last_sensor_value.first(), sensor.db_data_column)
+    try:
+        first_sensor_value = getattr(query_last_sensor_value.first(), sensor.db_data_column)
+    except AttributeError:
+        first_sensor_value = None
 
     # Get sensor values in the selected time interval
     query = db.session.query(getattr(dbp, sensor.db_data_column), dbp.timestamp) \
@@ -114,6 +117,8 @@ def _get_sensor_data(device: str, sensor: Sensor, interval: TimeInterval) -> pd.
     # Create data frame
     data_since = pd.DataFrame({"timestamp": [since], sensor.db_data_column: [first_sensor_value]})
     data_between = pd.DataFrame(query.all())
+    if data_between.empty:
+        return pd.DataFrame()
     last_sensor_value = data_between[sensor.db_data_column].iloc[-1]
     data_until = pd.DataFrame({"timestamp": [until], sensor.db_data_column: [last_sensor_value]})
 
@@ -121,7 +126,8 @@ def _get_sensor_data(device: str, sensor: Sensor, interval: TimeInterval) -> pd.
     data = pd.concat([data_since, data_between, data_until], axis=0) \
         .rename(columns={sensor.db_data_column: sensor.data_column}) \
         .set_index("timestamp") \
-        .sort_index()
+        .sort_index() \
+        .dropna()
 
     return data
 
@@ -140,17 +146,15 @@ def get_sensor_data_single_interval(device: str,
                                     sensor: Optional[Sensor] = None) -> pd.DataFrame:
 
     def _get_data(_sensor: Sensor):
-        with app.app_context():
-            data = _get_sensor_data(device, _sensor, interval)
+        data = _get_sensor_data(device, _sensor, interval)
+        if data.empty:
+            return data
         return resample_sensor_data(data, rule)
 
     if sensor:
         return _get_data(sensor)
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        data_future = executor.map(_get_data, Sensor)
-
-    return pd.concat(list(data_future), axis=1)
+    return pd.concat([_get_data(sensor) for sensor in Sensor], axis=1)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -188,5 +192,13 @@ def get_sensor_data(device, intervals, rule: str = "1Min", sensor: Optional[Sens
             return get_sensor_data_single_interval(device, TimeInterval(begin, end), rule, sensor)
 
     raise TypeError(f"Incorrect type for parameter intervals: {intervals}.")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@db_cached
+def get_sensor_data_for_day(device: str, day: date, rule: str = "1s") -> pd.DataFrame:
+    interval = (start_of_day(day), end_of_day(day))
+    return get_sensor_data(device, interval, rule=rule)
 
 # ----------------------------------------------------------------------------------------------------------------------
