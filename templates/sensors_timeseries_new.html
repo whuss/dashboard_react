@@ -57,12 +57,13 @@
     // Callback for time range picker
     function cb(start, end) {
         format_range(start, end);
-        run_query(activeSensors());
+        run_query();
     }
 
-    function run_query(sensor)
+    function run_query()
     {
-        var device = "ALL";
+        var device = document.getElementById('device_id').textContent;
+        var sensor = document.getElementById('sensor_type').textContent;
         var start = range_start.format("YYYY-MM-DD");
         var end = range_end.format("YYYY-MM-DD");
         var url_template = '{{url_for_self(device='device_template', start_date='start_date_template', end_date='end_date_template', sensor='sensor_template')}}';
@@ -88,31 +89,6 @@
            'Last week': [moment().subtract(6, 'days').startOf('day'), moment()]
         }
     }, cb);
-
-    function activeSensors()
-    {
-        var sensors = document.querySelectorAll('input[name=sensor]:checked');
-        var selected = Array();
-        for (const sensor of sensors)
-        {
-            console.log("selected sensors:", sensor.getAttribute("id"));
-            selected.push(sensor.getAttribute('id'));
-        };
-        return selected.join(',');
-    }
-
-    const sensor_buttons = document.querySelectorAll('input[name="sensor"]');
-    for (var button of sensor_buttons)
-    {
-        const sensor = button.getAttribute("id");
-        console.log("sensor:", sensor);
-
-        button.addEventListener('click', event => {
-            const shift = event.shiftKey;
-            console.log(`button ${sensor} clicked. Shift: ${shift}`);
-            run_query(activeSensors());
-        });
-    }
 
     format_range(range_start, range_end);
 });

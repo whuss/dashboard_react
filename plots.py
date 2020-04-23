@@ -190,7 +190,7 @@ def plot_time_series(x, y, x_range, **kwargs):
 
     figure_kwargs['toolbar_location'] = kwargs.get('toolbar_location', "right")
 
-    fig = figure(plot_width=800, plot_height=180, x_range=x_range, x_axis_type='datetime', **figure_kwargs)
+    fig = figure(plot_width=1000, plot_height=200, x_range=x_range, x_axis_type='datetime', **figure_kwargs)
     fig.output_backend = "webgl"
     if "title" in kwargs:
         #fig.title.text_font_style = "italic"
