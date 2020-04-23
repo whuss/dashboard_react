@@ -824,8 +824,8 @@ def create_sensor_view(start_date: date, end_date: date, sensors: Iterable[str],
     ajax_plot_list = [_plot(device) for device in get_devices()]
 
     return render_template("sensors_timeseries_new.html",
-                           start_date=start_date,
-                           end_date=end_date,
+                           start_date=format_datetime(start_date),
+                           end_date=format_datetime(end_date),
                            sensor=sensor_name,
                            ajax_plot_list=ajax_plot_list,
                            js_resources=INLINE.render_js(),
@@ -835,9 +835,9 @@ def create_sensor_view(start_date: date, end_date: date, sensors: Iterable[str],
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/analytics/sensor', methods=['GET'])
-@app.route('/analytics/sensor/<start_date>/<end_date>', methods=['GET'])
-@app.route('/analytics/sensor/<start_date>/<end_date>/<sensor>', methods=['GET'])
+@app.route('/analytics/sensor')
+@app.route('/analytics/sensor/<start_date>/<end_date>')
+@app.route('/analytics/sensor/<start_date>/<end_date>/<sensor>')
 def analytics_sensor(start_date: Optional[str] = None, end_date: Optional[str] = None, sensor: str = "temperature"):
     logging.warning(f"{start_date} - {end_date}")
     if not end_date or not start_date:

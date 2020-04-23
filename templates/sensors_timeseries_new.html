@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block page_title %}
-<h1>Timeseries for {{sensor}} data</h1>
+<h1>Timeseries for sensor data</h1>
 {% endblock %}
 
 {% block page_navigation %}
@@ -57,8 +57,12 @@
     // Callback for time range picker
     function cb(start, end) {
         format_range(start, end);
+        run_query();
+    }
 
-        var start = range_start.format("YYYY-MM-DD");
+    function run_query()
+    {
+       var start = range_start.format("YYYY-MM-DD");
         var end = range_end.format("YYYY-MM-DD");
         var url_template = '{{url_for_self(start_date='start_date_template', end_date='end_date_template', sensor='sensor_template')}}';
         var sensor = $('#sensor_type').text().toLowerCase();
@@ -83,6 +87,22 @@
            'Last week': [moment().subtract(6, 'days').startOf('day'), moment()]
         }
     }, cb);
+
+    $('input[name="sensor"]').click(function() {
+        console.log("sensor clicked:", this.getAttribute("id"));
+        var sensors = document.querySelectorAll('input[name=sensor]:checked');
+        var selected = Array();
+        for (const sensor of sensors)
+        {
+            console.log("selected sensors:", sensor.getAttribute("id"));
+            selected.push(sensor.getAttribute('id'));
+        };
+        var sensor_str = selected.join(',');
+        console.log("list =", sensor_str);
+        //$('input:checked[name="sensor"]') {
+        //    console.log("selected sensors:", this.getAttribute("id"));
+        //}
+    });
 
     format_range(range_start, range_end);
 });

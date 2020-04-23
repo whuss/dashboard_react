@@ -12,11 +12,29 @@
             <span id="sensor_type">{{request.view_args.sensor|or_else("Temperature")|capitalize}}</span>
         </button>
         <div class="dropdown-menu">
-            <a class="dropdown-item" href="{{url_for_self(sensor='temperature')}}">Temperature</a>
-            <a class="dropdown-item" href="{{url_for_self(sensor='pressure')}}">Pressure</a>
-            <a class="dropdown-item" href="{{url_for_self(sensor='humidity')}}">Humidity</a>
-            <a class="dropdown-item" href="{{url_for_self(sensor='brightness')}}">Brightness</a>
-            <a class="dropdown-item" href="{{url_for_self(sensor='gas')}}">Gas</a>
+            <a class="dropdown-item" href="{{url_for_self(start_date=start_date, end_date=end_date, sensor='temperature')}}">Temperature</a>
+            <a class="dropdown-item" href="{{url_for_self(start_date=start_date, end_date=end_date, sensor='pressure')}}">Pressure</a>
+            <a class="dropdown-item" href="{{url_for_self(start_date=start_date, end_date=end_date, sensor='humidity')}}">Humidity</a>
+            <a class="dropdown-item" href="{{url_for_self(start_date=start_date, end_date=end_date, sensor='brightness')}}">Brightness</a>
+            <a class="dropdown-item" href="{{url_for_self(start_date=start_date, end_date=end_date, sensor='gas')}}">Gas</a>
         </div>
+    </div>
+
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+      <label class="btn btn-secondary active">
+        <input type="checkbox" name="sensor" id="temperature" autocomplete="off" checked> Temperature
+      </label>
+      <label class="btn btn-secondary">
+        <input type="checkbox" name="sensor" id="humidity" autocomplete="off"> Humidity
+      </label>
+      <label class="btn btn-secondary">
+        <input type="checkbox" name="sensor" id="pressure" autocomplete="off"> Pressure
+      </label>
+      <label class="btn btn-secondary">
+        <input type="checkbox" name="sensor" id="brightness" autocomplete="off"> Brightness
+      </label>
+      <label class="btn btn-secondary">
+        <input type="checkbox" name="sensor" id="gas" autocomplete="off"> Gas
+      </label>
     </div>
 </div>
