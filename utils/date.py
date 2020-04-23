@@ -56,12 +56,14 @@ def parse_date(date_str: str) -> date:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def date_range(start_date: date, end_date: date):
+def date_range(start_date: date, end_date: date, include_endpoint=False):
     one_day = timedelta(days=1)
     current_date = start_date
     while current_date < end_date:
         yield current_date
         current_date += one_day
+    if include_endpoint:
+        yield current_date
 
 # ----------------------------------------------------------------------------------------------------------------------
 

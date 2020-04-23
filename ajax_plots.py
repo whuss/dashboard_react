@@ -18,8 +18,7 @@ import plots
 from analytics.scenes import get_scene_durations
 from config import Config
 from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
-from utils.date import start_of_day, end_of_day, format_time_span
-
+from utils.date import start_of_day, end_of_day, format_time_span, date_range
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -565,12 +564,18 @@ class PlotSensors(AjaxPlot):
                 brightness="lx",
                 gas="VOC kOhm")
 
+        # Make sure that the interval ends at least one day in the past.
+        self.end_date = min(self.end_date, date.today() - timedelta(days=1))
+        self.start_date = min(self.start_date, self.end_date)
+
     # ------------------------------------------------------------------------------------------------------------------
 
     def _fetch(self):
-        # TODO
         from analytics.sensors import get_sensor_data_for_day
-        sensor_data = get_sensor_data_for_day(self.device, self.start_date)
+        data_list = list()
+        for day in date_range(self.start_date, self.end_date, include_endpoint=True):
+            data_list.append(get_sensor_data_for_day(self.device, day, rule="1s"))
+        sensor_data = pd.concat(data_list, axis=0)
         if sensor_data.empty:
             return None
 
