@@ -813,20 +813,22 @@ def debug_sensors_presence():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def create_sensor_view(start_date: date, end_date: date, sensors: Iterable[str], sensor_name: str, unit: str):
+def create_sensor_view(start_date: date, end_date: date, sensors: Iterable[str]):
     def _plot(device):
         return PlotSensors(plot_parameters={'start_date': start_date,
                                             'end_date': end_date,
                                             'device': device,
-                                            'sensors': sensors,
-                                            'unit': unit})
+                                            'sensors': sensors})
 
     ajax_plot_list = [_plot(device) for device in get_devices()]
+
+    all_sensors = ["temperature", "humidity", "pressure", "brightness", "gas"]
 
     return render_template("sensors_timeseries_new.html",
                            start_date=format_datetime(start_date),
                            end_date=format_datetime(end_date),
-                           sensor=sensor_name,
+                           all_sensors=all_sensors,
+                           active_sensors=sensors,
                            ajax_plot_list=ajax_plot_list,
                            js_resources=INLINE.render_js(),
                            css_resources=INLINE.render_css()
@@ -848,21 +850,11 @@ def analytics_sensor(start_date: Optional[str] = None, end_date: Optional[str] =
         start_date = parse_date(start_date)
         end_date = parse_date(end_date)
 
-    if sensor == "brightness":
-        sensors = ["brightness_lh", "brightness_lv", "brightness_rh", "brightness_rv"]
-    else:
-        sensors = [sensor]
+    sensors = sensor.split(",")
 
-    unit = dict(temperature="°C",
-                humidity="%RH",
-                pressure="hPa",
-                brightness="lx",
-                gas="VOC kOhm")
-
-    return create_sensor_view(start_date, end_date,
-                              sensors=sensors,
-                              sensor_name=sensor.capitalize(),
-                              unit=unit.get(sensor, ""))
+    return create_sensor_view(start_date,
+                              end_date,
+                              sensors)
 
 # ----------------------------------------------------------------------------------------------------------------------
 

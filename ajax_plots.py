@@ -557,8 +557,13 @@ class PlotSensors(AjaxPlot):
         self.start_date = self.parameters.get('start_date')
         self.end_date = self.parameters.get('end_date')
         self.sensors = self.parameters.get('sensors')
-        self.unit = self.parameters.get('unit')
         self.device = self.parameters.get('device')
+
+        self.units = dict(temperature="°C",
+                humidity="%RH",
+                pressure="hPa",
+                brightness="lx",
+                gas="VOC kOhm")
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -578,13 +583,21 @@ class PlotSensors(AjaxPlot):
         data = sensor_data.resample("1Min").mean()
         figures = list()
         for sensor in self.sensors:
-            fig = plots.plot_time_series(data.index,
-                                         data[sensor],
-                                         x_range=x_range,
-                                         y_axis_label=self.unit,
-                                         mode='line')
-            x_range = fig.x_range
-            figures.append(fig)
+            unit = self.units[sensor]
+            if sensor == "brightness":
+                sources = ["brightness_lh", "brightness_lv", "brightness_rh", "brightness_rv"]
+            else:
+                sources = [sensor]
+
+            for source in sources:
+                fig = plots.plot_time_series(data.index,
+                                             data[source],
+                                             x_range=x_range,
+                                             y_axis_label=unit,
+                                             mode='line',
+                                             title=source.capitalize())
+                x_range = fig.x_range
+                figures.append(fig)
         return column(figures)
 
 # ----------------------------------------------------------------------------------------------------------------------

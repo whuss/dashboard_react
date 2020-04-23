@@ -6,7 +6,7 @@
         <i class="fa fa-caret-down"></i>
     </span>
 
-    <div class="btn-group" style="align-items: center;">
+    <!--<div class="btn-group" style="align-items: center;">
         <span class="label">Sensor:</span>
         <button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown">
             <span id="sensor_type">{{request.view_args.sensor|or_else("Temperature")|capitalize}}</span>
@@ -18,23 +18,14 @@
             <a class="dropdown-item" href="{{url_for_self(start_date=start_date, end_date=end_date, sensor='brightness')}}">Brightness</a>
             <a class="dropdown-item" href="{{url_for_self(start_date=start_date, end_date=end_date, sensor='gas')}}">Gas</a>
         </div>
-    </div>
+    </div>-->
 
-    <div class="btn-group btn-group-toggle" data-toggle="buttons">
-      <label class="btn btn-secondary active">
-        <input type="checkbox" name="sensor" id="temperature" autocomplete="off" checked> Temperature
+    <div class="btn-group btn-group-toggle" style="align-items: center;" data-toggle="buttons">
+      <span class="label">Sensor:</span>
+      {% for sensor in all_sensors %}
+      <label class="btn btn-success active">
+        <input type="checkbox" name="sensor" id="{{sensor}}" autocomplete="off" {{"checked" if sensor in active_sensors else ""}}>{{sensor.capitalize()}}
       </label>
-      <label class="btn btn-secondary">
-        <input type="checkbox" name="sensor" id="humidity" autocomplete="off"> Humidity
-      </label>
-      <label class="btn btn-secondary">
-        <input type="checkbox" name="sensor" id="pressure" autocomplete="off"> Pressure
-      </label>
-      <label class="btn btn-secondary">
-        <input type="checkbox" name="sensor" id="brightness" autocomplete="off"> Brightness
-      </label>
-      <label class="btn btn-secondary">
-        <input type="checkbox" name="sensor" id="gas" autocomplete="off"> Gas
-      </label>
+      {% endfor %}
     </div>
 </div>

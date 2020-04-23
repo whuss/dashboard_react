@@ -20,7 +20,7 @@
     <thead class="thead-dark">
     <tr>
         <th>Device ID</th>
-        <th>{{sensor}}</th>
+        <th>Time series</th>
         <th>Download</th>
     </tr>
     </thead>
@@ -41,8 +41,8 @@
 <script>
  $(function() {
     // Set initial time range for database query
-    var start_date = '{{start_date|datetime}}';
-    var end_date = '{{end_date|datetime}}';
+    var start_date = '{{start_date}}';
+    var end_date = '{{end_date}}';
     var range_start = moment(start_date);
     var range_end = moment(end_date);
     console.log("Date range: ", range_start, range_end);
@@ -57,15 +57,14 @@
     // Callback for time range picker
     function cb(start, end) {
         format_range(start, end);
-        run_query();
+        run_query(activeSensors());
     }
 
-    function run_query()
+    function run_query(sensor)
     {
        var start = range_start.format("YYYY-MM-DD");
         var end = range_end.format("YYYY-MM-DD");
         var url_template = '{{url_for_self(start_date='start_date_template', end_date='end_date_template', sensor='sensor_template')}}';
-        var sensor = $('#sensor_type').text().toLowerCase();
         url = url_template.replace('start_date_template', start)
                           .replace('end_date_template', end)
                           .replace('sensor_template', sensor);
@@ -88,8 +87,8 @@
         }
     }, cb);
 
-    $('input[name="sensor"]').click(function() {
-        console.log("sensor clicked:", this.getAttribute("id"));
+    function activeSensors()
+    {
         var sensors = document.querySelectorAll('input[name=sensor]:checked');
         var selected = Array();
         for (const sensor of sensors)
@@ -97,12 +96,21 @@
             console.log("selected sensors:", sensor.getAttribute("id"));
             selected.push(sensor.getAttribute('id'));
         };
-        var sensor_str = selected.join(',');
-        console.log("list =", sensor_str);
-        //$('input:checked[name="sensor"]') {
-        //    console.log("selected sensors:", this.getAttribute("id"));
-        //}
-    });
+        return selected.join(',');
+    }
+
+    const sensor_buttons = document.querySelectorAll('input[name="sensor"]');
+    for (var button of sensor_buttons)
+    {
+        const sensor = button.getAttribute("id");
+        console.log("sensor:", sensor);
+
+        button.addEventListener('click', event => {
+            const shift = event.shiftKey;
+            console.log(`button ${sensor} clicked. Shift: ${shift}`);
+            run_query(activeSensors());
+        });
+    }
 
     format_range(range_start, range_end);
 });
