@@ -11,7 +11,7 @@ import pandas as pd
 
 from app import db
 from db import query_cache, Dashboard, DataFramePackage, DeviceDataFramePackage, Errors
-from analytics.sensors import get_sensor_data
+from analytics.sensors import get_sensor_data_for_day
 from analytics.scenes import get_scene_durations
 from utils.date import parse_date, date_range, start_of_day
 from dataclasses import dataclass
@@ -78,12 +78,7 @@ def update_scene_data(query: str, device: str, start_date: date, end_date: date)
 
 
 def cache_sensor_data(device: str, data_date: date):
-    since = datetime.combine(data_date, time(0))
-    until = datetime.combine(data_date, time(23, 59, 59))
-    data = get_sensor_data(device, (since, until), rule="1s")
-    data_package = DataFramePackage(device=device, date=data_date, query="sensor_data", data=data)
-    db.session.add(data_package)
-    db.session.commit()
+    _ = get_sensor_data_for_day(device, data_date, rule="1s")
 
 # ----------------------------------------------------------------------------------------------------------------------
 

@@ -4,8 +4,8 @@ from typing import Optional
 
 import pandas as pd
 
-from app import db, app
-from db import TemperaturePackage, PressurePackage, HumidityPackage, BrightnessPackage, GasPackage, db_cached
+from app import db
+from db import TemperaturePackage, PressurePackage, HumidityPackage, BrightnessPackage, GasPackage, db_cached_permanent
 from utils.interval import TimeInterval, Interval
 from utils.date import start_of_day, end_of_day
 
@@ -196,7 +196,7 @@ def get_sensor_data(device, intervals, rule: str = "1Min", sensor: Optional[Sens
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@db_cached
+@db_cached_permanent
 def get_sensor_data_for_day(device: str, day: date, rule: str = "1s") -> pd.DataFrame:
     interval = (start_of_day(day), end_of_day(day))
     return get_sensor_data(device, interval, rule=rule)

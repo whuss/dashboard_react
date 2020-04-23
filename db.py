@@ -44,6 +44,20 @@ class CachePackage(db.Model):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
+class CacheDeviceDatePackage(db.Model):
+    __bind_key__ = "cache"
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    device = db.Column(db.String(20), index=True, nullable=False)
+    date = db.Column(db.Date, index=True, nullable=False)
+    query = db.Column(db.String(100), index=True, nullable=False)
+    sha256 = db.Column(db.String(64), index=True, nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    data = db.Column(PickleTypeMedium, nullable=False)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class DataFramePackage(db.Model):
     __bind_key__ = "cache"
     id = db.Column(db.Integer, primary_key=True)
@@ -331,6 +345,19 @@ def find_in_cache(query_name: str, parameter_digest: str) -> Optional[CachePacka
 
     return query.first()
 
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def find_in_permanent_cache(query_name: str, device: str, day: date,
+                            parameter_digest: str) -> Optional[CacheDeviceDatePackage]:
+    cp = CacheDeviceDatePackage
+    query = db.session.query(cp) \
+        .filter(cp.device == device) \
+        .filter(cp.date == day) \
+        .filter(cp.query == query_name) \
+        .filter(cp.sha256 == parameter_digest)
+
+    return query.first()
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -391,6 +418,50 @@ def db_cached(fn):
                                             data=data)
                 db.session.add(data_package)
                 db.session.commit()
+
+        logging.debug(f"db_cached: return data.")
+        return data
+
+    return wrapped
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def db_cached_permanent(fn):
+    @functools.wraps(fn)
+    def wrapped(device: str, day: date, *args, **kwargs):
+        in_test: bool = "pytest" in sys.modules
+        if in_test:
+            logging.info("db_cache disabled during test")
+
+        if not in_test:
+            f_name = f"{fn.__module__}.{fn.__name__}"
+            # collect remaining parameters
+            parameter_repr = f"args: {args} kwargs: {kwargs}"
+            parameter_digest = _hash_id(parameter_repr)
+
+            logging.debug(f"db_cached: name={f_name}, device={device}, day={day}, parameter_digest={parameter_digest}")
+            cached_data = find_in_permanent_cache(f_name, device, day, parameter_digest)
+
+            if cached_data:
+                logging.debug(f"db_cached: found cached value.")
+                return cached_data.data
+
+        # Calculate data
+        logging.debug(f"db_cached: Calculate data.")
+        data = fn(device, day, *args, **kwargs)
+
+        if not in_test:
+            # insert data into cache
+            logging.debug(f"db_cached: insert data into cache.")
+            data_package = CacheDeviceDatePackage(device=device,
+                                                  date=day,
+                                                  query=f_name,
+                                                  sha256=parameter_digest,
+                                                  timestamp=datetime.now(),
+                                                  data=data)
+            db.session.add(data_package)
+            db.session.commit()
 
         logging.debug(f"db_cached: return data.")
         return data
