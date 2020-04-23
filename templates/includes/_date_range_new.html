@@ -21,26 +21,27 @@
     </span>
 
 
-    <!--<div class="btn-group" style="align-items: center;">
+    <div class="btn-group" style="align-items: center;">
         <span class="label">Sensor:</span>
         <button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown">
             <span id="sensor_type">{{request.view_args.sensor|or_else("Temperature")|capitalize}}</span>
         </button>
         <div class="dropdown-menu">
+            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor='ALL')}}">ALL</a>
             <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor='temperature')}}">Temperature</a>
             <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor='pressure')}}">Pressure</a>
             <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor='humidity')}}">Humidity</a>
             <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor='brightness')}}">Brightness</a>
             <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor='gas')}}">Gas</a>
         </div>
-    </div>-->
+    </div>
 
-    <div class="btn-group btn-group-toggle" style="align-items: center;" data-toggle="buttons">
+    <!--<div class="btn-group btn-group-toggle" style="align-items: center;" data-toggle="buttons">
       <span class="label">Sensor:</span>
       {% for sensor in all_sensors %}
       <label class="btn btn-success active">
         <input type="checkbox" name="sensor" id="{{sensor}}" autocomplete="off" {{"checked" if sensor in active_sensors else ""}}>{{sensor.capitalize()}}
       </label>
       {% endfor %}
-    </div>
+    </div>-->
 </div>

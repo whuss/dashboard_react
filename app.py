@@ -813,7 +813,12 @@ def debug_sensors_presence():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def create_sensor_view(device: str, start_date: date, end_date: date, active_sensors: Iterable[str]):
+def create_sensor_view(device: str, start_date: date, end_date: date, sensor):
+    all_sensors = ["temperature", "humidity", "pressure", "brightness", "gas"]
+    if sensor == "ALL":
+        active_sensors = all_sensors
+    else:
+        active_sensors = [sensor]
     def _plot(device):
         return PlotSensors(plot_parameters={'start_date': start_date,
                                             'end_date': end_date,
@@ -827,14 +832,13 @@ def create_sensor_view(device: str, start_date: date, end_date: date, active_sen
 
     ajax_plot_list = [_plot(device) for device in devices]
 
-    all_sensors = ["temperature", "humidity", "pressure", "brightness", "gas"]
-
     return render_template("sensors_timeseries_new.html",
                            device=device,
                            start_date=format_datetime(start_date),
                            end_date=format_datetime(end_date),
                            all_sensors=all_sensors,
                            all_devices=get_devices(),
+                           sensor=sensor,
                            active_sensors=active_sensors,
                            ajax_plot_list=ajax_plot_list,
                            js_resources=INLINE.render_js(),
@@ -860,15 +864,15 @@ def analytics_sensor(device: Optional[str] = None, start_date: Optional[str] = N
     if not device:
         device="ALL"
     
-    if sensor == "ALL":
-        sensors = ["temperature", "humidity", "pressure", "brightness", "gas"]
-    else:
-        sensors = sensor.split(",")
+    #if sensor == "ALL":
+    #    sensors = ["temperature", "humidity", "pressure", "brightness", "gas"]
+    #else:
+    #    sensors = sensor.split(",")
 
     return create_sensor_view(device,
                               start_date,
                               end_date,
-                              sensors)
+                              sensor)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
