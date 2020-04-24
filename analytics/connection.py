@@ -72,16 +72,21 @@ def connection(device: str, start_date: date, end_date: date,
                max_delay: timedelta = timedelta(minutes=2), cut_intervals=False) -> pd.DataFrame:
     begin = start_of_day(start_date)
     end = end_of_day(end_date)
+    fully_unconnected = pd.DataFrame(dict(begin=begin, end=end, duration=end-begin, connected=0, color=['#ff0000']))
+
     data = _connection_for_device(device, max_delay=max_delay)
+    if data.empty:
+        return fully_unconnected
+
     data = data[(begin <= data.end) & (data.begin <= end)]
+    if data.empty:
+        return fully_unconnected
+
     if cut_intervals:
         data.begin = data.begin.apply(lambda dt: max(begin, dt))
         data.end = data.end.apply(lambda dt: min(end, dt))
         # fix duration of cut intervals
         data.duration = data.end - data.begin
-
-    if data.empty:
-        return pd.DataFrame(dict(begin=begin, end=end, duration=end-begin, connected=0, color=['#ff0000']))
 
     end_of_last_interval = data.iloc[-1].end
     # Fill the hole at the end of the time interval, if there is no connection at the end
