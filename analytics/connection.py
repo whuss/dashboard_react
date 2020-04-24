@@ -79,6 +79,16 @@ def connection(device: str, start_date: date, end_date: date,
         data.end = data.end.apply(lambda dt: min(end, dt))
         # fix duration of cut intervals
         data.duration = data.end - data.begin
+
+    if data.empty:
+        return pd.DataFrame(dict(begin=begin, end=end, duration=end-begin, connected=0, color=['#ff0000']))
+
+    end_of_last_interval = data.iloc[-1].end
+    # Fill the hole at the end of the time interval, if there is no connection at the end
+    if data.iloc[-1].connected == 1 and end_of_last_interval < end:
+        unconnected = dict(begin=end_of_last_interval, end=end, duration=end-begin, connected=0, color=['#ff0000'])
+        data = data.append(pd.DataFrame(unconnected))
+
     return data
 
 # ----------------------------------------------------------------------------------------------------------------------

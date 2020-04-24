@@ -610,6 +610,8 @@ class PlotSensors(AjaxPlot):
 
             logging.info(f"Automatic samplerate: {self.sample_rate}")
 
+        # Fill holes in the data, which occur when date for a whole day is missing.
+        sensor_data = sensor_data.resample("1s").ffill()
         data = sensor_data.resample(self.sample_rate).mean()
 
         return data
