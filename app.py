@@ -838,6 +838,7 @@ def create_sensor_view(device: str, start_date: date, end_date: date, sensor: st
                            device=device,
                            sensor=sensor,
                            sample_rate=sample_rate,
+                           automatic_sample_rate=PlotSensors.auto_sample_rate(start_date, end_date),
                            start_date=format_datetime(start_date),
                            end_date=format_datetime(end_date),
                            all_sensors=all_sensors,

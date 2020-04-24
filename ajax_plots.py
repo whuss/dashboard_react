@@ -573,7 +573,25 @@ class PlotSensors(AjaxPlot):
 
     @staticmethod
     def supported_sample_rates():
-        return ['AUTO', '1Min', '10Min', '30Min', '1h', '2h', '6h', '12h', '1d', '7d']
+        return ['1s', '1Min', '10Min', '30Min', '1h', '2h', '6h', '12h', '1d', '7d']
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @staticmethod
+    def auto_sample_rate(start_date: date, end_date: date) -> str:
+        total_seconds = (end_date - start_date).total_seconds()
+        # compute the sample_rate such that there is always 1440 samples in the interval
+        # (the number of samples in a day when a sample_rate of 1Min is used)
+        if total_seconds > 0:
+            sample_rate_in_seconds = int(total_seconds / 1440)
+            if sample_rate_in_seconds % 60 == 0:
+                sample_rate = f"{sample_rate_in_seconds // 60}Min"
+            else:
+                sample_rate = f"{sample_rate_in_seconds}s"
+
+        else:
+            sample_rate = "1Min"
+        return sample_rate
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -586,12 +604,9 @@ class PlotSensors(AjaxPlot):
         if sensor_data.empty:
             return None
 
-        if self.sample_rate == "AUTO":
-            total_seconds = (self.end_date - self.start_date).total_seconds()
-            # compute the sample_rate such that there is always 1440 samples in the interval
-            # (the number of samples in a day when a sample_rate of 1Min is used)
-            sample_rate_in_seconds = int(total_seconds / 1440)
-            self.sample_rate = f"{sample_rate_in_seconds}s"
+        if "AUTO" in self.sample_rate:
+            self.sample_rate = self.auto_sample_rate(self.start_date, self.end_date)
+
             logging.info(f"Automatic samplerate: {self.sample_rate}")
 
         data = sensor_data.resample(self.sample_rate).mean()

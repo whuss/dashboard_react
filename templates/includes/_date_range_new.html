@@ -39,8 +39,9 @@
             <span id="sample_rate">{{request.view_args.sample_rate|or_else("AUTO")}}</span>
         </button>
         <div class="dropdown-menu">
-            {% for sample_rate in all_sample_rates %}
-            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor=sensor, sample_rate=sample_rate)}}">{{sample_rate}}</a>
+            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor=sensor, sample_rate="AUTO")}}">AUTO  ({{automatic_sample_rate}})</a>
+            {% for _sample_rate in all_sample_rates %}
+            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor=sensor, sample_rate=_sample_rate)}}">{{_sample_rate}}</a>
             {% endfor %}
         </div>
     </div>
