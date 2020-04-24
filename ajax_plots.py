@@ -557,6 +557,7 @@ class PlotSensors(AjaxPlot):
         self.end_date = self.parameters.get('end_date')
         self.sensors = self.parameters.get('sensors')
         self.device = self.parameters.get('device')
+        self.sample_rate = self.parameters.get('sample_rate')
 
         self.units = dict(temperature="°C",
                 humidity="%RH",
@@ -570,6 +571,12 @@ class PlotSensors(AjaxPlot):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    @staticmethod
+    def supported_sample_rates():
+        return ['AUTO', '1Min', '10Min', '30Min', '1h', '2h', '6h', '12h', '1d', '7d']
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def _fetch(self):
         from analytics.sensors import get_sensor_data_for_day
         data_list = list()
@@ -579,13 +586,23 @@ class PlotSensors(AjaxPlot):
         if sensor_data.empty:
             return None
 
-        return sensor_data
+        if self.sample_rate == "AUTO":
+            total_seconds = (self.end_date - self.start_date).total_seconds()
+            # compute the sample_rate such that there is always 1440 samples in the interval
+            # (the number of samples in a day when a sample_rate of 1Min is used)
+            sample_rate_in_seconds = int(total_seconds / 1440)
+            self.sample_rate = f"{sample_rate_in_seconds}s"
+            logging.info(f"Automatic samplerate: {self.sample_rate}")
+
+        data = sensor_data.resample(self.sample_rate).mean()
+
+        return data
 
     # ------------------------------------------------------------------------------------------------------------------
 
     def _plot(self, sensor_data):
         x_range = (start_of_day(self.start_date), end_of_day(self.end_date))
-        data = sensor_data.resample("1Min").mean()
+
         figures = list()
         for sensor in self.sensors:
             unit = self.units[sensor]
@@ -595,8 +612,8 @@ class PlotSensors(AjaxPlot):
                 sources = [sensor]
 
             for source in sources:
-                fig = plots.plot_time_series(data.index,
-                                             data[source],
+                fig = plots.plot_time_series(sensor_data.index,
+                                             sensor_data[source],
                                              x_range=x_range,
                                              y_axis_label=unit,
                                              mode='line',

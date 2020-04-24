@@ -7,7 +7,7 @@
         </button>
         <div class="dropdown-menu">
             {% for device in ["ALL"] + all_devices %}
-            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor=sensor)}}">{{device}}</a>
+            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor=sensor, sample_rate=sample_rate)}}">{{device}}</a>
             {% endfor%}
         </div>
     </div>
@@ -26,9 +26,21 @@
             <span id="sensor_type">{{request.view_args.sensor|or_else("temperature")}}</span>
         </button>
         <div class="dropdown-menu">
-            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor='ALL')}}">ALL</a>
+            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor='ALL', sample_rate=sample_rate)}}">ALL</a>
             {% for sensor in all_sensors %}
-            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor=sensor)}}">{{sensor}}</a>
+            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor=sensor, sample_rate=sample_rate)}}">{{sensor}}</a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="btn-group" style="align-items: center;">
+        <span class="label">Sample&nbsp;rate:</span>
+        <button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown">
+            <span id="sample_rate">{{request.view_args.sample_rate|or_else("AUTO")}}</span>
+        </button>
+        <div class="dropdown-menu">
+            {% for sample_rate in all_sample_rates %}
+            <a class="dropdown-item" href="{{url_for_self(device=device, start_date=start_date, end_date=end_date, sensor=sensor, sample_rate=sample_rate)}}">{{sample_rate}}</a>
             {% endfor %}
         </div>
     </div>
