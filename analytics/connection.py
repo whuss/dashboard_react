@@ -60,7 +60,7 @@ def _connection_for_device_raw(device: str) -> pd.DataFrame:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-# TODO: enable db_cached (after: expiration)
+@db_cached
 def _connection_for_device(device: str, max_delay: timedelta) -> pd.DataFrame:
     raw_data = _connection_for_device_raw(device)
     return _find_connection_intervals(raw_data, max_delay)
