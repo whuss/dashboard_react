@@ -814,7 +814,7 @@ def debug_sensors_presence():
 
 
 def create_sensor_view(device: str, start_date: date, end_date: date, sensor: str, sample_rate: str):
-    all_sensors = ["temperature", "humidity", "pressure", "brightness", "gas"]
+    all_sensors = ["temperature", "humidity", "pressure", "brightness", "gas", "presence"]
     if sensor == "ALL":
         active_sensors = all_sensors
     else:

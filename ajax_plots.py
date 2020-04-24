@@ -17,7 +17,7 @@ from flask import render_template, jsonify
 import plots
 from analytics.scenes import get_scene_durations
 from config import Config
-from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
+from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard, Connectivity
 from utils.date import start_of_day, end_of_day, format_time_span, date_range
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -615,26 +615,62 @@ class PlotSensors(AjaxPlot):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def _plot_presence(self, x_range):
+        sensor_data = PresenceDetectorStatistics().on_off_timeseries(start_of_day(self.start_date),
+                                                                     end_of_day(self.end_date),
+                                                                     self.device)
+
+        if sensor_data is None:
+            return None
+        return plots.plot_on_off_times(sensor_data,
+                                       x_range=x_range,
+                                       plot_width=1000,
+                                       title="Presence detection")
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot_connection(self, x_range):
+        connection_data = Connectivity.connection_times(start_of_day(self.start_date),
+                                                        end_of_day(self.end_date),
+                                                        device=self.device)
+
+        if connection_data is None:
+            return
+
+        return plots.plot_connection_times(connection_data, x_range=x_range, plot_width=1000,
+                                           title="Internet connection")
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def _plot(self, sensor_data):
         x_range = (start_of_day(self.start_date), end_of_day(self.end_date))
 
         figures = list()
         for sensor in self.sensors:
-            unit = self.units[sensor]
+            unit = self.units.get(sensor, "")
             if sensor == "brightness":
                 sources = ["brightness_lh", "brightness_lv", "brightness_rh", "brightness_rv"]
             else:
                 sources = [sensor]
 
             for source in sources:
-                fig = plots.plot_time_series(sensor_data.index,
-                                             sensor_data[source],
-                                             x_range=x_range,
-                                             y_axis_label=unit,
-                                             mode='line',
-                                             title=source.capitalize())
-                x_range = fig.x_range
-                figures.append(fig)
+                if source == "presence":
+                    fig = self._plot_presence(x_range)
+                else:
+                    fig = plots.plot_time_series(sensor_data.index,
+                                                 sensor_data[source],
+                                                 x_range=x_range,
+                                                 y_axis_label=unit,
+                                                 mode='line',
+                                                 title=source.capitalize())
+                if fig is not None:
+                    x_range = fig.x_range
+                    figures.append(fig)
+
+        connection_fig = self._plot_connection(x_range)
+        if connection_fig:
+            figures.append(connection_fig)
+
         return column(figures)
 
 # ----------------------------------------------------------------------------------------------------------------------

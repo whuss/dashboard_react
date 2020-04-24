@@ -129,7 +129,6 @@ def parse_interval(interval):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-
 def find_intervals(data: pd.DataFrame) -> pd.DataFrame:
     """Compute consecutive time intervals in a pandas data frame representing a timeseries.
 
