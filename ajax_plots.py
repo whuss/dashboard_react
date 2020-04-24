@@ -15,9 +15,11 @@ from bokeh.layouts import column
 from flask import render_template, jsonify
 
 import plots
+from analytics.connection import connection
 from analytics.scenes import get_scene_durations
+from analytics.sensors import get_sensor_data_for_day
 from config import Config
-from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard, Connectivity
+from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
 from utils.date import start_of_day, end_of_day, format_time_span, date_range
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -596,7 +598,6 @@ class PlotSensors(AjaxPlot):
     # ------------------------------------------------------------------------------------------------------------------
 
     def _fetch(self):
-        from analytics.sensors import get_sensor_data_for_day
         data_list = list()
         for day in date_range(self.start_date, self.end_date, include_endpoint=True):
             data_list.append(get_sensor_data_for_day(self.device, day, rule="1s"))
@@ -630,9 +631,8 @@ class PlotSensors(AjaxPlot):
     # ------------------------------------------------------------------------------------------------------------------
 
     def _plot_connection(self, x_range):
-        connection_data = Connectivity.connection_times(start_of_day(self.start_date),
-                                                        end_of_day(self.end_date),
-                                                        device=self.device)
+        max_delay = timedelta(seconds=90)
+        connection_data = connection(self.device, self.start_date, self.end_date, max_delay, cut_intervals=False)
 
         if connection_data is None:
             return

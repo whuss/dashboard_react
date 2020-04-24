@@ -4,8 +4,8 @@ from typing import Optional
 
 import pandas as pd
 
-from app import db
-from db import TemperaturePackage, PressurePackage, HumidityPackage, BrightnessPackage, GasPackage, db_cached_permanent
+from db import TemperaturePackage, PressurePackage, HumidityPackage, BrightnessPackage, GasPackage
+from db import db, db_cached_permanent
 from utils.interval import TimeInterval, Interval
 from utils.date import start_of_day, end_of_day
 

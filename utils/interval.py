@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import TypeVar, Generic, Union
+from typing import TypeVar, Generic, Union, Optional
 
 import pandas as pd
 from pandas.core.series import Series
@@ -129,7 +129,7 @@ def parse_interval(interval):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def find_intervals(data: pd.DataFrame) -> pd.DataFrame:
+def find_intervals(data: pd.DataFrame, min_timedelta: Optional[timedelta] = timedelta(seconds=1)) -> pd.DataFrame:
     """Compute consecutive time intervals in a pandas data frame representing a timeseries.
 
     A new interval is assumed to start if the delay between to consecutive timestamps is bigger than
@@ -140,6 +140,10 @@ def find_intervals(data: pd.DataFrame) -> pd.DataFrame:
 
         All other columns are ignored, and the data for the first element of each interval are returned unchanged.
 
+    @parameter min_timedelta:
+        The minimal time difference between two timestamps that are considered to be part of two different intervals.
+        All delays bigger than this are assumed to start a new interval.
+
     @returns a pandas dataframe with the columns 'begin', 'end', 'duration' where
         begin: datetime is the start time of each interval
         end: datetime is the end time of each interval
@@ -147,10 +151,6 @@ def find_intervals(data: pd.DataFrame) -> pd.DataFrame:
     """
     if data.empty:
         return pd.DataFrame(columns=['begin', 'end', 'duration'])
-
-    # The minimal length of an interval.
-    # All delays bigger than this are assumed to start a new interval
-    min_timedelta = timedelta(seconds=1)
 
     # compute the time difference between a row and the previous row grouped per day.
     # That means the time of the last data row of each day is not subtracted

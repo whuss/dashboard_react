@@ -529,7 +529,7 @@ def plot_connection_times(device_data, **kwargs):
     else:
         x_range = device_data.begin.min(), device_data.end.max()
 
-    device_data.loc[:, 'duration_str'] = device_data.duration.apply(utils.date.format_time_span)
+    device_data.loc[:, 'duration_str'] = device_data.duration.apply(utils.date.format_timespan_sloppy)
 
     def connection_status(connected):
         if connected:
