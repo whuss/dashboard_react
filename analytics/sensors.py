@@ -7,7 +7,7 @@ import pandas as pd
 from db import TemperaturePackage, PressurePackage, HumidityPackage, BrightnessPackage, GasPackage
 from db import db, db_cached_permanent
 from utils.interval import TimeInterval, Interval
-from utils.date import start_of_day, end_of_day
+from utils.date import start_of_day, end_of_day, date_range
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -176,29 +176,24 @@ def get_sensor_data_intervals(device: str,
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def get_sensor_data(device, intervals, rule: str = "1Min", sensor: Optional[Sensor] = None) -> pd.DataFrame:
-    if isinstance(intervals, pd.DataFrame):
-        return get_sensor_data_intervals(device, intervals, rule, sensor)
-
-    # intervals is actually a single interval
-    interval = intervals
-
-    if isinstance(interval, Interval):
-        return get_sensor_data_single_interval(device, interval, rule, sensor)
-
-    if isinstance(interval, tuple):
-        if len(interval) == 2 and isinstance(interval[0], datetime) and isinstance(interval[1], datetime):
-            begin, end = interval
-            return get_sensor_data_single_interval(device, TimeInterval(begin, end), rule, sensor)
-
-    raise TypeError(f"Incorrect type for parameter intervals: {intervals}.")
+@db_cached_permanent
+def get_sensor_data_for_day(device: str, day: date, rule: str = "1s") -> pd.DataFrame:
+    interval = TimeInterval(start_of_day(day), end_of_day(day))
+    return get_sensor_data_single_interval(device, interval, rule=rule)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@db_cached_permanent
-def get_sensor_data_for_day(device: str, day: date, rule: str = "1s") -> pd.DataFrame:
-    interval = (start_of_day(day), end_of_day(day))
-    return get_sensor_data(device, interval, rule=rule)
+def get_sensor_data(device: str, start_date: date, end_date: date) -> pd.DataFrame:
+    data_list = list()
+    for day in date_range(start_date, end_date, include_endpoint=True):
+        data_list.append(get_sensor_data_for_day(device, day, rule="1s"))
+    sensor_data = pd.concat(data_list, axis=0)
+    if sensor_data.empty:
+        return sensor_data
+
+    # Fill holes in the data, which occur when date for a whole day is missing.
+    sensor_data = sensor_data.resample("1s").ffill()
+    return sensor_data
 
 # ----------------------------------------------------------------------------------------------------------------------

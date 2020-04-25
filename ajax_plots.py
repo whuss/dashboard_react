@@ -15,9 +15,9 @@ from bokeh.layouts import column
 from flask import render_template, jsonify
 
 import plots
-from analytics.connection import connection
+from analytics.connection import connection, connection_timeseries
 from analytics.scenes import get_scene_durations
-from analytics.sensors import get_sensor_data_for_day
+from analytics.sensors import get_sensor_data
 from config import Config
 from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
 from utils.date import start_of_day, end_of_day, format_time_span, date_range
@@ -598,21 +598,18 @@ class PlotSensors(AjaxPlot):
     # ------------------------------------------------------------------------------------------------------------------
 
     def _fetch(self):
-        data_list = list()
-        for day in date_range(self.start_date, self.end_date, include_endpoint=True):
-            data_list.append(get_sensor_data_for_day(self.device, day, rule="1s"))
-        sensor_data = pd.concat(data_list, axis=0)
+        sensor_data = get_sensor_data(self.device, self.start_date, self.end_date)
         if sensor_data.empty:
             return None
+        connection_data = connection_timeseries(self.device, self.start_date, self.end_date)
+        data = pd.merge(sensor_data, connection_data, left_index=True, right_index=True)
 
         if "AUTO" in self.sample_rate:
             self.sample_rate = self.auto_sample_rate(self.start_date, self.end_date)
 
             logging.info(f"Automatic samplerate: {self.sample_rate}")
 
-        # Fill holes in the data, which occur when date for a whole day is missing.
-        sensor_data = sensor_data.resample("1s").ffill()
-        data = sensor_data.resample(self.sample_rate).mean()
+        data = data.resample(self.sample_rate).mean()
 
         return data
 
@@ -652,7 +649,10 @@ class PlotSensors(AjaxPlot):
             unit = self.units.get(sensor, "")
             if sensor == "brightness":
                 sources = ["brightness_lh", "brightness_lv", "brightness_rh", "brightness_rv"]
+                # share y-axis for all brightness plots
+                y_range = min(sensor_data[sources].min()), max(sensor_data[sources].max())
             else:
+                y_range = None
                 sources = [sensor]
 
             for source in sources:
@@ -662,6 +662,7 @@ class PlotSensors(AjaxPlot):
                     fig = plots.plot_time_series(sensor_data.index,
                                                  sensor_data[source],
                                                  x_range=x_range,
+                                                 y_range=y_range,
                                                  y_axis_label=unit,
                                                  mode='line',
                                                  title=source.capitalize())

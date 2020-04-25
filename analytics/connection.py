@@ -94,6 +94,26 @@ def connection(device: str, start_date: date, end_date: date,
         unconnected = dict(begin=end_of_last_interval, end=end, duration=end-begin, connected=0, color=['#ff0000'])
         data = data.append(pd.DataFrame(unconnected))
 
-    return data
+    return data.reset_index(drop=True)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def connection_timeseries(device: str, start_date: date, end_date: date,
+                          max_delay: timedelta = timedelta(minutes=2)) -> pd.DataFrame:
+    data_interval = connection(device, start_date, end_date, max_delay, cut_intervals=True)
+    if data_interval.empty:
+        return pd.DataFrame()
+
+    data = data_interval[['begin', 'connected']]
+
+    # Add a data row for the end of the time interval
+    # To make sure the timeseries goes until the end.
+    connected = data.iloc[-1].connected
+    return data.append(pd.DataFrame(dict(begin=[end_of_day(end_date)], connected=[connected]))) \
+        .rename(columns=dict(begin='timestamp')) \
+        .set_index('timestamp') \
+        .resample('1s') \
+        .ffill()
 
 # ----------------------------------------------------------------------------------------------------------------------

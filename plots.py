@@ -190,7 +190,10 @@ def plot_time_series(x, y, x_range, **kwargs):
 
     figure_kwargs['toolbar_location'] = kwargs.get('toolbar_location', "right")
 
-    fig = figure(plot_width=1000, plot_height=200, x_range=x_range, x_axis_type='datetime', **figure_kwargs)
+    y_range = kwargs.get('y_range', None)
+
+    fig = figure(plot_width=1000, plot_height=200, x_range=x_range, y_range=y_range, x_axis_type='datetime',
+                 **figure_kwargs)
     fig.output_backend = "webgl"
     if "title" in kwargs:
         #fig.title.text_font_style = "italic"
@@ -521,7 +524,7 @@ def plot_database_size(data):
 
 def plot_connection_times(device_data, **kwargs):
     title = kwargs.pop('title', None)
-    plot_width = kwargs.pop('plot_width', 800)
+    plot_width = kwargs.pop('plot_width', 1000)
     plot_height = kwargs.pop('plot_height', 80 if title else 50)
 
     if 'x_range' in kwargs:
@@ -573,7 +576,7 @@ def plot_connection_times(device_data, **kwargs):
 
 def plot_on_off_times(device_data, **kwargs):
     colors = ['#eeeeee', '#ff8e00']  # [off, on]
-    plot_width = kwargs.pop('plot_width', 800)
+    plot_width = kwargs.pop('plot_width', 1000)
     plot_height = kwargs.pop('plot_height', 80)
     title = kwargs.pop('title', None)
 
@@ -842,3 +845,79 @@ def create_x_range(start_date: date, end_date: date):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
+def plot_percentage_time_series(x, y, x_range, **kwargs):
+    """Creates an interactive timeseries plot
+
+    Optional arguments:
+    -------------------
+
+    title: str
+        Figure title
+
+    title_location: str
+        Location of title. One of: "above, "below", "left", "right" (default: "above")
+
+    x_axis_label: str
+
+    y_axis_label: str
+
+    line_color: str
+        Color of the time series (default: 'navy')
+
+    mode: "step" or "line
+    """
+    if len(x) == 0:
+        return None
+
+    # set the drawing mode (default: line)
+    mode = kwargs.pop("mode", "line")
+
+    figure_kwargs = {}
+    if "title" in kwargs:
+        figure_kwargs['title'] = kwargs['title']
+        figure_kwargs['title_location'] = kwargs.get('title_location', "above")
+
+    figure_kwargs['toolbar_location'] = kwargs.get('toolbar_location', "right")
+
+    fig = figure(plot_width=1000, plot_height=200, x_range=x_range, x_axis_type='datetime', **figure_kwargs)
+    fig.output_backend = "webgl"
+    if "title" in kwargs:
+        #fig.title.text_font_style = "italic"
+        fig.title.offset = 20
+    if "x_axis_label" in kwargs:
+        fig.xaxis.axis_label = kwargs.pop("x_axis_label")
+    if "y_axis_label" in kwargs:
+        fig.yaxis.axis_label = kwargs.pop("y_axis_label")
+    fig.toolbar.logo = None
+    fig.tools = [WheelZoomTool(dimensions=Dimensions.width),
+                 PanTool(dimensions=Dimensions.width),
+                 ResetTool(),
+                 SaveTool(),
+                 # TODO: add hover tool
+                 # HoverTool(mode='vline')
+    ]
+    # fig.sizing_mode = 'scale_width'
+    line_kwargs = dict()
+    line_kwargs['line_color'] = kwargs.get('line_color', 'navy')
+
+    if mode == "step":
+        fig.step(
+            x=x,
+            line_width=1,
+            y=y,
+            mode=StepMode.after,
+            **line_kwargs
+        )
+    else:
+        fig.line(
+            x=x,
+            line_width=1,
+            y=y,
+            **line_kwargs
+        )
+
+    # render template
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
