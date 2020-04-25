@@ -172,8 +172,7 @@ def fill_cache(start_date: date):
     for day in date_range(start_date, end_date):
         for device in devices:
             for key in query_keys:
-                if not query_cache(device, day, key):
-                    queries.append(Query(day, device, key))
+                queries.append(Query(day, device, key))
     print(f"Number of cached queries: {number_of_queries - len(queries)}")
 
     hline()
