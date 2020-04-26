@@ -119,3 +119,28 @@ def connection_timeseries(device: str, start_date: date, end_date: date,
         .ffill()
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+
+@db_cached
+def connection_data_per_day(device: str, start_date: date, end_date: date) -> pd.DataFrame:
+    connection_data = connection_timeseries(device, start_date, end_date)
+    if connection_data.empty:
+        return None
+
+    data = connection_data.resample("1d").mean()
+    data = data.reset_index()
+    data.timestamp = data.timestamp.apply(lambda x: x.date())
+    data = data.rename(columns=dict(timestamp='date')).set_index('date')
+
+    data_loss_intervals = find_intervals(connection_data[connection_data.connected == 0].reset_index())
+    data_loss_intervals['date'] = data_loss_intervals.begin.apply(lambda x: x.date())
+    datalosses_per_day = data_loss_intervals.groupby('date').connected.count()
+
+    data['datalosses'] = datalosses_per_day
+    data.datalosses = data.datalosses.fillna(0).astype(int)
+
+    data.loc[:, 'excluded'] = 0
+    data.loc[(data.connected < 0.95) | (data.datalosses > 5), 'excluded'] = 1
+    return data
+
+# ----------------------------------------------------------------------------------------------------------------------

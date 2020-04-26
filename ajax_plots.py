@@ -15,7 +15,7 @@ from bokeh.layouts import column
 from flask import render_template, jsonify
 
 import plots
-from analytics.connection import connection, connection_timeseries
+from analytics.connection import connection, connection_timeseries, connection_data_per_day
 from analytics.scenes import get_scene_durations
 from analytics.sensors import get_sensor_data
 from config import Config
@@ -691,28 +691,12 @@ class PlotConnection(AjaxPlot):
     # ------------------------------------------------------------------------------------------------------------------
 
     def _fetch(self):
-        connection_data = connection_timeseries(self.device, self._start_date, self._end_date)
+        connection_data = connection_data_per_day(self.device, self._start_date, self._end_date)
         if connection_data.empty:
             return None
 
-        data = connection_data.resample("1d").mean()
-        data = data.reset_index()
-        data.timestamp = data.timestamp.apply(lambda x: x.date())
-        data = data.rename(columns=dict(timestamp='date')).set_index('date')
-
-        max_delay = timedelta(seconds=90)
-        data_loss_intervals = find_intervals(connection_data[connection_data.connected == 0].reset_index())
-        data_loss_intervals['date'] = data_loss_intervals.begin.apply(lambda x: x.date())
-        datalosses_per_day = data_loss_intervals.groupby('date').connected.count()
-
-        data['datalosses'] = datalosses_per_day
-        data.datalosses = data.datalosses.fillna(0).astype(int)
-
-        data.loc[:, 'excluded'] = 0
-        data.loc[(data.connected < 0.95) | (data.datalosses > 5), 'excluded'] = 1
-
-        self.field['excluded_days'].set_value(f"{data.excluded.sum()}&nbsp;days")
-        return data
+        self.field['excluded_days'].set_value(f"{connection_data.excluded.sum()}&nbsp;days")
+        return connection_data
 
     # ------------------------------------------------------------------------------------------------------------------
 
