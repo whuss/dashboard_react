@@ -30,7 +30,7 @@ import humanfriendly
 from plots import plot_histogram, plot_time_series, plot_connection_times, plot_on_off_times
 
 from ajax_plots import AjaxFactory, PlotCrashes, PlotDatabaseSize, PlotOnOffCycles, PlotSceneDurations, DashboardInfo
-from ajax_plots import PlotErrors, PlotDatabaseDelay, PlotSensors
+from ajax_plots import PlotErrors, PlotDatabaseDelay, PlotSensors, PlotConnection
 
 from utils.excel import convert_to_excel
 from base64 import b64encode
@@ -876,6 +876,23 @@ def analytics_sensor(device: Optional[str] = None,
                               end_date,
                               sensor,
                               sample_rate=sample_rate)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/analytics/connection')
+def analytics_connection():
+    def _plot(device):
+        return PlotConnection(plot_parameters={'device': device})
+
+    ajax_plot_list = [_plot(device) for device in get_devices()]
+
+    return render_template('analytics_connection.html',
+                           ajax_plot_list=ajax_plot_list,
+                           js_resources=INLINE.render_js(),
+                           css_resources=INLINE.render_css()
+                           )
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 

@@ -141,6 +141,7 @@ def plot_duration_histogram(data, time_scale: str='s', **kwargs):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 def plot_lost_signal(lost_signal, x_range):
     x = lost_signal.timestamp
     y = lost_signal.signal_delay.astype(f'timedelta64[m]')
@@ -919,5 +920,146 @@ def plot_percentage_time_series(x, y, x_range, **kwargs):
 
     # render template
     return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_connection_per_day(data):
+    data = data.reset_index()
+    data['unconnected'] = 1 - data.connected
+    data['color'] = 'green'
+    data.color[data.connected < 0.95] = 'red'
+
+    from datetime import date
+    x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    data_source = ColumnDataSource(data)
+
+    fig = figure(plot_height=200, plot_width=1000,
+                 title=f"Downtime percentage",
+                 x_axis_type='datetime',
+                 x_range=x_range,
+                 y_range=(0, 1),
+                 tools="")
+    fig.yaxis[0].formatter = NumeralTickFormatter(format='0%')
+
+    fig.vbar(bottom=0,
+             top='unconnected',
+             x='date',
+             width=timedelta(days=1) / 2,
+             source=data_source,
+             fill_color='color',
+             line_color='black',
+             line_width=0)
+
+    fig.output_backend = "svg"
+    fig.toolbar.logo = None
+
+    hover_tool = HoverTool(tooltips=[('Date', '@date{%F}'),
+                                     ('Downtime', '@unconnected{0%}')],
+                           formatters={'date': 'datetime'},
+                           mode='vline')
+
+    fig.add_tools(hover_tool)
+    fig.add_tools(SaveTool())
+    fig.add_tools(WheelZoomTool(dimensions=Dimensions.width))
+    fig.add_tools(PanTool(dimensions=Dimensions.width))
+    fig.add_tools(ResetTool())
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_datalosses_per_day(data):
+    data = data.reset_index()
+    p = palettes.RdYlGn[10]
+    data['color'] = data.datalosses.apply(lambda x: p[min(9, x)])
+
+    from datetime import date
+    x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    data_source = ColumnDataSource(data)
+
+    fig = figure(plot_height=200, plot_width=1000,
+                 title=f"Datalosses",
+                 x_axis_type='datetime',
+                 x_range=x_range,
+                 y_range=(0, 20),
+                 tools="")
+
+    fig.vbar(bottom=0,
+             top='datalosses',
+             x='date',
+             width=timedelta(days=1) / 2,
+             source=data_source,
+             fill_color='color',
+             line_color='black',
+             line_width=0)
+
+    fig.output_backend = "svg"
+    fig.toolbar.logo = None
+
+    hover_tool = HoverTool(tooltips=[('Date', '@date{%F}'),
+                                     ('Data losses', '@datalosses')],
+                           formatters={'date': 'datetime'},
+                           mode='vline')
+
+    fig.add_tools(hover_tool)
+    fig.add_tools(SaveTool())
+    fig.add_tools(WheelZoomTool(dimensions=Dimensions.width))
+    fig.add_tools(PanTool(dimensions=Dimensions.width))
+    fig.add_tools(ResetTool())
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_excluded_days(data):
+    data = data.reset_index()
+    p = ['green', 'red']
+    data['color'] = data.excluded.apply(lambda x: p[x])
+
+    from datetime import date
+    x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    data_source = ColumnDataSource(data)
+
+    fig = figure(plot_height=80, plot_width=1000,
+                 title=f"Excluded days",
+                 x_axis_type='datetime',
+                 x_range=x_range,
+                 y_range=(0, 1),
+                 tools="")
+    fig.yaxis.visible = False
+    # disable grid
+    fig.xgrid.grid_line_color = None
+    fig.ygrid.grid_line_color = None
+    # disable border
+    fig.outline_line_color = None
+
+    fig.vbar(bottom=0,
+             top=1,
+             x='date',
+             width=timedelta(days=1),
+             source=data_source,
+             fill_color='color',
+             line_color='color',
+             line_width=1)
+
+    fig.output_backend = "svg"
+    fig.toolbar.logo = None
+
+    hover_tool = HoverTool(tooltips=[('Date', '@date{%F}'),
+                                     ('Excluded', '@excluded')],
+                           formatters={'date': 'datetime'},
+                           mode='vline')
+
+    fig.add_tools(hover_tool)
+    #fig.add_tools(SaveTool())
+    #fig.add_tools(WheelZoomTool(dimensions=Dimensions.width))
+    #fig.add_tools(PanTool(dimensions=Dimensions.width))
+    #fig.add_tools(ResetTool())
+    return fig
+
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,43 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+{{ js_resources|indent(4)|safe }}
+{{ css_resources|indent(4)|safe }}
+{% endblock %}
+
+{% block page_title %}
+<h1>Connection Analytics</h1>
+{% endblock %}
+
+{% block body %}
+<div id="content">
+  <div style="margin:20px">
+    <p>A data loss is detected when no data is received from the device for at least two minutes.</p>
+    <p>Data from a day is excluded from analysis when either the downtime percentage is bigger than 5%, or
+    the number of datalosses, i.e. the number of time intervals where the device has been offline, exceeds 5.</p>
+  </div>
+  <table id="data-table" class="table">
+    <thead class="thead-dark">
+    <tr>
+        <th>Device ID</th>
+        <th>Excluded</th>
+        <th>Internet connection</th>
+        <th>Download</th>
+    </tr>
+    </thead>
+  {% for plot in ajax_plot_list %}
+  <tr>
+    <th scope="row">{{plot.parameters.device}}</th>
+    <td>{{plot.field.excluded_days|safe}}</td>
+    <td><div align="center">{{plot.field.plot|safe}}</div></td>
+    <td>{{plot.field.download|safe}}</td>
+  </tr>
+  {% endfor %}
+  </table>
+</div>
+{% endblock %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+{% include 'includes/_ajax_plot.html' %}
+{% endblock script %}

@@ -63,6 +63,8 @@ def _connection_for_device_raw(device: str) -> pd.DataFrame:
 @db_cached
 def _connection_for_device(device: str, max_delay: timedelta) -> pd.DataFrame:
     raw_data = _connection_for_device_raw(device)
+    if raw_data.empty:
+        return raw_data
     return _find_connection_intervals(raw_data, max_delay)
 
 # ----------------------------------------------------------------------------------------------------------------------

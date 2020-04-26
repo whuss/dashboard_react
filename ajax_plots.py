@@ -21,6 +21,7 @@ from analytics.sensors import get_sensor_data
 from config import Config
 from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
 from utils.date import start_of_day, end_of_day, format_time_span, date_range
+from utils.interval import find_intervals
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -675,5 +676,50 @@ class PlotSensors(AjaxPlot):
             figures.append(connection_fig)
 
         return column(figures)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotConnection(AjaxPlot):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self.add_field(AjaxField(name='excluded_days'))
+        self._start_date = start_of_day(date(2020, 3, 1))
+        self._end_date = end_of_day(date.today() - timedelta(days=1))
+        self.device = self.parameters.get('device')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        connection_data = connection_timeseries(self.device, self._start_date, self._end_date)
+        if connection_data.empty:
+            return None
+
+        data = connection_data.resample("1d").mean()
+        data = data.reset_index()
+        data.timestamp = data.timestamp.apply(lambda x: x.date())
+        data = data.rename(columns=dict(timestamp='date')).set_index('date')
+
+        max_delay = timedelta(seconds=90)
+        data_loss_intervals = find_intervals(connection_data[connection_data.connected == 0].reset_index())
+        data_loss_intervals['date'] = data_loss_intervals.begin.apply(lambda x: x.date())
+        datalosses_per_day = data_loss_intervals.groupby('date').connected.count()
+
+        data['datalosses'] = datalosses_per_day
+        data.datalosses = data.datalosses.fillna(0).astype(int)
+
+        data.loc[:, 'excluded'] = 0
+        data.loc[(data.connected < 0.95) | (data.datalosses > 5), 'excluded'] = 1
+
+        self.field['excluded_days'].set_value(f"{data.excluded.sum()}&nbsp;days")
+        return data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, connection_data):
+        fig1 = plots.plot_excluded_days(connection_data)
+        fig2 = plots.plot_connection_per_day(connection_data)
+        fig3 = plots.plot_datalosses_per_day(connection_data)
+        return column([fig1, fig2, fig3])
 
 # ----------------------------------------------------------------------------------------------------------------------
