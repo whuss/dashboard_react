@@ -18,6 +18,7 @@ import plots
 from analytics.connection import connection, connection_timeseries, connection_data_per_day
 from analytics.scenes import get_scene_durations
 from analytics.sensors import get_sensor_data
+from analytics.keyboard import get_keyboard_data
 from config import Config
 from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
 from utils.date import start_of_day, end_of_day, format_time_span, date_range
@@ -297,7 +298,7 @@ class PlotCrashes(AjaxPlot):
         self.add_field(AjaxField(name='total_number_of_crashes'))
         self.add_field(AjaxField(name='total_number_of_restarts'))
 
-        self._start_date = start_of_day(date(2020, 3, 1))
+        self._start_date = start_of_day(date(2020, 2, 1))
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -337,7 +338,7 @@ class PlotCrashes(AjaxPlot):
 class PlotSceneDurations(AjaxPlot):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
-        self._start_date = start_of_day(date(2020, 3, 1))
+        self._start_date = start_of_day(date(2020, 2, 1))
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -382,7 +383,7 @@ class PlotDatabaseSize(AjaxPlot):
 class PlotOnOffCycles(AjaxPlot):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
-        self._start_date = start_of_day(date(2020, 3, 1))
+        self._start_date = start_of_day(date(2020, 2, 1))
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -452,7 +453,7 @@ class PlotErrors(AjaxPlot):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self.add_field(AjaxField(name='total_number_of_errors'))
-        self._start_date = start_of_day(date(2020, 3, 1))
+        self._start_date = start_of_day(date(2020, 2, 1))
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -687,7 +688,7 @@ class PlotConnection(AjaxPlot):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self.add_field(AjaxField(name='excluded_days'))
-        self._start_date = date(2020, 3, 1)
+        self._start_date = date(2020, 2, 1)
         self._end_date = date.today() - timedelta(days=1)
         self.device = self.parameters.get('device')
 
@@ -708,5 +709,36 @@ class PlotConnection(AjaxPlot):
         fig2 = plots.plot_connection_per_day(connection_data, x_range=fig1.x_range)
         fig3 = plots.plot_datalosses_per_day(connection_data, x_range=fig2.x_range)
         return column([fig1, fig2, fig3])
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotKeyboard(AjaxPlot):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = date(2020, 2, 1)
+        self._end_date = date.today() - timedelta(days=1)
+        self.device = self.parameters.get('device')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        keyboard_data = get_keyboard_data(self.device, self._start_date, self._end_date)
+        if keyboard_data.empty:
+            return None
+
+        keyboard_data = keyboard_data.reset_index()
+        keyboard_data['date'] = keyboard_data.timestamp.dt.date
+        keyboard_data = keyboard_data.set_index('timestamp')
+
+        return keyboard_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, keyboard_data):
+        keyboard_data = keyboard_data.resample('1d').sum()
+        fig1 = plots.plot_key_presses(keyboard_data.copy())
+        fig2 = plots.plot_special_key_presses(keyboard_data.copy(), x_range=fig1.x_range)
+        return column([fig1, fig2])
 
 # ----------------------------------------------------------------------------------------------------------------------

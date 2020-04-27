@@ -30,7 +30,7 @@ import humanfriendly
 from plots import plot_histogram, plot_time_series, plot_connection_times, plot_on_off_times
 
 from ajax_plots import AjaxFactory, PlotCrashes, PlotDatabaseSize, PlotOnOffCycles, PlotSceneDurations, DashboardInfo
-from ajax_plots import PlotErrors, PlotDatabaseDelay, PlotSensors, PlotConnection
+from ajax_plots import PlotErrors, PlotDatabaseDelay, PlotSensors, PlotConnection, PlotKeyboard
 
 from utils.excel import convert_to_excel
 from base64 import b64encode
@@ -888,6 +888,23 @@ def analytics_connection():
     ajax_plot_list = [_plot(device) for device in get_devices()]
 
     return render_template('analytics_connection.html',
+                           ajax_plot_list=ajax_plot_list,
+                           js_resources=INLINE.render_js(),
+                           css_resources=INLINE.render_css()
+                           )
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/analytics/keyboard')
+def analytics_keyboard():
+    def _plot(device):
+        return PlotKeyboard(plot_parameters={'device': device})
+
+    ajax_plot_list = [_plot(device) for device in get_devices()]
+
+    return render_template('analytics_keyboard.html',
                            ajax_plot_list=ajax_plot_list,
                            js_resources=INLINE.render_js(),
                            css_resources=INLINE.render_css()

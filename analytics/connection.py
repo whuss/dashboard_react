@@ -140,11 +140,11 @@ def connection_data_per_day(device: str, start_date: date, end_date: date) -> pd
         data.connected = data.connected.fillna(1.0)
 
     data = data.reset_index()
-    data.timestamp = data.timestamp.apply(lambda x: x.date())
+    data.timestamp = data.timestamp.dt.date
     data = data.rename(columns=dict(timestamp='date')).set_index('date')
 
     data_loss_intervals = find_intervals(connection_data[connection_data.connected == 0].reset_index())
-    data_loss_intervals['date'] = data_loss_intervals.begin.apply(lambda x: x.date())
+    data_loss_intervals['date'] = data_loss_intervals.begin.dt.date
     datalosses_per_day = data_loss_intervals.groupby('date').connected.count()
 
     data['datalosses'] = datalosses_per_day

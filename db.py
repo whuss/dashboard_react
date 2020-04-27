@@ -218,6 +218,21 @@ class LightingPackage(db.Model):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class MouseClickPackage(db.Model):
+    __tablename__ = 'MouseClickPackage'
+    __table_args__ = dict(extend_existing=True)
+
+    id = db.Column('pk_mouse_click_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    frame_start = db.Column('frame_start_dtm', key='frame_start')
+    click_count = db.Column('click_count_int', key='click_count')
+    double_click_count = db.Column('double_click_count_int', key='double_click_count')
+    create_dtm = db.Column('create_dtm')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class MouseGesturePackage(db.Model):
     __tablename__ = 'MouseGesturePackage'
     __table_args__ = dict(extend_existing=True)
@@ -233,6 +248,42 @@ class MouseGesturePackage(db.Model):
     gesture_deviation = db.Column('gesture_deviation_dbl', key='gesture_deviation')
     create_dtm = db.Column('create_dtm')
 
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class MouseWheelPackage(db.Model):
+    __tablename__ = 'MouseWheelPackage'
+    __table_args__ = dict(extend_existing=True)
+
+    id = db.Column('pk_mouse_wheel_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    frame_start = db.Column('frame_start_dtm', key='frame_start')
+    rotation_distance = db.Column('rotation_distance_int', key='rotation_distance')
+    rotation_speed = db.Column('rotation_speed_dbl', key='rotation_speed')
+    create_dtm = db.Column('create_dtm')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class KeyboardPackage(db.Model):
+    __tablename__ = 'KeyboardPackage'
+    __table_args__ = dict(extend_existing=True)
+
+    id = db.Column('pk_keyboard_package_id', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    frame_start = db.Column('frame_start_dtm', key='frame_start')
+    key_press_count = db.Column('key_press_count_int', key='key_press_count')
+    delete_press_count = db.Column('delete_press_count_int', key='delete_press_count')
+    enter_press_count = db.Column('enter_press_count_int', key='enter_press_count')
+    shift_press_count = db.Column('shift_press_count_int', key='shift_press_count')
+    space_press_count = db.Column('space_press_count_int', key='space_press_count')
+    press_pause_count = db.Column('press_pause_count_int', key='press_pause_count')
+    pause_length = db.Column('pause_length_dbl', key='pause_length')
+    keystroke_time = db.Column('keystroke_time_dbl', key='keystroke_time')
+    press_to_press_time = db.Column('press_to_press_time_dbl', key='press_to_press_time')
+    create_dtm = db.Column('create_dtm')
 
 # ----------------------------------------------------------------------------------------------------------------------
 

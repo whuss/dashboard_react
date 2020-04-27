@@ -673,7 +673,7 @@ def plot_scene_duration_percentage(data, **kwargs):
     from datetime import date
     x_range = kwargs.get('x_range', None)
     if not x_range:
-        x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+        x_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
 
     data_source = ColumnDataSource(data_t)
 
@@ -722,7 +722,7 @@ def plot_on_duration(data, **kwargs):
     from datetime import date
     x_range = kwargs.get('x_range', None)
     if not x_range:
-        x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+        x_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
 
     data_source = ColumnDataSource(data)
 
@@ -772,7 +772,7 @@ def plot_sporadic_scenes_duration(data, **kwargs):
     from datetime import date
     x_range = kwargs.get('x_range', None)
     if not x_range:
-        x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+        x_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
 
     y_range = min(data[['TASK_HORI', 'TASK_VERT', 'LIGHT_SHOWER']].min()), \
         max(data[['TASK_HORI', 'TASK_VERT', 'LIGHT_SHOWER']].max())
@@ -944,7 +944,7 @@ def plot_connection_per_day(data, **kwargs):
     from datetime import date
     x_range = kwargs.get('x_range', None)
     if not x_range:
-        x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+        x_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
 
     data_source = ColumnDataSource(data)
 
@@ -991,7 +991,7 @@ def plot_datalosses_per_day(data, **kwargs):
     from datetime import date
     x_range = kwargs.get('x_range', None)
     if not x_range:
-        x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+        x_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
 
     data_source = ColumnDataSource(data)
 
@@ -1037,7 +1037,7 @@ def plot_excluded_days(data, **kwargs):
     from datetime import date
     x_range = kwargs.get('x_range', None)
     if not x_range:
-        x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+        x_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
 
     data_source = ColumnDataSource(data)
 
@@ -1078,5 +1078,129 @@ def plot_excluded_days(data, **kwargs):
     #fig.add_tools(ResetTool())
     return fig
 
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_key_presses(data, **kwargs):
+    data = data.reset_index()
+
+    from datetime import date
+    x_range = kwargs.get('x_range', None)
+    if not x_range:
+        x_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    data_source = ColumnDataSource(data[['timestamp', 'key_press_count']])
+
+    fig = figure(plot_height=200, plot_width=1000,
+                 title=f"Key presses",
+                 x_axis_type='datetime',
+                 x_range=x_range,
+                 tools="")
+
+    fig.vbar(bottom=0,
+             top='key_press_count',
+             x='timestamp',
+             width=timedelta(days=1) * 2/3,
+             source=data_source,
+             fill_color='blue',
+             line_color='black',
+             line_width=0)
+
+    fig.output_backend = "webgl"
+    fig.toolbar.logo = None
+
+    hover_tool = HoverTool(tooltips=[('Date', '@timestamp{%F}'),
+                                     ('Keypress count', '@key_press_count')],
+                           formatters={'timestamp': 'datetime'},
+                           mode='vline')
+
+    fig.add_tools(hover_tool)
+    fig.add_tools(SaveTool())
+    fig.add_tools(WheelZoomTool(dimensions=Dimensions.width))
+    fig.add_tools(PanTool(dimensions=Dimensions.width))
+    fig.add_tools(ResetTool())
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_special_key_presses(data, **kwargs):
+    data = data.reset_index()
+
+    from datetime import date
+    x_range = kwargs.get('x_range', None)
+    if not x_range:
+        x_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    data_source = ColumnDataSource(data)
+
+    vbar_width = timedelta(days=1) / 6
+    vbar_shift = vbar_width.total_seconds() * 1000
+
+    fig = figure(plot_height=200, plot_width=1000,
+                 title=f"Special key presses",
+                 x_axis_type='datetime',
+                 x_range=x_range,
+                 tools="")
+
+    fig.vbar(bottom=0,
+             top='delete_press_count',
+             x=dodge('timestamp', -3/2*vbar_shift, range=fig.x_range),
+             width=vbar_width,
+             source=data_source,
+             fill_color='magenta',
+             line_color='black',
+             line_width=0,
+             legend_label='Delete')
+
+    fig.vbar(bottom=0,
+             top='enter_press_count',
+             x=dodge('timestamp', -1/2*vbar_shift, range=fig.x_range),
+             width=vbar_width,
+             source=data_source,
+             fill_color='green',
+             line_color='black',
+             line_width=0,
+             legend_label="Enter")
+
+    fig.vbar(bottom=0,
+             top='shift_press_count',
+             x=dodge('timestamp', 1/2*vbar_shift, range=fig.x_range),
+             width=vbar_width,
+             source=data_source,
+             fill_color='red',
+             line_color='black',
+             line_width=0,
+             legend_label="Shift")
+
+    fig.vbar(bottom=0,
+             top='space_press_count',
+             x=dodge('timestamp', 3/2*vbar_shift, range=fig.x_range),
+             width=vbar_width,
+             source=data_source,
+             fill_color='orange',
+             line_color='black',
+             line_width=0,
+             legend_label="Space")
+
+    fig.output_backend = "webgl"
+    fig.toolbar.logo = None
+
+    hover_tool = HoverTool(tooltips=[('Date', '@timestamp{%F}'),
+                                     ('Delete press count', '@delete_press_count'),
+                                     ('Enter press count', '@enter_press_count'),
+                                     ('Shift press count', '@shift_press_count'),
+                                     ('Space press count', '@space_press_count')],
+                           formatters={'timestamp': 'datetime'},
+                           mode='vline')
+
+    fig.add_tools(hover_tool)
+    fig.add_tools(SaveTool())
+    fig.add_tools(WheelZoomTool(dimensions=Dimensions.width))
+    fig.add_tools(PanTool(dimensions=Dimensions.width))
+    fig.add_tools(ResetTool())
+    fig.legend.location = "top_left"
+    return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
