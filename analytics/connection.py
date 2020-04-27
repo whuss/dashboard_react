@@ -128,6 +128,17 @@ def connection_data_per_day(device: str, start_date: date, end_date: date) -> pd
         return None
 
     data = connection_data.resample("1d").mean()
+
+    # DeadMan-Service has only been active since the 12.03.2020,
+    # hence for earlier dates we have no connection data.
+    # We assume that for earlier dates the device was always connected.
+    if start_date <= date(2020, 3, 12):
+        date_range = pd.DataFrame(pd.date_range(start_date, end_date), columns=["timestamp"]) \
+            .set_index('timestamp')
+
+        data = pd.merge(data, date_range, how='outer', left_index=True, right_index=True)
+        data.connected = data.connected.fillna(1.0)
+
     data = data.reset_index()
     data.timestamp = data.timestamp.apply(lambda x: x.date())
     data = data.rename(columns=dict(timestamp='date')).set_index('date')

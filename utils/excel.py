@@ -58,6 +58,9 @@ def dataframe_to_excel(data: pd.DataFrame, filename: str) -> None:
 
     columns = data.columns
 
+    # increase the column width
+    worksheet.set_column(0, len(columns)-1, 20)
+
     for c_index, header in enumerate(columns):
         worksheet.write(0, c_index, header)
     for r_index, (index, row) in enumerate(data.iterrows()):

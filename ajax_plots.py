@@ -684,8 +684,8 @@ class PlotConnection(AjaxPlot):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self.add_field(AjaxField(name='excluded_days'))
-        self._start_date = start_of_day(date(2020, 3, 1))
-        self._end_date = end_of_day(date.today() - timedelta(days=1))
+        self._start_date = date(2020, 3, 1)
+        self._end_date = date.today() - timedelta(days=1)
         self.device = self.parameters.get('device')
 
     # ------------------------------------------------------------------------------------------------------------------

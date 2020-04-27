@@ -1375,6 +1375,7 @@ def dataframe_from_query(query):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 def query_cache(device: str, data_date: Optional[date], query_name: str) -> bool:
     if data_date:
         dfp = DataFramePackage
