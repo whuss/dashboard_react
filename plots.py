@@ -646,8 +646,7 @@ def plot_on_off_times(device_data, **kwargs):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def plot_scene_duration_percentage(data):
-    data.loc[:, 'total_time'] = data.sum(axis=1)
+def plot_scene_duration_percentage(data, **kwargs):
     data.AUTO /= data.total_time
     data.TASK_HORI /= data.total_time
     data.TASK_VERT /= data.total_time
@@ -672,7 +671,9 @@ def plot_scene_duration_percentage(data):
     #x_range = (data.index.min() - timedelta(days=1),
     #           data.index.max() + timedelta(days=1))
     from datetime import date
-    x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+    x_range = kwargs.get('x_range', None)
+    if not x_range:
+        x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
 
     data_source = ColumnDataSource(data_t)
 
@@ -710,7 +711,7 @@ def plot_scene_duration_percentage(data):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def plot_on_duration(data):
+def plot_on_duration(data, **kwargs):
     data.loc[:, 'total_time'] = data.sum(axis=1)
 
     data = data.reset_index().rename(columns=dict(index="date"))
@@ -719,7 +720,9 @@ def plot_on_duration(data):
     data.total_time = data.total_time.apply(lambda x: x.total_seconds() / 60 / 60)
 
     from datetime import date
-    x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+    x_range = kwargs.get('x_range', None)
+    if not x_range:
+        x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
 
     data_source = ColumnDataSource(data)
 
@@ -727,7 +730,7 @@ def plot_on_duration(data):
                  title=f"Total on time",
                  x_axis_type='datetime',
                  x_range=x_range,
-                 y_range=(0, 24),
+                 y_range=(0, 12),
                  tools="")
     fig.yaxis.axis_label = "Hours"
 
@@ -759,7 +762,7 @@ def plot_on_duration(data):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def plot_sporadic_scenes_duration(data):
+def plot_sporadic_scenes_duration(data, **kwargs):
     data = data.reset_index().rename(columns=dict(index="date"))
 
     data.TASK_HORI = data.TASK_HORI / 1000 / 60
@@ -767,7 +770,14 @@ def plot_sporadic_scenes_duration(data):
     data.LIGHT_SHOWER = data.LIGHT_SHOWER / 1000 / 60
 
     from datetime import date
-    x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+    x_range = kwargs.get('x_range', None)
+    if not x_range:
+        x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    y_range = min(data[['TASK_HORI', 'TASK_VERT', 'LIGHT_SHOWER']].min()), \
+        max(data[['TASK_HORI', 'TASK_VERT', 'LIGHT_SHOWER']].max())
+    if y_range[0] == timedelta(0) and y_range[1] == timedelta(0):
+        y_range = (0, 1)
 
     data_source = ColumnDataSource(data)
 
@@ -775,6 +785,7 @@ def plot_sporadic_scenes_duration(data):
                  title=f"Total special scene durations",
                  x_axis_type='datetime',
                  x_range=x_range,
+                 y_range=y_range,
                  tools="")
     fig.yaxis.axis_label = "Minutes"
 
@@ -924,14 +935,16 @@ def plot_percentage_time_series(x, y, x_range, **kwargs):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def plot_connection_per_day(data):
+def plot_connection_per_day(data, **kwargs):
     data = data.reset_index()
     data['unconnected'] = 1 - data.connected
     data['color'] = 'green'
     data.color[data.connected < 0.95] = 'red'
 
     from datetime import date
-    x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+    x_range = kwargs.get('x_range', None)
+    if not x_range:
+        x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
 
     data_source = ColumnDataSource(data)
 
@@ -970,13 +983,15 @@ def plot_connection_per_day(data):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def plot_datalosses_per_day(data):
+def plot_datalosses_per_day(data, **kwargs):
     data = data.reset_index()
     p = palettes.RdYlGn[10]
     data['color'] = data.datalosses.apply(lambda x: p[min(9, x)])
 
     from datetime import date
-    x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+    x_range = kwargs.get('x_range', None)
+    if not x_range:
+        x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
 
     data_source = ColumnDataSource(data)
 
@@ -1014,13 +1029,15 @@ def plot_datalosses_per_day(data):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def plot_excluded_days(data):
+def plot_excluded_days(data, **kwargs):
     data = data.reset_index()
     p = ['green', 'red']
     data['color'] = data.excluded.apply(lambda x: p[x])
 
     from datetime import date
-    x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+    x_range = kwargs.get('x_range', None)
+    if not x_range:
+        x_range = (date(2020, 3, 1) - timedelta(days=1), date.today() + timedelta(days=1))
 
     data_source = ColumnDataSource(data)
 

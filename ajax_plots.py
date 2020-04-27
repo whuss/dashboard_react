@@ -344,6 +344,9 @@ class PlotSceneDurations(AjaxPlot):
     def _fetch(self):
         device = self.parameters.get('device')
         scene_data = get_scene_durations(device, self._start_date)
+        scene_data.loc[:, 'total_time'] = scene_data.sum(axis=1)
+        scene_data = scene_data[scene_data.total_time >= timedelta(minutes=30)]
+
         if scene_data is None or scene_data.empty:
             return None
 
@@ -353,8 +356,8 @@ class PlotSceneDurations(AjaxPlot):
 
     def _plot(self, scene_data):
         fig1 = plots.plot_scene_duration_percentage(scene_data.copy())
-        fig2 = plots.plot_on_duration(scene_data.copy())
-        fig3 = plots.plot_sporadic_scenes_duration(scene_data)
+        fig2 = plots.plot_on_duration(scene_data.copy(), x_range=fig1.x_range)
+        fig3 = plots.plot_sporadic_scenes_duration(scene_data, x_range=fig2.x_range)
         return column([fig1, fig2, fig3])
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -702,8 +705,8 @@ class PlotConnection(AjaxPlot):
 
     def _plot(self, connection_data):
         fig1 = plots.plot_excluded_days(connection_data)
-        fig2 = plots.plot_connection_per_day(connection_data)
-        fig3 = plots.plot_datalosses_per_day(connection_data)
+        fig2 = plots.plot_connection_per_day(connection_data, x_range=fig1.x_range)
+        fig3 = plots.plot_datalosses_per_day(connection_data, x_range=fig2.x_range)
         return column([fig1, fig2, fig3])
 
 # ----------------------------------------------------------------------------------------------------------------------
