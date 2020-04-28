@@ -10,9 +10,10 @@ from plumbum.cli.terminal import get_terminal_size
 import pandas as pd
 
 from app import db
-from db import query_cache, Dashboard, DataFramePackage, DeviceDataFramePackage, Errors
+from db import query_cache, Dashboard, CachePackage, CacheDeviceDatePackage, Errors, PresenceDetectorStatistics
 from analytics.sensors import get_sensor_data_for_day
 from analytics.scenes import get_scene_durations
+from analytics.connection import connection_data_per_day
 from utils.date import parse_date, date_range, start_of_day
 from dataclasses import dataclass
 
@@ -50,8 +51,8 @@ def get_devices():
 
 def clear_device_query(query: str) -> None:
     try:
-        num_packages = db.session.query(DeviceDataFramePackage) \
-            .filter(DeviceDataFramePackage.query == query) \
+        num_packages = db.session.query(CachePackage) \
+            .filter(CachePackage.query == query) \
             .delete()
         db.session.commit()
         print(f"Number of cache entries deleted: {num_packages}.")
@@ -67,12 +68,14 @@ def update_scene_data(query: str, device: str, start_date: date, end_date: date)
         data = get_scene_durations(device, start_date, end_date)
     elif query == "error_restart_histogram":
         data = Errors().crash_restart_histogram(device, start_of_day(start_date))
+    elif query == "connection_data":
+        data = connection_data_per_day(device, start_date, end_date)
+    elif query == "on_off_cycle_count":
+        data = PresenceDetectorStatistics.on_off_cycle_count(device, start_date)
+    elif query == "error_heatmap_device":
+        data = Errors().error_heatmap_device(device, start_of_day(start_date))
     else:
         raise ValueError(f"Unknown query: {query}.")
-    # print(data)
-    data_package = DeviceDataFramePackage(device=device, query=query, data=data)
-    db.session.add(data_package)
-    db.session.commit()
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -102,7 +105,7 @@ def initialize_cache():
 def clear_cache():
     click.confirm("Delete all cached queries?", abort=True)
     try:
-        num_packages = db.session.query(DataFramePackage).delete()
+        num_packages = db.session.query(CacheDeviceDatePackage).delete()
         db.session.commit()
         print(f"Number of cache entries deleted: {num_packages}.")
     except:
@@ -115,7 +118,8 @@ def clear_cache():
 @click.command(name="update", help="update query cache")
 @click.argument("start_date", type=str)
 def update_cache(start_date: date):
-    query_keys = ["scene_durations", "error_restart_histogram"]
+    query_keys = ["scene_durations", "error_restart_histogram", "connection_data",
+                  "on_off_cycle_count", "error_heatmap_device"]
     devices = get_devices()
 
     start_date = parse_date(start_date)
@@ -187,12 +191,6 @@ def fill_cache(start_date: date):
         except:
             print(colors.red | "failed")
         progress += 1
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-# ----------------------------------------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------------------------------------------
 
