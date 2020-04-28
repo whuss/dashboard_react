@@ -261,7 +261,7 @@ def plot_on_off_cycles(data, **kwargs):
 
     fig = figure(x_axis_type="datetime", x_range=x_range, plot_height=400, plot_width=1000,
                  title="On/Off Cycles", tools="")
-    fig.output_backend = "svg"
+    fig.output_backend = "webgl"
     fig.toolbar.logo = None
     fig.add_tools(HoverTool(
         tooltips=[
@@ -279,10 +279,10 @@ def plot_on_off_cycles(data, **kwargs):
 
     fig.vbar(x=dodge('date', -vbar_shift / 2, range=fig.x_range),
              width=vbar_width, top='count', source=night_source,
-             legend_label='night', line_color="black")
+             legend_label='night', line_color="black", line_alpha=0)
     fig.vbar(x=dodge('date', vbar_shift / 2, range=fig.x_range),
              width=vbar_width, top='count', source=day_source,
-             legend_label='day (6:00am - 10:00pm)', color="#fa9fb5", line_color="black")
+             legend_label='day (6:00am - 10:00pm)', color="#fa9fb5", line_color="black", line_alpha=0)
     fig.legend.location = "top_left"
     return fig
 
