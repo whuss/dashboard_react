@@ -739,6 +739,7 @@ class PlotKeyboard(AjaxPlot):
         keyboard_data = keyboard_data.resample('1d').sum()
         fig1 = plots.plot_key_presses(keyboard_data.copy())
         fig2 = plots.plot_special_key_presses(keyboard_data.copy(), x_range=fig1.x_range)
-        return column([fig1, fig2])
+        fig3 = plots.plot_special_key_relative_frequency(keyboard_data.copy(), x_range=fig2.x_range)
+        return column([fig1, fig2, fig3])
 
 # ----------------------------------------------------------------------------------------------------------------------

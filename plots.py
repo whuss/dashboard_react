@@ -1204,3 +1204,58 @@ def plot_special_key_presses(data, **kwargs):
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_special_key_relative_frequency(data, **kwargs):
+    #data = data.reset_index()
+
+    from datetime import date
+    x_range = kwargs.get('x_range', None)
+    if not x_range:
+        x_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    data = data[['delete_press_count', 'enter_press_count', 'shift_press_count', 'space_press_count']]
+    data['total'] = data.sum(axis=1)
+
+    data.delete_press_count /= data.total
+    data.enter_press_count /= data.total
+    data.shift_press_count /= data.total
+    data.space_press_count /= data.total
+
+    data = data.drop(columns=['total'])
+
+    data_t = data.transpose()
+    data_t = data_t.rename(columns={date: str(date) for date in data_t.columns})
+    data_t = data_t.fillna(0.0)
+    data_t['colors'] = ['magenta', 'green', 'red', 'orange']
+
+    data_source = ColumnDataSource(data_t)
+
+    fig = figure(plot_height=200, plot_width=1000,
+                 title=f"Special keys percentage",
+                 x_axis_type='datetime',
+                 x_range=x_range,
+                 y_range=(0, 1),
+                 tools="")
+    fig.yaxis.formatter = NumeralTickFormatter(format='0 %')
+
+    for date in data.index:
+        fig.vbar(bottom=cumsum(str(date), include_zero=True),
+                 top=cumsum(str(date)),
+                 x=date,
+                 width=timedelta(days=1) / 2,
+                 source=data_source,
+                 fill_color='colors',
+                 line_color='black',
+                 line_width=0)
+
+    fig.output_backend = "webgl"
+    fig.toolbar.logo = None
+
+    fig.add_tools(SaveTool())
+    fig.add_tools(WheelZoomTool(dimensions=Dimensions.width))
+    fig.add_tools(PanTool(dimensions=Dimensions.width))
+    fig.add_tools(ResetTool())
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
