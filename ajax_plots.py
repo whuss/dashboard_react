@@ -743,3 +743,32 @@ class PlotKeyboard(AjaxPlot):
         return column([fig1, fig2, fig3])
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotKeypress(AjaxPlot):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = date(2020, 2, 1)
+        self._end_date = date.today() - timedelta(days=1)
+        self.device = self.parameters.get('device')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        keyboard_data = get_keyboard_data(self.device, self._start_date, self._end_date)
+        if keyboard_data.empty:
+            return None
+
+        keyboard_data = keyboard_data.reset_index()
+        keyboard_data['date'] = keyboard_data.timestamp.dt.date
+        keyboard_data = keyboard_data.set_index('timestamp')
+
+        return keyboard_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, keyboard_data):
+        fig = plots.plot_key_press_pause(keyboard_data.copy())
+        return fig
+
+# ----------------------------------------------------------------------------------------------------------------------

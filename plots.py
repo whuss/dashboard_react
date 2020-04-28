@@ -8,7 +8,7 @@ from bokeh.transform import dodge, cumsum
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, OpenURL, TapTool
 from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
-from bokeh.models import NumeralTickFormatter, PrintfTickFormatter
+from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Circle
 from bokeh.models.ranges import Range1d
 from bokeh import palettes, layouts
 
@@ -1207,8 +1207,6 @@ def plot_special_key_presses(data, **kwargs):
 
 
 def plot_special_key_relative_frequency(data, **kwargs):
-    #data = data.reset_index()
-
     from datetime import date
     x_range = kwargs.get('x_range', None)
     if not x_range:
@@ -1256,6 +1254,46 @@ def plot_special_key_relative_frequency(data, **kwargs):
     fig.add_tools(WheelZoomTool(dimensions=Dimensions.width))
     fig.add_tools(PanTool(dimensions=Dimensions.width))
     fig.add_tools(ResetTool())
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_key_press_pause(data, **kwargs):
+
+    import math
+    data['pause'] = data.pause_length.apply(lambda x: math.sqrt(x) + 1)
+    data['p_to_p'] = data.press_to_press_time.apply(lambda x: math.log(x+1))
+    data.p_to_p = data.p_to_p / data.p_to_p.max() * 255
+    data.p_to_p = data.p_to_p.astype(int)
+
+    p = palettes.viridis(256)
+    data['color'] = data.p_to_p.apply(lambda x: p[x])
+
+    print(data.p_to_p)
+
+    data_source = ColumnDataSource(data)
+
+    x_range = (-data.pause.max(), max(data.key_press_count.max(), data.key_press_count.max()) + data.pause.max())
+    y_range = x_range
+
+    fig = figure(plot_height=500, plot_width=500,
+                 x_range=x_range,
+                 y_range=y_range,
+                 title=f"Key press count / Key pause count",
+                 tools="")
+
+    circle = Circle(x='key_press_count',
+                    y='press_pause_count',
+                    radius='pause',
+                    fill_color='color', fill_alpha=0.75, line_width=0)
+    fig.add_glyph(data_source, circle)
+
+    fig.xaxis.axis_label = "key press count"
+    fig.yaxis.axis_label = "press pause count"
+
+    fig.toolbar.logo = None
+
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
