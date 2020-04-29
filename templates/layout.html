@@ -18,6 +18,7 @@
 			  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
 			  crossorigin="anonymous"></script>
         <!-- Date Range Picker-->
+        <script src="https://unpkg.com/sticky-table-headers"></script>
         <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
         <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
@@ -55,6 +56,7 @@
                     $(this).find('.dropdown-menu').stop(true, true).delay(50).fadeOut(0);
                 }
             );
+            $('#data-table').stickyTableHeaders({fixedOffset: $('div.sticky-top')});
         </script>
         {% block script %}
         {% endblock %}
