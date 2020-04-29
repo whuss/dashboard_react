@@ -1263,7 +1263,7 @@ def plot_key_press_pause(data, **kwargs):
 
     import math
     data['pause'] = data.pause_length.apply(lambda x: math.sqrt(x) + 1)
-    data['p_to_p'] = data.press_to_press_time.apply(lambda x: math.log(x+1))
+    data['p_to_p'] = data.press_to_press_time.apply(lambda x: math.sqrt(x))
     data.p_to_p = data.p_to_p / data.p_to_p.max() * 255
     data.p_to_p = data.p_to_p.astype(int)
 
@@ -1294,6 +1294,79 @@ def plot_key_press_pause(data, **kwargs):
 
     fig.toolbar.logo = None
 
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_mouse_clicks(data, **kwargs):
+    data = data.reset_index()
+
+    from datetime import date
+    x_range = kwargs.get('x_range', None)
+    if not x_range:
+        x_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    data['date'] = data.timestamp.dt.date
+    data = data[['date', 'click_count', 'double_click_count', 'rotation_distance']]
+    data = data.groupby('date').sum()
+
+    data_source = ColumnDataSource(data)
+
+    vbar_width = timedelta(days=1) / 3.5
+    vbar_shift = vbar_width.total_seconds() * 1000
+
+    fig = figure(plot_height=200, plot_width=1000,
+                 title=f"Total mouse clicks/wheel rotation",
+                 x_axis_type='datetime',
+                 x_range=x_range,
+                 tools="")
+
+    fig.vbar(bottom=0,
+             top='click_count',
+             x=dodge('date', -vbar_shift, range=fig.x_range),
+             width=vbar_width,
+             source=data_source,
+             fill_color='orange',
+             line_color='black',
+             line_width=0,
+             legend_label='Clicks')
+
+    fig.vbar(bottom=0,
+             top='double_click_count',
+             x=dodge('date', 0, range=fig.x_range),
+             width=vbar_width,
+             source=data_source,
+             fill_color='green',
+             line_color='black',
+             line_width=0,
+             legend_label="Double Clicks")
+
+    fig.vbar(bottom=0,
+             top='rotation_distance',
+             x=dodge('date', vbar_shift, range=fig.x_range),
+             width=vbar_width,
+             source=data_source,
+             fill_color='blue',
+             line_color='black',
+             line_width=0,
+             legend_label="Wheel rotations")
+
+    fig.output_backend = "webgl"
+    fig.toolbar.logo = None
+
+    hover_tool = HoverTool(tooltips=[('Date', '@date{%F}'),
+                                     ('Single Clicks', '@click_count'),
+                                     ('Double Clicks', '@double_click_count'),
+                                     ('Wheel rotations', '@rotation_distance')],
+                           formatters={'date': 'datetime'},
+                           mode='vline')
+
+    fig.add_tools(hover_tool)
+    fig.add_tools(SaveTool())
+    fig.add_tools(WheelZoomTool(dimensions=Dimensions.width))
+    fig.add_tools(PanTool(dimensions=Dimensions.width))
+    fig.add_tools(ResetTool())
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------

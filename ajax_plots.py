@@ -19,6 +19,7 @@ from analytics.connection import connection, connection_timeseries, connection_d
 from analytics.scenes import get_scene_durations
 from analytics.sensors import get_sensor_data
 from analytics.keyboard import get_keyboard_data
+from analytics.mouse import get_mouse_data_raw, get_mouse_data_aggregated
 from config import Config
 from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
 from utils.date import start_of_day, end_of_day, format_time_span, date_range
@@ -770,5 +771,34 @@ class PlotKeypress(AjaxPlot):
     def _plot(self, keyboard_data):
         fig = plots.plot_key_press_pause(keyboard_data.copy())
         return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotMouse(AjaxPlot):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = date(2020, 2, 1)
+        self._end_date = date.today() - timedelta(days=1)
+        self.device = self.parameters.get('device')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        mouse_data = get_mouse_data_aggregated(self.device, self._start_date, self._end_date, resample_rule="1h")
+        if mouse_data.empty:
+            return None
+
+        return mouse_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, mouse_data):
+        plot_data = mouse_data[[('click_count', 'sum'), ('double_click_count', 'sum'), ('rotation_distance', 'sum')]]
+        plot_data = plot_data.transpose().reset_index(level=1, drop=True).transpose()
+        if plot_data.empty:
+            return None
+        fig1 = plots.plot_mouse_clicks(plot_data)
+        return fig1
 
 # ----------------------------------------------------------------------------------------------------------------------

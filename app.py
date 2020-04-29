@@ -30,7 +30,7 @@ import humanfriendly
 from plots import plot_histogram, plot_time_series, plot_connection_times, plot_on_off_times
 
 from ajax_plots import AjaxFactory, PlotCrashes, PlotDatabaseSize, PlotOnOffCycles, PlotSceneDurations, DashboardInfo
-from ajax_plots import PlotErrors, PlotDatabaseDelay, PlotSensors, PlotConnection, PlotKeyboard, PlotKeypress
+from ajax_plots import PlotErrors, PlotDatabaseDelay, PlotSensors, PlotConnection, PlotKeyboard, PlotKeypress, PlotMouse
 
 from utils.excel import convert_to_excel
 from base64 import b64encode
@@ -922,6 +922,22 @@ def analytics_keypress():
     ajax_plot_list = [_plot(device) for device in get_devices()]
 
     return render_template('analytics_keypress.html',
+                           ajax_plot_list=ajax_plot_list,
+                           js_resources=INLINE.render_js(),
+                           css_resources=INLINE.render_css()
+                           )
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/analytics/mouse')
+def analytics_mouse():
+    def _plot(device):
+        return PlotMouse(plot_parameters={'device': device})
+
+    ajax_plot_list = [_plot(device) for device in get_devices()]
+
+    return render_template('analytics_mouse.html',
                            ajax_plot_list=ajax_plot_list,
                            js_resources=INLINE.render_js(),
                            css_resources=INLINE.render_css()

@@ -4,19 +4,6 @@ from tempfile import mkstemp
 import xlsxwriter
 import os
 
-# ----------------------------------------------------------------------------------------------------------------------
-
-# TODO: remove tempfile:
-# from io import BytesIO
-#
-# output = BytesIO()
-# workbook = xlsxwriter.Workbook(output)
-# worksheet = workbook.add_worksheet()
-#
-# worksheet.write('A1', 'Hello')
-# workbook.close()
-#
-# xlsx_data = output.getvalue()
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -41,9 +28,9 @@ def dataframe_to_excel(data: pd.DataFrame, filename: str) -> None:
     worksheet = workbook.add_worksheet()
 
     date_format = workbook.add_format({'num_format': 'yyyy-mm-dd'})
-    datetime_format = workbook.add_format({'num_format': 'yyyy-mm-dd hh:mm:ss'})
+    datetime_format = workbook.add_format({'num_format': 'yyyy-mm-dd hh:mm:ss.000'})
     time_format = workbook.add_format({'num_format': 'hh:mm:ss'})
-    timedelta_format = workbook.add_format({'num_format': '[hh]:mm:ss'})
+    timedelta_format = workbook.add_format({'num_format': '[hh]:mm:ss.000'})
 
     def excel_format(value):
         if isinstance(value, timedelta):
@@ -59,7 +46,7 @@ def dataframe_to_excel(data: pd.DataFrame, filename: str) -> None:
     columns = data.columns
 
     # increase the column width
-    worksheet.set_column(0, len(columns)-1, 20)
+    worksheet.set_column(0, len(columns)-1, 24)
 
     for c_index, header in enumerate(columns):
         worksheet.write(0, c_index, header)
@@ -67,7 +54,10 @@ def dataframe_to_excel(data: pd.DataFrame, filename: str) -> None:
         worksheet.write(r_index+1, 0, index, excel_format(index))
         for c_index, c_name in enumerate(columns):
             entry = row[c_name]
-            worksheet.write(r_index+1, c_index, entry, excel_format(entry))
+            fmt = excel_format(entry)
+            if isinstance(entry, type(pd.NaT)) or pd.isna(entry):
+                continue
+            worksheet.write(r_index+1, c_index, entry, fmt)
     workbook.close()
 
 # ----------------------------------------------------------------------------------------------------------------------
