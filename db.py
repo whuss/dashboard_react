@@ -1125,7 +1125,7 @@ class Errors(object):
         sq_device = db.session.query(DeviceInfo.device).subquery()
 
         query = db.session.query(vp.device, vp.timestamp, vp.version_timestamp, vp.branch, vp.commit, vp.ip) \
-            .filter(vp.timestamp >= datetime.now() - timedelta(days=2)) \
+            .filter(vp.timestamp >= datetime.now() - timedelta(days=14)) \
             .outerjoin(sq_device, sq_device.c.device == vp.device) \
             .order_by(vp.device)
 
