@@ -27,6 +27,7 @@ from analytics.scenes import get_scene_durations
 from analytics.sensors import get_sensor_data
 from analytics.keyboard import get_keyboard_data
 from analytics.mouse import get_mouse_data_raw, get_mouse_data_aggregated
+from clustering.clustering import get_input_data
 from config import Config
 from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
 from utils.date import start_of_day, end_of_day, format_time_span, date_range
@@ -378,7 +379,7 @@ class AjaxPlotMpl(Ajax):
                 raise
 
         self.field['plot'].set_value(plot)
-        self.field['plot_svg'].set_value(plot)
+        # self.field['plot_svg'].set_value(plot)
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -946,7 +947,7 @@ class PlotClusteringInputDistribution(AjaxPlotMpl):
     # ------------------------------------------------------------------------------------------------------------------
 
     def _fetch(self):
-        mouse_data = get_mouse_data_raw(self.device, self._start_date, self._end_date)
+        mouse_data = get_input_data(self.device, self._start_date, self._end_date)
         if mouse_data.empty:
             return None
 
@@ -960,9 +961,9 @@ class PlotClusteringInputDistribution(AjaxPlotMpl):
         sns.set(style="dark")
 
         # Set up the matplotlib figure
-        fig = Figure(figsize=(5 * 3, 2 * 3), constrained_layout=True)
+        fig = Figure(figsize=(3 * 3, 6 * 3), constrained_layout=True)
         for i, c in enumerate(mouse_data.columns):
-            ax = fig.add_subplot(2, 5, i+1)
+            ax = fig.add_subplot(6, 3, i+1)
             sns.distplot(mouse_data[c].dropna(), ax=ax)
 
         fig.set_constrained_layout_pads(w_pad=2. / 72., h_pad=2. / 72.,
