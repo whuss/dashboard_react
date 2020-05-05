@@ -24,6 +24,12 @@
                     </div>
                 </li>
                 <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Clustering</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{{ url_for('clustering_input_distribution') }}">Input Distribution</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Time series</a>
                     <div class="dropdown-menu">
                         <a class="dropdown-item" href="{{ url_for('sensors_presence') }}">Presence</a>

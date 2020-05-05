@@ -1,4 +1,4 @@
-from db import db, MouseClickPackage, MouseGesturePackage, MouseWheelPackage
+from db import db, MouseClickPackage, MouseGesturePackage, MouseWheelPackage, db_cached
 import pandas as pd
 import numpy as np
 from datetime import date

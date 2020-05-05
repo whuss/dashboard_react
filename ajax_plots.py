@@ -2,6 +2,7 @@ import logging
 import hashlib
 import hmac
 import os
+import io
 import pickle
 import traceback
 from abc import abstractmethod
@@ -13,6 +14,12 @@ import pandas as pd
 from bokeh.embed import components
 from bokeh.layouts import column
 from flask import render_template, jsonify
+
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.backends.backend_svg import FigureCanvasSVG
+from matplotlib.figure import Figure
+
+import seaborn as sns
 
 import plots
 from analytics.connection import connection, connection_timeseries, connection_data_per_day
@@ -181,6 +188,50 @@ class AjaxFieldPlotBokeh(AjaxField):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class AjaxFieldPlotMplPng(AjaxField):
+    def __init__(self, name: str):
+        super().__init__(name)
+        self.initial_value = "Loading plot ..."
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def set_value(self, value):
+        self._value = value
+
+        if self._value is None:
+            self._final_html = f"no data"
+        else:
+            output = io.BytesIO()
+            FigureCanvasAgg(self._value).print_png(output)
+            plot_data = b64encode(output.getvalue()).decode('ascii')
+
+            self._final_html = f'<img src="data:image/png;charset=US-ASCII;base64,{plot_data}">'
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class AjaxFieldPlotMplSvg(AjaxField):
+    def __init__(self, name: str):
+        super().__init__(name)
+        self.initial_value = "Loading plot ..."
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def set_value(self, value):
+        self._value = value
+
+        if self._value is None:
+            self._final_html = f"no data"
+        else:
+            output = io.BytesIO()
+            FigureCanvasSVG(self._value).print_svg(output)
+            plot_data = b64encode(output.getvalue()).decode('ascii')
+
+            self._final_html = f'<img src="data:image/svg+xml;charset=US-ASCII;base64,{plot_data}">'
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class Ajax:
     def __init__(self, plot_parameters: dict):
         self._plot_name = self.__class__.__name__
@@ -277,6 +328,57 @@ class AjaxPlotBokeh(Ajax):
                 raise
 
         self.field['plot'].set_value(plot)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @abstractmethod
+    def _fetch(self):
+        pass
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @abstractmethod
+    def _plot(self):
+        pass
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class AjaxPlotMpl(Ajax):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self.add_field(AjaxFieldPlotMplPng(name='plot'))
+        self.add_field(AjaxFieldPlotMplSvg(name='plot_svg'))
+        self.add_field(AjaxFieldDownload(name='download'))
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def fetch_data(self):
+        data = self._fetch()
+        self.field['download'].set_value(data)
+        return data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def render(self):
+        logging.info(f"Ajax::render(): plot_name={self._plot_name}, parameters={self._plot_parameters}")
+        try:
+            data = self.fetch_data()
+            if data is None:
+                plot = None
+            else:
+                plot = self._plot(data)
+        except Exception:
+            tb = traceback.format_exc()
+            logging.error(f"Error in plotting function:\n"
+                          f"plot_name={self._plot_name}, "
+                          f"parameters={self._plot_parameters}\n{tb}")
+            plot = None
+            if Config.debug:
+                raise
+
+        self.field['plot'].set_value(plot)
+        self.field['plot_svg'].set_value(plot)
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -800,5 +902,72 @@ class PlotMouse(AjaxPlotBokeh):
             return None
         fig1 = plots.plot_mouse_clicks(plot_data)
         return fig1
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotMplTest(AjaxPlotMpl):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = date(2020, 2, 1)
+        self._end_date = date.today() - timedelta(days=1)
+        self.device = self.parameters.get('device')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        mouse_data = get_mouse_data_aggregated(self.device, self._start_date, self._end_date, resample_rule="1h")
+        if mouse_data.empty:
+            return None
+
+        return mouse_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, mouse_data):
+        num_x_points = 50
+        fig = Figure()
+        axis = fig.add_subplot(1, 1, 1)
+        x_points = range(num_x_points)
+        import random
+        axis.plot(x_points, [random.randint(1, 30) for x in x_points])
+        return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotClusteringInputDistribution(AjaxPlotMpl):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = date(2020, 2, 1)
+        self._end_date = date.today() - timedelta(days=1)
+        self.device = self.parameters.get('device')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        mouse_data = get_mouse_data_raw(self.device, self._start_date, self._end_date)
+        if mouse_data.empty:
+            return None
+
+        return mouse_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, mouse_data):
+        mouse_data = mouse_data.drop(columns=['gesture_duration'])
+
+        sns.set(style="dark")
+
+        # Set up the matplotlib figure
+        fig = Figure(figsize=(5 * 3, 2 * 3), constrained_layout=True)
+        for i, c in enumerate(mouse_data.columns):
+            ax = fig.add_subplot(2, 5, i+1)
+            sns.distplot(mouse_data[c].dropna(), ax=ax)
+
+        fig.set_constrained_layout_pads(w_pad=2. / 72., h_pad=2. / 72.,
+                                        hspace=0.2, wspace=0.2)
+
+        return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
