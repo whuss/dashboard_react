@@ -162,7 +162,7 @@ class AjaxFieldDownload(AjaxField):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class AjaxFieldPlot(AjaxField):
+class AjaxFieldPlotBokeh(AjaxField):
     def __init__(self, name: str):
         super().__init__(name)
         self.initial_value = "Loading plot ..."
@@ -244,10 +244,10 @@ class Ajax:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class AjaxPlot(Ajax):
+class AjaxPlotBokeh(Ajax):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
-        self.add_field(AjaxFieldPlot(name='plot'))
+        self.add_field(AjaxFieldPlotBokeh(name='plot'))
         self.add_field(AjaxFieldDownload(name='download'))
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -293,7 +293,7 @@ class AjaxPlot(Ajax):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlotCrashes(AjaxPlot):
+class PlotCrashes(AjaxPlotBokeh):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self.add_field(AjaxField(name='total_number_of_crashes'))
@@ -336,7 +336,7 @@ class PlotCrashes(AjaxPlot):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlotSceneDurations(AjaxPlot):
+class PlotSceneDurations(AjaxPlotBokeh):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self._start_date = start_of_day(date(2020, 2, 1))
@@ -365,7 +365,7 @@ class PlotSceneDurations(AjaxPlot):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlotDatabaseSize(AjaxPlot):
+class PlotDatabaseSize(AjaxPlotBokeh):
     def _fetch(self):
         data = DatabaseDelay().size()
         if data is None or data.empty:
@@ -381,7 +381,7 @@ class PlotDatabaseSize(AjaxPlot):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlotOnOffCycles(AjaxPlot):
+class PlotOnOffCycles(AjaxPlotBokeh):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self._start_date = start_of_day(date(2020, 2, 1))
@@ -450,7 +450,7 @@ class DashboardInfo(Ajax):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlotErrors(AjaxPlot):
+class PlotErrors(AjaxPlotBokeh):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self.add_field(AjaxField(name='total_number_of_errors'))
@@ -521,7 +521,7 @@ class PlotErrors(AjaxPlot):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlotDatabaseDelay(AjaxPlot):
+class PlotDatabaseDelay(AjaxPlotBokeh):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self.add_field(AjaxField(name='number_of_packages'))
@@ -558,7 +558,7 @@ class PlotDatabaseDelay(AjaxPlot):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlotSensors(AjaxPlot):
+class PlotSensors(AjaxPlotBokeh):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self.start_date = self.parameters.get('start_date')
@@ -685,7 +685,7 @@ class PlotSensors(AjaxPlot):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlotConnection(AjaxPlot):
+class PlotConnection(AjaxPlotBokeh):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self.add_field(AjaxField(name='excluded_days'))
@@ -714,7 +714,7 @@ class PlotConnection(AjaxPlot):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlotKeyboard(AjaxPlot):
+class PlotKeyboard(AjaxPlotBokeh):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self._start_date = date(2020, 2, 1)
@@ -746,7 +746,7 @@ class PlotKeyboard(AjaxPlot):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlotKeypress(AjaxPlot):
+class PlotKeypress(AjaxPlotBokeh):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self._start_date = date(2020, 2, 1)
@@ -775,7 +775,7 @@ class PlotKeypress(AjaxPlot):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlotMouse(AjaxPlot):
+class PlotMouse(AjaxPlotBokeh):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self._start_date = date(2020, 2, 1)
