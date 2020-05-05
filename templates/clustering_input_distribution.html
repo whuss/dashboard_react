@@ -7,9 +7,26 @@
 <h1>Keyboard/Mouse Data distributions</h1>
 {% endblock %}
 
+{% block page_navigation %}
+<div class="container-fluid toolbar">
+
+    <div class="btn-group" style="align-items: center;">
+        <span class="label">Transformation:</span>
+        <button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown">
+            <span id="transformation_type">{{request.view_args.normalize|or_else("none")}}</span>
+        </button>
+        <div class="dropdown-menu">
+            <a class="dropdown-item" href="{{url_for_self(normalize='none')}}">none</a>
+            <a class="dropdown-item" href="{{url_for_self(normalize='power_transform')}}">power transform</a>
+        </div>
+    </div>
+</div>
+{% endblock%}
+
 {% block body %}
 <div id="content">
   <div style="margin:20px">
+    <b>Warning:</b> Plotting of the distributions can take a very long time.
   </div>
   <table id="data-table" class="table">
     <thead class="thead-dark" style="position: sticky; top: 0">

@@ -19,7 +19,6 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_svg import FigureCanvasSVG
 from matplotlib.figure import Figure
 
-import seaborn as sns
 
 import plots
 from analytics.connection import connection, connection_timeseries, connection_data_per_day
@@ -27,7 +26,7 @@ from analytics.scenes import get_scene_durations
 from analytics.sensors import get_sensor_data
 from analytics.keyboard import get_keyboard_data
 from analytics.mouse import get_mouse_data_raw, get_mouse_data_aggregated
-from clustering.clustering import get_input_data
+import clustering.clustering as clustering
 from config import Config
 from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
 from utils.date import start_of_day, end_of_day, format_time_span, date_range
@@ -941,13 +940,13 @@ class PlotClusteringInputDistribution(AjaxPlotMpl):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self._start_date = date(2020, 2, 1)
-        self._end_date = date.today() - timedelta(days=1)
         self.device = self.parameters.get('device')
+        self.normalize = self.parameters.get('normalize')
 
     # ------------------------------------------------------------------------------------------------------------------
 
     def _fetch(self):
-        mouse_data = get_input_data(self.device, self._start_date, self._end_date)
+        mouse_data = clustering.get_input_data(self.device, self._start_date, normalized=self.normalize)
         if mouse_data.empty:
             return None
 
@@ -956,19 +955,6 @@ class PlotClusteringInputDistribution(AjaxPlotMpl):
     # ------------------------------------------------------------------------------------------------------------------
 
     def _plot(self, mouse_data):
-        mouse_data = mouse_data.drop(columns=['gesture_duration'])
-
-        sns.set(style="dark")
-
-        # Set up the matplotlib figure
-        fig = Figure(figsize=(3 * 3, 6 * 3), constrained_layout=True)
-        for i, c in enumerate(mouse_data.columns):
-            ax = fig.add_subplot(6, 3, i+1)
-            sns.distplot(mouse_data[c].dropna(), ax=ax)
-
-        fig.set_constrained_layout_pads(w_pad=2. / 72., h_pad=2. / 72.,
-                                        hspace=0.2, wspace=0.2)
-
-        return fig
+        return clustering.plot_distributions(mouse_data)
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -27,7 +27,7 @@ db = SQLAlchemy()
 
 
 class PickleTypeMedium(db.PickleType):
-    impl = mysql.MEDIUMBLOB
+    impl = mysql.LONGBLOB
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Define DB Model

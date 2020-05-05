@@ -835,7 +835,7 @@ def create_sensor_view(device: str, start_date: date, end_date: date, sensor: st
 
     ajax_plot_list = [_plot(device) for device in devices]
 
-    return render_template("sensors_timeseries_new.html",
+    return render_template("analytics_sensors_timeseries.html",
                            device=device,
                            sensor=sensor,
                            sample_rate=sample_rate,
@@ -1253,9 +1253,15 @@ def analytics_scenes():
 
 
 @app.route('/clustering/input_distribution')
-def clustering_input_distribution():
+@app.route('/clustering/input_distribution/<normalize>')
+def clustering_input_distribution(normalize: str = "raw"):
+    if normalize == "raw":
+        normalize = False
+    else:
+        normalize = True
+
     def _plot(device):
-        return PlotClusteringInputDistribution(plot_parameters={'device': device})
+        return PlotClusteringInputDistribution(plot_parameters={'device': device, 'normalize': normalize})
 
     ajax_plot_list = [_plot(device) for device in get_devices()]
 
