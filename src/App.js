@@ -98,10 +98,10 @@ function AppRouter() {
                         <Users />
                     </Route>
                     <Route path="/plot">
-                        <Plot />
+                        <Plot src="/backend/test_plot_html"/>
                     </Route>
                     <Route path="/database_size">
-                        <PlotDatabaseSize />
+                        <PlotDatabaseSize/>
                     </Route>
                     <Route path="/">
                         <Dashboard />
@@ -112,7 +112,7 @@ function AppRouter() {
     );
 }
 
-function Plot() {
+function Plot(props) {
     const [error, setError] = useState(null);
     const [isLoaded, setIsLoaded] = useState(false);
     const [plot_div, setPlotDiv] = useState(null);
@@ -121,7 +121,7 @@ function Plot() {
     useEffect(() => {
         const script = document.createElement("script");
 
-        fetch("/backend/test_plot_html")
+        fetch(props.src)
             .then((res) => res.json())
             .then(
                 (result) => {
