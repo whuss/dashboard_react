@@ -36,3 +36,9 @@
     transform: rotate(360deg);
   }
 }
+
+#titlebar {
+    background: white;
+    padding: 10px;
+    z-index: -1;
+}

@@ -60,7 +60,30 @@ function Navigation() {
 function AppRouter() {
     return (
         <Router>
-            <Navigation />
+            <Container fluid className="sticky-top" style={{ padding: 0 }}>
+                <Navigation />
+                <Container fluid className="border-bottom">
+                    <div id="titlebar" className="row">
+                        <Switch>
+                            <Route path="/about">
+                                <h2>About</h2>
+                            </Route>
+                            <Route path="/devices">
+                                <h2>Devices</h2>
+                            </Route>
+                            <Route path="/users">
+                                <h2>Users</h2>
+                            </Route>
+                            <Route path="/plot">
+                                <h2>Plot</h2>
+                            </Route>
+                            <Route path="/database_size">
+                                <h2>Database Size</h2>
+                            </Route>
+                        </Switch>
+                    </div>
+                </Container>
+            </Container>
             {/* A <Switch> looks through its children <Route>s and
               renders the first one that matches the current URL. */}
             <Container className="p-3">
@@ -232,32 +255,24 @@ const ExampleToast = ({ children }) => {
 const App = () => <AppRouter />;
 
 function Dashboard() {
-    return (
-        <React.Fragment>
-            <h2>Dashboard</h2>
-            <ExTable />
-        </React.Fragment>
-    );
+    return <ExTable />;
 }
 
 function About() {
     return (
-        <React.Fragment>
-            <h2>About</h2>
-            <Jumbotron>
-                <h1 className="header">Welcome To React-Bootstrap</h1>
-                <ExampleToast>
-                    We now have Bootstrap
-                    <span role="img" aria-label="tada">
-                        🎉
-                    </span>
-                </ExampleToast>
-            </Jumbotron>
-        </React.Fragment>
+        <Jumbotron>
+            <h1 className="header">Welcome To React-Bootstrap</h1>
+            <ExampleToast>
+                We now have Bootstrap
+                <span role="img" aria-label="tada">
+                    🎉
+                </span>
+            </ExampleToast>
+        </Jumbotron>
     );
 }
 
-const Users = () => <h2>Users</h2>;
+const Users = () => <div>There are no users!</div>;
 
 function DeviceState(props) {
     const [error, setError] = useState(null);
