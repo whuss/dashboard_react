@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { Component, useState } from "react";
 
 import Jumbotron from "react-bootstrap/Jumbotron";
 import Toast from "react-bootstrap/Toast";
@@ -13,7 +13,7 @@ import FormControl from "react-bootstrap/FormControl";
 import Table from "react-bootstrap/Table";
 import { LinkContainer } from "react-router-bootstrap";
 
-import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
 import "./App.css";
 
@@ -26,6 +26,9 @@ function Navigation() {
                 <Nav className="mr-auto">
                     <LinkContainer to="/">
                         <Nav.Link>Dashboard</Nav.Link>
+                    </LinkContainer>
+                    <LinkContainer to="/devices">
+                        <Nav.Link>Devices</Nav.Link>
                     </LinkContainer>
                     <LinkContainer to="/about">
                         <Nav.Link>About</Nav.Link>
@@ -54,18 +57,21 @@ function AppRouter() {
             <Navigation />
             {/* A <Switch> looks through its children <Route>s and
               renders the first one that matches the current URL. */}
-              <Container className="p-3">
-            <Switch>
-                <Route path="/about">
-                    <About />
-                </Route>
-                <Route path="/users">
-                    <Users />
-                </Route>
-                <Route path="/">
-                    <Dashboard />
-                </Route>
-            </Switch>
+            <Container className="p-3">
+                <Switch>
+                    <Route path="/about">
+                        <About />
+                    </Route>
+                    <Route path="/devices">
+                        <Devices />
+                    </Route>
+                    <Route path="/users">
+                        <Users />
+                    </Route>
+                    <Route path="/">
+                        <Dashboard />
+                    </Route>
+                </Switch>
             </Container>
         </Router>
     );
@@ -133,17 +139,20 @@ const ExampleToast = ({ children }) => {
     );
 };
 
-const App = () => (
-    <AppRouter />
-);
+const App = () => <AppRouter />;
 
 function Dashboard() {
-    return <div><h2>Dashboard</h2><ExTable/></div>;
+    return (
+        <React.Fragment>
+            <h2>Dashboard</h2>
+            <ExTable />
+        </React.Fragment>
+    );
 }
 
 function About() {
     return (
-        <div>
+        <React.Fragment>
             <h2>About</h2>
             <Jumbotron>
                 <h1 className="header">Welcome To React-Bootstrap</h1>
@@ -154,12 +163,28 @@ function About() {
                     </span>
                 </ExampleToast>
             </Jumbotron>
-        </div>
+        </React.Fragment>
     );
 }
 
-function Users() {
-    return <h2>Users</h2>;
+const Users = () => <h2>Users</h2>;
+
+
+class Devices extends Component {
+    state = {
+        devices: ['PTL_RD_AT_001', 'PTL_RD_AT_002', 'PTL_RD_AT_003', 'PTL_RD_AT_004']
+    };
+
+    render() {
+        return (
+            <React.Fragment>
+                <h2>Devices</h2>
+                <ul>
+                    {this.state.devices.map(device => <li key={device}>{device}</li>)}
+                </ul>
+            </React.Fragment>
+        );
+    }
 }
 
 export default App;
