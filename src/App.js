@@ -199,7 +199,7 @@ class Devices extends Component {
     }
 
     componentDidMount() {
-        fetch("https://localhost:5000/backend/devices")
+        fetch("/backend/devices")
             .then((res) => res.json())
             .then(
                 (result) => {
