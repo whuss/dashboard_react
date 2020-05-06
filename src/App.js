@@ -66,19 +66,19 @@ function AppRouter() {
                     <div id="titlebar" className="row">
                         <Switch>
                             <Route path="/about">
-                                <h2>About</h2>
+                                About
                             </Route>
                             <Route path="/devices">
-                                <h2>Devices</h2>
+                                Devices
                             </Route>
                             <Route path="/users">
-                                <h2>Users</h2>
+                                Users
                             </Route>
                             <Route path="/plot">
-                                <h2>Plot</h2>
+                                Plot
                             </Route>
                             <Route path="/database_size">
-                                <h2>Database Size</h2>
+                                Database Size
                             </Route>
                         </Switch>
                     </div>
@@ -141,7 +141,6 @@ function Plot() {
     } else if (!isLoaded) {
         return <div>Loading ...</div>;
     } else {
-        console.log(plot_div);
         return (
             <>
                 <div dangerouslySetInnerHTML={{ __html: plot_div }}></div>
@@ -180,7 +179,6 @@ function PlotDatabaseSize() {
     } else if (!isLoaded) {
         return <div>Loading ...</div>;
     } else {
-        console.log(plot_div);
         return (
             <>
                 <div dangerouslySetInnerHTML={{ __html: plot_div }}></div>
