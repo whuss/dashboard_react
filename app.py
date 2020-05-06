@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from typing import Optional
 
-from flask import Flask, render_template, jsonify, request, url_for, json
+from flask import Flask, render_template, jsonify, request, url_for, json, make_response
 import dateutil.parser
 
 from config import Config
@@ -1282,6 +1282,28 @@ def clustering_input_distribution(normalize: str = "raw"):
     return render_template('clustering_input_distribution.html',
                            ajax_plot_list=ajax_plot_list
                            )
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Backend
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/backend/devices')
+def backend_devices():
+    return jsonify(get_devices())
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/backend/device_state/<device>')
+def backend_device_state(device: str):
+    data = Dashboard.info(device)
+
+    return dict(device=device,
+                study_mode=data['study_mode'],
+                offline_duration=data['offline_duration'],
+                health_status=data['health_status'],
+                sick_reason=data['sick_reason'])
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Main
