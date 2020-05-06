@@ -1119,6 +1119,32 @@ class Errors(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
+    def restarts(device: str, check_crashes: bool = True, limit: Optional[int] = None, page: Optional[int] = None):
+        vp = VersionPackage
+        query = db.session.query(vp.device, vp.timestamp, vp.version_timestamp, vp.branch, vp.commit, vp.ip) \
+            .filter(vp.device == device) \
+            .order_by(vp.timestamp.desc())
+
+        if page is None:
+            if limit:
+                query = query.limit(limit)
+
+            data = pd.DataFrame(query.all())
+            pagination = None
+        else:
+            if not limit:
+                limit = 20
+            pagination = query.paginate(page, limit, False)
+            data = pd.DataFrame(pagination.items)
+
+        if not data.empty and check_crashes:
+            data['crash'] = data.apply(lambda row: Errors.crash_at_time(row['device'], row['timestamp']), axis=1)
+
+        return data, pagination
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @staticmethod
     def version(device_id=None, check_crashes=True):
         vp = VersionPackage
 
@@ -1135,6 +1161,9 @@ class Errors(object):
             query = query.filter(vp.device == device_id)
 
         data = pd.DataFrame(query.all())
+
+        if data.empty:
+            return data
 
         if check_crashes:
             data['crash'] = data.apply(lambda row: Errors.crash_at_time(row['device'], row['timestamp']), axis=1)
@@ -1467,14 +1496,24 @@ def get_cached_data(device: str, data_date: Optional[date], query_name: str) -> 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def get_devices():
-    def _is_ptl(device):
-        if not "PTL" in device:
-            return False
+def get_devices(only_ptl: bool = True):
+    def _is_device(device):
         if device == "PTL_DEFAULT" or device == "PTL_UNIT_TEST":
             return False
 
         return True
-    return [device for device in Dashboard().devices() if _is_ptl(device)]
+
+    def _is_ptl(device):
+        if not "PTL" in device:
+            return False
+
+        return True
+
+    devices = [device for device in Dashboard().devices() if _is_device(device)]
+
+    if only_ptl:
+        devices = [device for device in devices if _is_ptl(device)]
+
+    return devices
 
 # ----------------------------------------------------------------------------------------------------------------------

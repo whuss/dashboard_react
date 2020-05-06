@@ -18,7 +18,7 @@ from flask import render_template, jsonify
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_svg import FigureCanvasSVG
 from matplotlib.figure import Figure
-
+from flask_table import Col, LinkCol, Table
 
 import plots
 from analytics.connection import connection, connection_timeseries, connection_data_per_day
@@ -141,6 +141,28 @@ class AjaxField:
             self._final_html = format_time_span(value)
         else:
             self._final_html = repr(value)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class AjaxFieldTable(AjaxField):
+    def __init__(self, name: str):
+        super().__init__(name)
+        self.initial_value = "Loading Table ..."
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def set_value(self, value):
+        self._value = value
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @property
+    def final_html(self):
+        if self._value is None:
+            return "no data"
+
+        return self._value.__html__()
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -956,5 +978,62 @@ class PlotClusteringInputDistribution(AjaxPlotMpl):
 
     def _plot(self, mouse_data):
         return clustering.plot_distributions(mouse_data)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class CrashCol(Col):
+    def td_format(self, content):
+        c = 'SICK' if content else 'HEALTHY'
+        return f'''<i class="fa fa-heartbeat {c}"></i>'''
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class TableRestarts(Ajax):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self.add_field(AjaxFieldTable(name='table'))
+
+        self.device = self.parameters.get('device')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def fetch(self):
+        data, pagination = Errors.restarts(self.device, limit=10, page=1)
+        if data.empty:
+            return None
+
+        class VersionTable(Table):
+            classes = ["error-table"]
+            timestamp = LinkCol('Time', 'show_logs',
+                                url_kwargs=dict(device='device', timestamp='timestamp'),
+                                url_kwargs_extra=dict(log_level='TRACE', duration=5),
+                                attr='timestamp')
+            ip = Col('IP Address')
+            commit = Col('Commit')
+            branch = Col('branch')
+            version_timestamp = Col('Version Timestamp')
+            crash = CrashCol('Crash')
+
+        return VersionTable(data.to_dict(orient='records'))
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def render(self):
+        logging.info(f"Ajax::render(): plot_name={self._plot_name}, parameters={self._plot_parameters}")
+        try:
+            table = self.fetch()
+
+            self.field['table'].set_value(table)
+
+        except Exception:
+            tb = traceback.format_exc()
+            logging.error(f"Error in plotting function:\n"
+                          f"plot_name={self._plot_name}, "
+                          f"parameters={self._plot_parameters}\n{tb}")
+            table = None
+            if Config.debug:
+                raise
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -31,7 +31,7 @@ from plots import plot_histogram, plot_time_series, plot_connection_times, plot_
 
 from ajax_plots import AjaxFactory, PlotCrashes, PlotDatabaseSize, PlotOnOffCycles, PlotSceneDurations, DashboardInfo
 from ajax_plots import PlotErrors, PlotDatabaseDelay, PlotSensors, PlotConnection, PlotKeyboard, PlotKeypress, PlotMouse
-from ajax_plots import PlotClusteringInputDistribution
+from ajax_plots import PlotClusteringInputDistribution, TableRestarts
 
 from utils.excel import convert_to_excel
 from base64 import b64encode
@@ -392,6 +392,20 @@ def show_logs(device, duration=5, timestamp=None, log_level="TRACE"):
     devices = Dashboard().devices()
     return render_template("device_log.html", devices=devices, log_text=log_text, device=device, pagination=pagination)
 
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/system/restarts')
+def system_restarts():
+    def _table(device):
+        return TableRestarts(plot_parameters={'device': device})
+
+    ajax_plot_list = [_table(device) for device in get_devices(only_ptl=False)]
+
+    return render_template('system_restarts.html',
+                           ajax_plot_list=ajax_plot_list
+                           )
 
 # ----------------------------------------------------------------------------------------------------------------------
 

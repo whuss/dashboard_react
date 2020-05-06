@@ -77,6 +77,16 @@
     font-size: 12px;
 }
 
+.error-table {
+    background-color: white;
+    font-size: 12px;
+    width:100%;
+}
+
+.error-table thead {
+    color: #555;
+}
+
 .pandas_describe table td {
     font-size: 12px;
     padding-bottom: 4px;
