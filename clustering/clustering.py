@@ -71,7 +71,8 @@ def plot_distributions(mouse_data: pd.DataFrame):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def cluster(device: str, start_date: date, end_date: Optional[date] = None):
+@db_cached
+def input_data_clustering(device: str, start_date: date, end_date: Optional[date] = None):
     def add_column_postfix(df: pd.DataFrame, postfix: str) -> pd.DataFrame:
         columns = df.columns
         mapping = {c: f"{c}_{postfix}" for c in columns}
@@ -116,5 +117,19 @@ def cluster(device: str, start_date: date, end_date: Optional[date] = None):
 
     data_rolling.loc[:, 'cluster'] = clustering
     return data_rolling[['cluster']]
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def cluster_histogram(cluster_data: pd.DataFrame) -> pd.DataFrame:
+    c = cluster_data.reset_index()
+    c.loc[:, 'date'] = c.timestamp.dt.date
+    c_histogram = pd.DataFrame(c.groupby(['date', 'cluster']).cluster.count())
+    c_histogram = c_histogram.rename(columns=dict(cluster="count")).sort_index()
+
+    new_index = pd.MultiIndex.from_product(c_histogram.index.levels, names=['date', 'cluster'])
+    c_histogram = c_histogram.reindex(new_index)
+
+    return c_histogram.fillna(0).astype(int)
 
 # ----------------------------------------------------------------------------------------------------------------------
