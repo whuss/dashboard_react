@@ -169,6 +169,46 @@ function About() {
 
 const Users = () => <h2>Users</h2>;
 
+function DeviceState(props) {
+    const [error, setError] = useState(null);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [deviceState, setDeviceState] = useState(null);
+
+    useEffect(() => {
+        fetch(`/backend/device_state/${props.device_id}`)
+            .then((res) => res.json())
+            .then(
+                (result) => {
+                    setIsLoaded(true);
+                    setDeviceState(result);
+                },
+                (error) => {
+                    setIsLoaded(true);
+                    setError(error);
+                }
+            );
+    }, []);
+
+    if (error) {
+        return <td>Error: {error.message}</td>;
+    } else if (!isLoaded) {
+        return <td colSpan={4}>Loading ...</td>;
+    } else {
+        if (deviceState === null) {
+            return <td colSpan={4}>No state</td>;
+        } else {
+            return (
+                <>
+                <td>{deviceState.study_mode}</td>
+                <td>{deviceState.offline_duration}</td>
+                <td>{deviceState.health_status}</td>
+                <td>{deviceState.sick_reason}</td>
+                </>
+            );
+        }
+    }
+}
+
 function Devices() {
     const [error, setError] = useState(null);
     const [isLoaded, setIsLoaded] = useState(false);
@@ -201,14 +241,16 @@ function Devices() {
                     <thead>
                         <tr>
                             <th>Device</th>
-                            <th>Status</th>
+                            <th>Device Mode</th>
+                            <th>Last Connection</th>
+                            <th colSpan={2}>Health Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {devices.map((device) => (
                             <tr key={device}>
                                 <td>{device}</td>
-                                <td>status</td>
+                                <DeviceState device_id={device} />
                             </tr>
                         ))}
                     </tbody>
