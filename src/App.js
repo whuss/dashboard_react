@@ -11,24 +11,32 @@ import NavDropdown from "react-bootstrap/NavDropdown";
 import Form from "react-bootstrap/Form";
 import FormControl from "react-bootstrap/FormControl";
 import Table from "react-bootstrap/Table";
+import { LinkContainer } from "react-router-bootstrap";
+
+import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 
 import "./App.css";
 
 function Navigation() {
     return (
         <Navbar bg="light" expand="lg">
-            <Navbar.Brand href="#home">REPRO-LIGHT</Navbar.Brand>
+            <Navbar.Brand>REPRO-LIGHT</Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="mr-auto">
-                    <Nav.Link href="#home">Home</Nav.Link>
-                    <Nav.Link href="#link">Link</Nav.Link>
+                    <LinkContainer to="/">
+                        <Nav.Link>Dashboard</Nav.Link>
+                    </LinkContainer>
+                    <LinkContainer to="/about">
+                        <Nav.Link>About</Nav.Link>
+                    </LinkContainer>
                     <NavDropdown title="Dropdown" id="basic-nav-dropdown">
-                        <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
-                        <NavDropdown.Item href="#action/3.2">Another action</NavDropdown.Item>
-                        <NavDropdown.Item href="#action/3.3">Something</NavDropdown.Item>
+                        <LinkContainer to="/users">
+                            <NavDropdown.Item>Users</NavDropdown.Item>
+                        </LinkContainer>
+                        <NavDropdown.Item href="/users2">Something</NavDropdown.Item>
                         <NavDropdown.Divider />
-                        <NavDropdown.Item href="#action/3.4">Separated link</NavDropdown.Item>
+                        <NavDropdown.Item href="/users3">Separated link</NavDropdown.Item>
                     </NavDropdown>
                 </Nav>
                 <Form inline>
@@ -37,6 +45,29 @@ function Navigation() {
                 </Form>
             </Navbar.Collapse>
         </Navbar>
+    );
+}
+
+function AppRouter() {
+    return (
+        <Router>
+            <Navigation />
+            {/* A <Switch> looks through its children <Route>s and
+              renders the first one that matches the current URL. */}
+              <Container className="p-3">
+            <Switch>
+                <Route path="/about">
+                    <About />
+                </Route>
+                <Route path="/users">
+                    <Users />
+                </Route>
+                <Route path="/">
+                    <Dashboard />
+                </Route>
+            </Switch>
+            </Container>
+        </Router>
     );
 }
 
@@ -103,20 +134,32 @@ const ExampleToast = ({ children }) => {
 };
 
 const App = () => (
-    <Container className="p-3">
-        <Navigation />
-        <h1>Dashboard</h1>
-        <ExTable />
-        <Jumbotron>
-            <h1 className="header">Welcome To React-Bootstrap</h1>
-            <ExampleToast>
-                We now have Bootstrap
-                <span role="img" aria-label="tada">
-                    🎉
-                </span>
-            </ExampleToast>
-        </Jumbotron>
-    </Container>
+    <AppRouter />
 );
+
+function Dashboard() {
+    return <div><h2>Dashboard</h2><ExTable/></div>;
+}
+
+function About() {
+    return (
+        <div>
+            <h2>About</h2>
+            <Jumbotron>
+                <h1 className="header">Welcome To React-Bootstrap</h1>
+                <ExampleToast>
+                    We now have Bootstrap
+                    <span role="img" aria-label="tada">
+                        🎉
+                    </span>
+                </ExampleToast>
+            </Jumbotron>
+        </div>
+    );
+}
+
+function Users() {
+    return <h2>Users</h2>;
+}
 
 export default App;
