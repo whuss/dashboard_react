@@ -169,10 +169,9 @@ function About() {
 
 const Users = () => <h2>Users</h2>;
 
-
-class Devices extends Component {
+class DevicesStatic extends Component {
     state = {
-        devices: ['PTL_RD_AT_001', 'PTL_RD_AT_002', 'PTL_RD_AT_003', 'PTL_RD_AT_004']
+        devices: ["PTL_RD_AT_001", "PTL_RD_AT_002", "PTL_RD_AT_003", "PTL_RD_AT_004"],
     };
 
     render() {
@@ -180,10 +179,65 @@ class Devices extends Component {
             <React.Fragment>
                 <h2>Devices</h2>
                 <ul>
-                    {this.state.devices.map(device => <li key={device}>{device}</li>)}
+                    {this.state.devices.map((device) => (
+                        <li key={device}>{device}</li>
+                    ))}
                 </ul>
             </React.Fragment>
         );
+    }
+}
+
+class Devices extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            error: null,
+            isLoaded: false,
+            devices: [],
+        };
+    }
+
+    componentDidMount() {
+        fetch("https://localhost:5000/backend/devices")
+            .then((res) => res.json())
+            .then(
+                (result) => {
+                    this.setState({
+                        isLoaded: true,
+                        devices: result,
+                    });
+                },
+                // Note: it's important to handle errors here
+                // instead of a catch() block so that we don't swallow
+                // exceptions from actual bugs in components.
+                (error) => {
+                    this.setState({
+                        isLoaded: true,
+                        error,
+                    });
+                }
+            );
+    }
+
+    render() {
+        const { error, isLoaded, devices } = this.state;
+        if (error) {
+            return <div>Error: {error.message}</div>;
+        } else if (!isLoaded) {
+            return <div>Loading ...</div>;
+        } else {
+            return (
+                <React.Fragment>
+                    <h2>Devices</h2>
+                    <ul>
+                        {devices.map((device) => (
+                            <li key={device}>{device}</li>
+                        ))}
+                    </ul>
+                </React.Fragment>
+            );
+        }
     }
 }
 
