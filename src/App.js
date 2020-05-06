@@ -169,25 +169,6 @@ function About() {
 
 const Users = () => <h2>Users</h2>;
 
-class DevicesStatic extends Component {
-    state = {
-        devices: ["PTL_RD_AT_001", "PTL_RD_AT_002", "PTL_RD_AT_003", "PTL_RD_AT_004"],
-    };
-
-    render() {
-        return (
-            <React.Fragment>
-                <h2>Devices</h2>
-                <ul>
-                    {this.state.devices.map((device) => (
-                        <li key={device}>{device}</li>
-                    ))}
-                </ul>
-            </React.Fragment>
-        );
-    }
-}
-
 function Devices() {
     const [error, setError] = useState(null);
     const [isLoaded, setIsLoaded] = useState(false);
@@ -195,7 +176,7 @@ function Devices() {
 
     useEffect(() => {
         fetch("/backend/devices")
-            .then(res => res.json())
+            .then((res) => res.json())
             .then(
                 (result) => {
                     setIsLoaded(true);
@@ -205,8 +186,8 @@ function Devices() {
                     setIsLoaded(true);
                     setError(error);
                 }
-            )
-    }, [])
+            );
+    }, []);
 
     if (error) {
         return <div>Error: {error.message}</div>;
@@ -216,13 +197,24 @@ function Devices() {
         return (
             <React.Fragment>
                 <h2>Devices</h2>
-                <ul>
-                    {devices.map((device) => (
-                        <li key={device}>{device}</li>
-                    ))}
-                </ul>
+                <Table striped bordered hover>
+                    <thead>
+                        <tr>
+                            <th>Device</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {devices.map((device) => (
+                            <tr key={device}>
+                                <td>{device}</td>
+                                <td>status</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
             </React.Fragment>
-        ); 
+        );
     }
 }
 
