@@ -1,4 +1,4 @@
-import React, { Component, useState } from "react";
+import React, { Component, useState, useEffect } from "react";
 
 import Jumbotron from "react-bootstrap/Jumbotron";
 import Toast from "react-bootstrap/Toast";
@@ -188,7 +188,45 @@ class DevicesStatic extends Component {
     }
 }
 
-class Devices extends Component {
+function Devices() {
+    const [error, setError] = useState(null);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [devices, setDevices] = useState([]);
+
+    useEffect(() => {
+        fetch("/backend/devices")
+            .then(res => res.json())
+            .then(
+                (result) => {
+                    setIsLoaded(true);
+                    setDevices(result);
+                },
+                (error) => {
+                    setIsLoaded(true);
+                    setError(error);
+                }
+            )
+    }, [])
+
+    if (error) {
+        return <div>Error: {error.message}</div>;
+    } else if (!isLoaded) {
+        return <div>Loading ...</div>;
+    } else {
+        return (
+            <React.Fragment>
+                <h2>Devices</h2>
+                <ul>
+                    {devices.map((device) => (
+                        <li key={device}>{device}</li>
+                    ))}
+                </ul>
+            </React.Fragment>
+        ); 
+    }
+}
+
+class DevicesC extends Component {
     constructor(props) {
         super(props);
         this.state = {
