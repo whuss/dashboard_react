@@ -14,6 +14,7 @@ import Table from "react-bootstrap/Table";
 import { LinkContainer } from "react-router-bootstrap";
 
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import ScriptTag from "react-script-tag";
 
 import "./App.css";
 
@@ -37,7 +38,7 @@ function Navigation() {
                         <LinkContainer to="/users">
                             <NavDropdown.Item>Users</NavDropdown.Item>
                         </LinkContainer>
-                        <NavDropdown.Item href="/users2">Something</NavDropdown.Item>
+                        <NavDropdown.Item href="/plot">Plot</NavDropdown.Item>
                         <NavDropdown.Divider />
                         <NavDropdown.Item href="/users3">Separated link</NavDropdown.Item>
                     </NavDropdown>
@@ -68,6 +69,9 @@ function AppRouter() {
                     <Route path="/users">
                         <Users />
                     </Route>
+                    <Route path="/plot">
+                        <Plot />
+                    </Route>
                     <Route path="/">
                         <Dashboard />
                     </Route>
@@ -75,6 +79,45 @@ function AppRouter() {
             </Container>
         </Router>
     );
+}
+
+function Plot() {
+    const [error, setError] = useState(null);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [plot_div, setPlotDiv] = useState(null);
+    const [plot_script, setPlotScript] = useState(null);
+
+    useEffect(() => {
+        const script = document.createElement("script");
+
+        fetch("/backend/test_plot_html")
+            .then((res) => res.json())
+            .then(
+                (result) => {
+                    setIsLoaded(true);
+                    setPlotDiv(result.div);
+                    setPlotScript(result.script);
+                },
+                (error) => {
+                    setIsLoaded(true);
+                    setError(error);
+                }
+            );
+    }, []);
+
+    if (error) {
+        return <div>Error: {error.message}</div>;
+    } else if (!isLoaded) {
+        return <div>Loading ...</div>;
+    } else {
+        console.log(plot_div);
+        return (
+            <>
+                <div dangerouslySetInnerHTML={{ __html: plot_div }}></div>
+                <ScriptTag type="text/javascript">{plot_script}</ScriptTag>
+            </>
+        );
+    }
 }
 
 function ExTable() {
@@ -199,10 +242,10 @@ function DeviceState(props) {
         } else {
             return (
                 <>
-                <td>{deviceState.study_mode}</td>
-                <td>{deviceState.offline_duration}</td>
-                <td>{deviceState.health_status}</td>
-                <td>{deviceState.sick_reason}</td>
+                    <td>{deviceState.study_mode}</td>
+                    <td>{deviceState.offline_duration}</td>
+                    <td>{deviceState.health_status}</td>
+                    <td>{deviceState.sick_reason}</td>
                 </>
             );
         }

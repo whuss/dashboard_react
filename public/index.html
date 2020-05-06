@@ -2,6 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+
+    <!-- Required for Bokeh -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bokeh/1.4.0/bokeh.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bokeh/1.4.0/bokeh-widgets.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bokeh/1.4.0/bokeh-tables.css">
+
+    <!-- 
+      Easier to add via CDN than npm imports due to import errors 
+      https://github.com/bokeh/bokeh/issues/8197
+    -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bokeh/1.4.0/bokeh.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bokeh/1.4.0/bokeh-widgets.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bokeh/1.4.0/bokeh-tables.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bokeh/1.4.0/bokeh-api.js"></script>
+
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
