@@ -42,6 +42,11 @@ function Navigation() {
                         <NavDropdown.Divider />
                         <NavDropdown.Item href="/users3">Separated link</NavDropdown.Item>
                     </NavDropdown>
+                    <NavDropdown title="Database" id="basic-nav-dropdown">
+                        <LinkContainer to="/database_size">
+                            <NavDropdown.Item>Size</NavDropdown.Item>
+                        </LinkContainer>
+                    </NavDropdown>
                 </Nav>
                 <Form inline>
                     <FormControl type="text" placeholder="Search" className="mr-sm-2" />
@@ -72,6 +77,9 @@ function AppRouter() {
                     <Route path="/plot">
                         <Plot />
                     </Route>
+                    <Route path="/database_size">
+                        <PlotDatabaseSize />
+                    </Route>
                     <Route path="/">
                         <Dashboard />
                     </Route>
@@ -91,6 +99,45 @@ function Plot() {
         const script = document.createElement("script");
 
         fetch("/backend/test_plot_html")
+            .then((res) => res.json())
+            .then(
+                (result) => {
+                    setIsLoaded(true);
+                    setPlotDiv(result.div);
+                    setPlotScript(result.script);
+                },
+                (error) => {
+                    setIsLoaded(true);
+                    setError(error);
+                }
+            );
+    }, []);
+
+    if (error) {
+        return <div>Error: {error.message}</div>;
+    } else if (!isLoaded) {
+        return <div>Loading ...</div>;
+    } else {
+        console.log(plot_div);
+        return (
+            <>
+                <div dangerouslySetInnerHTML={{ __html: plot_div }}></div>
+                <ScriptTag type="text/javascript">{plot_script}</ScriptTag>
+            </>
+        );
+    }
+}
+
+function PlotDatabaseSize() {
+    const [error, setError] = useState(null);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [plot_div, setPlotDiv] = useState(null);
+    const [plot_script, setPlotScript] = useState(null);
+
+    useEffect(() => {
+        const script = document.createElement("script");
+
+        fetch("/backend/plot_database_size")
             .then((res) => res.json())
             .then(
                 (result) => {
