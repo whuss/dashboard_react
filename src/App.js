@@ -32,6 +32,15 @@ function NavPortal() {
     return ReactDOM.createPortal(<Navigation />, titleBar);
 }
 
+function NavRoute(props) {
+    return (
+        <Route path={props.path}>
+            <Title title={props.title} />
+            {props.children}
+        </Route>
+    );
+}
+
 function AppRouter() {
     return (
         <Router>
@@ -40,39 +49,31 @@ function AppRouter() {
               renders the first one that matches the current URL. */}
             <Container fluid className="p-3">
                 <Switch>
-                    <Route path="/about">
-                        <Title title="About" />
+                    <NavRoute path="/about" title="About">
                         <About />
                         <FetchHackernews />
-                    </Route>
-                    <Route path="/analytics/scenes">
-                        <Title title="Analytics Scenes" />
+                    </NavRoute>
+                    <NavRoute path="/analytics/scenes" title="Analytics Scenes">
                         <AnalyticsScenes />
-                    </Route>
-                    <Route path="/analytics/connection">
-                        <Title title="Analytics Connection" />
+                    </NavRoute>
+                    <NavRoute path="/analytics/connection" title="Analytics Connection">
                         <AnalyticsConnection />
-                    </Route>
-                    <Route path="/analytics/Keyboard">
-                        <Title title="Analytics Keyboard" />
+                    </NavRoute>
+                    <NavRoute path="/analytics/Keyboard" title="Analytics Keyboard">
                         <AnalyticsKeyboard />
-                    </Route>
-                    <Route path="/statistics/switch_cycles">
-                        <Title title="Statistics On/Off Cycles" />
+                    </NavRoute>
+                    <NavRoute path="/statistics/switch_cycles" title="Statistics On/Off Cycles">
                         <SwitchCycles />
-                    </Route>
-                    <Route path="/system/stability">
-                        <Title title="System Stability" />
+                    </NavRoute>
+                    <NavRoute path="/system/stability" title="System Stability">
                         <SystemStability />
-                    </Route>
-                    <Route path="/database_size">
-                        <Title title="Database Size" />
+                    </NavRoute>
+                    <NavRoute path="/database_size" title="Database Size">
                         <Plot src="/backend/plot_database_size" />
-                    </Route>
-                    <Route path="/">
-                        <Title title="Dashboard" />
+                    </NavRoute>
+                    <NavRoute path="/" title="Dashboard">
                         <Dashboard />
-                    </Route>
+                    </NavRoute>
                 </Switch>
             </Container>
         </Router>
