@@ -26,6 +26,9 @@ function Navigation() {
                         <LinkContainer to="/analytics/connection">
                             <NavDropdown.Item>Connection</NavDropdown.Item>
                         </LinkContainer>
+                        <LinkContainer to="/analytics/keyboard">
+                            <NavDropdown.Item>Keyboard</NavDropdown.Item>
+                        </LinkContainer>
                     </NavDropdown>
                     <LinkContainer to="/about">
                         <Nav.Link>About</Nav.Link>

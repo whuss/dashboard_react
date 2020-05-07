@@ -15,6 +15,7 @@ import Dashboard from "./Dashboard";
 import SwitchCycles from "./SwitchCycles";
 import AnalyticsScenes from "./AnalyticsScenes";
 import AnalyticsConnection from "./AnalyticsConnection";
+import AnalyticsKeyboard from "./AnalyticsKeyboard";
 import { Plot, PlotDevice } from "./BokehPlot";
 
 import useDataApi, { FetchHackernews } from "./Fetch";
@@ -32,6 +33,7 @@ function AppRouter() {
                             <Route path="/about">About</Route>
                             <Route path="/analytics/scenes">Analytics Scenes</Route>
                             <Route path="/analytics/connection">Analytics Connection</Route>
+                            <Route path="/analytics/keyboard">Analytics Keyboard</Route>
                             <Route path="/users">Users</Route>
                             <Route path="/plot">Plot</Route>
                             <Route path="/statistics/switch_cycles">On/Off Cycles</Route>
@@ -54,6 +56,9 @@ function AppRouter() {
                     </Route>
                     <Route path="/analytics/connection">
                         <AnalyticsConnection />
+                    </Route>
+                    <Route path="/analytics/Keyboard">
+                        <AnalyticsKeyboard />
                     </Route>
                     <Route path="/users">
                         <Users />
