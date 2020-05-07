@@ -3,37 +3,26 @@ import React from "react";
 import Table from "react-bootstrap/Table";
 
 import useDataApi from "./Fetch";
+import DeviceTable from "./DeviceTable";
 
-
-function Dashboard() {
-    const [{ data, isLoading, isError }, doFetch] = useDataApi("/backend/devices", []);
-
+function loading_row() {
     return (
         <>
-            {isError && <div>Something went wrong ...</div>}
+            <td></td>
+            <td>Loading ...</td>
+            <td></td>
+            <td></td>
+        </>
+    );
+}
 
-            {isLoading ? (
-                <div>Loading ...</div>
-            ) : (
-                <Table className={"dataTable"} hover>
-                <thead>
-                    <tr>
-                        <th>Device</th>
-                        <th>Device Mode</th>
-                        <th>Last Connection</th>
-                        <th colSpan={2}>Health Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {data.map((device) => (
-                        <tr key={device}>
-                            <th>{device}</th>
-                            <DeviceState device_id={device} />
-                        </tr>
-                    ))}
-                </tbody>
-            </Table>
-            )}
+function format_row(data) {
+    return (
+        <>
+            <td>{data.study_mode}</td>
+            <td>{data.offline_duration}</td>
+            <td>{data.health_status}</td>
+            <td>{data.sick_reason}</td>
         </>
     );
 }
@@ -44,25 +33,34 @@ function DeviceState(props) {
     return (
         <>
             {isError && <div>Something went wrong ...</div>}
-
-            {isLoading ? (
-                <>
-                    <td></td>
-                    <td>Loading ...</td>
-                    <td></td>
-                    <td></td>
-                </>
-            ) : (
-                <>
-                    <td>{data.study_mode}</td>
-                    <td>{data.offline_duration}</td>
-                    <td>{data.health_status}</td>
-                    <td>{data.sick_reason}</td>
-                </>
-            )}
+            {isLoading ? loading_row() : format_row(data)}
         </>
     );
 }
 
+function table(data) {
+    return (
+        <Table className={"dataTable"} hover>
+            <thead>
+                <tr>
+                    <th>Device</th>
+                    <th>Device Mode</th>
+                    <th>Last Connection</th>
+                    <th colSpan={2}>Health Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {data.map((device) => (
+                    <tr key={device}>
+                        <th>{device}</th>
+                        <DeviceState device_id={device} />
+                    </tr>
+                ))}
+            </tbody>
+        </Table>
+    );
+}
+
+const Dashboard = () => <DeviceTable format_table={table} />;
 
 export default Dashboard;
