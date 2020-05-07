@@ -65,21 +65,11 @@ function AppRouter() {
                 <Container fluid className="border-bottom">
                     <div id="titlebar" className="row">
                         <Switch>
-                            <Route path="/about">
-                                About
-                            </Route>
-                            <Route path="/devices">
-                                Devices
-                            </Route>
-                            <Route path="/users">
-                                Users
-                            </Route>
-                            <Route path="/plot">
-                                Plot
-                            </Route>
-                            <Route path="/database_size">
-                                Database Size
-                            </Route>
+                            <Route path="/about">About</Route>
+                            <Route path="/devices">Devices</Route>
+                            <Route path="/users">Users</Route>
+                            <Route path="/plot">Plot</Route>
+                            <Route path="/database_size">Database Size</Route>
                         </Switch>
                     </div>
                 </Container>
@@ -96,12 +86,14 @@ function AppRouter() {
                     </Route>
                     <Route path="/users">
                         <Users />
+                        <Plot src="/backend/test_plot_html" />
                     </Route>
                     <Route path="/plot">
-                        <Plot src="/backend/test_plot_html"/>
+                        <Plot src="/backend/test_plot_html" />
+                        <Plot src="/backend/plot_database_size" />
                     </Route>
                     <Route path="/database_size">
-                        <PlotDatabaseSize/>
+                        <Plot src="/backend/plot_database_size" />
                     </Route>
                     <Route path="/">
                         <Dashboard />
@@ -115,78 +107,94 @@ function AppRouter() {
 function Plot(props) {
     const [error, setError] = useState(null);
     const [isLoaded, setIsLoaded] = useState(false);
-    const [plot_div, setPlotDiv] = useState(null);
-    const [plot_script, setPlotScript] = useState(null);
+    const [plot, setPlot] = useState(null);
 
     useEffect(() => {
-        const script = document.createElement("script");
-
         fetch(props.src)
             .then((res) => res.json())
             .then(
                 (result) => {
                     setIsLoaded(true);
-                    setPlotDiv(result.div);
-                    setPlotScript(result.script);
+                    setPlot(result);
                 },
                 (error) => {
                     setIsLoaded(true);
                     setError(error);
                 }
             );
+
+        return () => {
+            setPlot(null);
+        };
     }, []);
-
-    if (error) {
-        return <div>Error: {error.message}</div>;
-    } else if (!isLoaded) {
-        return <div>Loading ...</div>;
-    } else {
-        return (
-            <>
-                <div dangerouslySetInnerHTML={{ __html: plot_div }}></div>
-                <ScriptTag type="text/javascript">{plot_script}</ScriptTag>
-            </>
-        );
-    }
-}
-
-function PlotDatabaseSize() {
-    const [error, setError] = useState(null);
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [plot_div, setPlotDiv] = useState(null);
-    const [plot_script, setPlotScript] = useState(null);
 
     useEffect(() => {
-        const script = document.createElement("script");
+        return () => {
+            console.log("Plot: unmount: ", props.src);
+        }
+    });
 
-        fetch("/backend/plot_database_size")
-            .then((res) => res.json())
-            .then(
-                (result) => {
-                    setIsLoaded(true);
-                    setPlotDiv(result.div);
-                    setPlotScript(result.script);
-                },
-                (error) => {
-                    setIsLoaded(true);
-                    setError(error);
-                }
-            );
-    }, []);
+    useEffect(() => {
+        console.log("Plot: src changed: ", props.src);
+
+        return () => {
+            setPlot(null);
+        }
+    }, [props.src]);
 
     if (error) {
         return <div>Error: {error.message}</div>;
     } else if (!isLoaded) {
         return <div>Loading ...</div>;
-    } else {
+    } else if (plot) {
         return (
             <>
-                <div dangerouslySetInnerHTML={{ __html: plot_div }}></div>
-                <ScriptTag type="text/javascript">{plot_script}</ScriptTag>
+                <ScriptTag type="text/javascript">{plot.script}</ScriptTag>
+                <div className={plot.class} id={plot.id} data-root-id={plot.data_root_id}></div>
             </>
         );
+    } else {
+        return <div>Plot is null</div>;
     }
 }
+
+// function PlotDatabaseSize() {
+//     const [error, setError] = useState(null);
+//     const [isLoaded, setIsLoaded] = useState(false);
+//     const [plot_div, setPlotDiv] = useState(null);
+//     const [plot_script, setPlotScript] = useState(null);
+
+//     useEffect(() => {
+//         const script = document.createElement("script");
+
+//         fetch("/backend/plot_database_size")
+//             .then((res) => res.json())
+//             .then(
+//                 (result) => {
+//                     setIsLoaded(true);
+//                     setPlotDiv(result.div);
+//                     setPlotScript(result.script);
+//                 },
+//                 (error) => {
+//                     setIsLoaded(true);
+//                     setError(error);
+//                 }
+//             );
+//     }, []);
+
+//     if (error) {
+//         return <div>Error: {error.message}</div>;
+//     } else if (!isLoaded) {
+//         return <div>Loading ...</div>;
+//     } else {
+//         return (
+//             <>
+//                 <div dangerouslySetInnerHTML={{ __html: plot_div }}></div>
+//                 <ScriptTag type="text/javascript">{plot_script}</ScriptTag>
+//             </>
+//         );
+//     }
+// }
 
 function ExTable() {
     return (
