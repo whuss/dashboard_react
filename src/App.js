@@ -16,7 +16,7 @@ import SwitchCycles from "./SwitchCycles";
 import AnalyticsScenes from "./AnalyticsScenes";
 import AnalyticsConnection from "./AnalyticsConnection";
 import AnalyticsKeyboard from "./AnalyticsKeyboard";
-import { Plot, PlotDevice } from "./BokehPlot";
+import Plot from "./BokehPlot";
 
 import useDataApi, { FetchHackernews } from "./Fetch";
 

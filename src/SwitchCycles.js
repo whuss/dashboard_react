@@ -3,8 +3,12 @@ import React from "react";
 import Table from "react-bootstrap/Table";
 import Button from "react-bootstrap/Button";
 
-import { PlotDevice } from "./BokehPlot";
+import Plot from "./BokehPlot";
 import DeviceTable from "./DeviceTable";
+
+function plotUrl(device) {
+    return `/backend/plot_switch_cycle/${device}`;
+}
 
 function table(data) {
     return (
@@ -21,7 +25,7 @@ function table(data) {
                     <tr key={device}>
                         <th>{device}</th>
                         <td>
-                            <PlotDevice src={"/backend/plot_switch_cycle"} device={device} />
+                            <Plot src={plotUrl(device)} />
                         </td>
                         <td>
                             <Button>Download</Button>
