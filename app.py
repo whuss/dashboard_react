@@ -5,6 +5,7 @@ import numpy as np
 from typing import Optional
 
 from flask import Flask, render_template, jsonify, request, url_for, json, make_response
+from flask_cors import cross_origin
 import dateutil.parser
 
 from config import Config
@@ -1383,6 +1384,19 @@ def backend_plot_system_stability(device: str):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+@app.route('/backend/plot_system_errors/<device>')
+def backend_plot_system_errors(device: str):
+    ajax = PlotErrors(plot_parameters=dict(device=device))
+    data = ajax.fetch_data()
+    if data.empty:
+        return dict()
+
+    plot = ajax._plot(data)
+    return reactify_bokeh(plot)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 @app.route('/backend/plot_analytics_scenes/<device>')
 def backend_plot_analytics_scenes(device: str):
     ajax = PlotSceneDurations(plot_parameters=dict(device=device))
@@ -1448,10 +1462,39 @@ def backend_plot_analytics_mouse(device: str):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 @app.route('/backend/system_restarts/<device>')
 def backend_system_restarts(device: str):
     table = TableRestarts(plot_parameters={'device': device})
     return dict(table=table.fetch().__html__())
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+@app.route('/backend/logs/<device>', methods=['GET'])
+@app.route('/backend/logs/<device>/<int:duration>', methods=['GET'])
+@app.route('/backend/logs/<device>/<int:duration>/<log_level>', methods=['GET'])
+@app.route('/backend/logs/<device>/<int:duration>/<log_level>/<timestamp>/', methods=['GET'])
+@cross_origin()
+def backend_logs(device, duration=5, timestamp=None, log_level="TRACE"):
+    try:
+        page = int(request.args.get('page', default=1, type=int))
+    except ValueError:
+        logging.error(f"get value page={page} is not an integer")
+        page = 1
+
+    filename = request.args.get('filename', default=None)
+    line_number = request.args.get('line_number', type=int, default=None)
+
+    if not timestamp:
+        timestamp = datetime.now()
+    log_text, pagination = fetch_logs(device, timestamp, log_level, before=duration, after=2, page=page,
+                                      filename=filename, line_number=line_number)
+    devices = Dashboard().devices()
+    return dict(devices=devices,
+                log_text=log_text,
+                device=device)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Main
