@@ -20,8 +20,8 @@ import "./App.css";
 
 function Navigation() {
     return (
-        <Navbar bg="light" expand="lg">
-            <Navbar.Brand>REPRO-LIGHT</Navbar.Brand>
+        <Navbar className="site-header" bg="dark" expand="lg" variant="dark">
+            <Navbar.Brand><img src="/ReproLight_trans.png" height="50px" alt="REPRO-LIGHT"/></Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="mr-auto">
@@ -53,11 +53,12 @@ function Navigation() {
                         </LinkContainer>
                     </NavDropdown>
                 </Nav>
-                <Form inline>
+                {/* <Form inline>
                     <FormControl type="text" placeholder="Search" className="mr-sm-2" />
-                    <Button variant="outline-success">Search</Button>
-                </Form>
+                    <Button>Search</Button>
+                </Form> */}
             </Navbar.Collapse>
+            <Navbar.Brand><img src="/dot_bartenbach.png" height="50px" alt="Bartenbach"/></Navbar.Brand>
         </Navbar>
     );
 }
@@ -76,6 +77,7 @@ function AppRouter() {
                             <Route path="/plot">Plot</Route>
                             <Route path="/statistics/switch_cycles">On/Off Cycles</Route>
                             <Route path="/database_size">Database Size</Route>
+                            <Route path="/">Dashboard</Route>
                         </Switch>
                     </div>
                 </Container>
