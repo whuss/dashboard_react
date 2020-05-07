@@ -42,6 +42,11 @@ function Navigation() {
                         <NavDropdown.Divider />
                         <NavDropdown.Item href="/users3">Separated link</NavDropdown.Item>
                     </NavDropdown>
+                    <NavDropdown title="Statistics" id="basic-nav-dropdown">
+                        <LinkContainer to="/statistics/switch_cycles">
+                            <NavDropdown.Item>On/Off Cycles</NavDropdown.Item>
+                        </LinkContainer>
+                    </NavDropdown>
                     <NavDropdown title="Database" id="basic-nav-dropdown">
                         <LinkContainer to="/database_size">
                             <NavDropdown.Item>Size</NavDropdown.Item>
@@ -69,6 +74,7 @@ function AppRouter() {
                             <Route path="/devices">Devices</Route>
                             <Route path="/users">Users</Route>
                             <Route path="/plot">Plot</Route>
+                            <Route path="/statistics/switch_cycles">On/Off Cycles</Route>
                             <Route path="/database_size">Database Size</Route>
                         </Switch>
                     </div>
@@ -91,6 +97,9 @@ function AppRouter() {
                     <Route path="/plot">
                         <Plot src="/backend/test_plot_html" />
                         <Plot src="/backend/plot_database_size" />
+                    </Route>
+                    <Route path="/statistics/switch_cycles">
+                        <SwitchCycles/>
                     </Route>
                     <Route path="/database_size">
                         <Plot src="/backend/plot_database_size" />
@@ -325,6 +334,10 @@ function DeviceState(props) {
             );
         }
     }
+}
+
+function SwitchCycles() {
+    return <b>TODO</b>
 }
 
 function Devices() {
