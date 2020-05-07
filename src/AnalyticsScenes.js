@@ -10,7 +10,8 @@ import useDataApi from "./Fetch";
 const AnalyticsScenes = () => (
     <>
         <p>
-            <b>Note:</b> Data from days where the total time of all scenes is less than 30 minutes are excluded form the dataset.
+            <b>Note:</b> Data from days where the total time of all scenes is less than 30 minutes are excluded form the
+            dataset.
         </p>
         <DeviceTable />
     </>
@@ -19,36 +20,37 @@ const AnalyticsScenes = () => (
 function DeviceTable() {
     const [{ data, isLoading, isError }, doFetch] = useDataApi("/backend/devices", []);
 
+    function table(data) {
+        return (
+            <Table className={"dataTable"} hover>
+                <thead>
+                    <tr>
+                        <th>Device ID</th>
+                        <th>Cycles</th>
+                        <th>Download</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {data.map((device) => (
+                        <tr key={device}>
+                            <th>{device}</th>
+                            <td>
+                                <PlotDevice src={"/backend/plot_analytics_scenes"} device={device} />
+                            </td>
+                            <td>
+                                <Button>Download</Button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </Table>
+        );
+    }
+
     return (
         <>
             {isError && <div>Something went wrong ...</div>}
-
-            {isLoading ? (
-                <div>Loading ...</div>
-            ) : (
-                <Table className={"dataTable"} hover>
-                    <thead>
-                        <tr>
-                            <th>Device ID</th>
-                            <th>Cycles</th>
-                            <th>Download</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data.map((device) => (
-                            <tr key={device}>
-                                <th>{device}</th>
-                                <td>
-                                    <PlotDevice src={"/backend/plot_analytics_scenes"} device={device} />
-                                </td>
-                                <td>
-                                    <Button>Download</Button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </Table>
-            )}
+            {isLoading ? <div>Loading ...</div> : table(data)}
         </>
     );
 }
