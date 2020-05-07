@@ -7,7 +7,16 @@ import { PlotDevice } from "./BokehPlot";
 
 import useDataApi from "./Fetch";
 
-function AnalyticsScenes() {
+const AnalyticsScenes = () => (
+    <>
+        <p>
+            <b>Note:</b> Data from days where the total time of all scenes is less than 30 minutes are excluded form the dataset.
+        </p>
+        <DeviceTable />
+    </>
+);
+
+function DeviceTable() {
     const [{ data, isLoading, isError }, doFetch] = useDataApi("/backend/devices", []);
 
     return (

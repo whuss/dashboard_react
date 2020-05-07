@@ -116,7 +116,9 @@ function PlotDevice(props) {
         return (
             <>
                 {/* <ScriptTag type="text/javascript">{plot.script}</ScriptTag> */}
-                <div className={plot.class} id={plot.id} data-root-id={plot.data_root_id}></div>
+                <div align="center">
+                    <div className={plot.class} id={plot.id} data-root-id={plot.data_root_id}></div>
+                </div>
                 <div ref={instance} />
             </>
         );
