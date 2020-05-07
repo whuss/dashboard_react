@@ -7,8 +7,8 @@ import DeviceTable from "./DeviceTable";
 
 const loading_row = () => (
     <>
-        <td></td>
         <td>Loading ...</td>
+        <td></td>
         <td></td>
         <td></td>
     </>
@@ -16,9 +16,9 @@ const loading_row = () => (
 
 const format_row = (data) => (
     <>
-        <td>{data.study_mode}</td>
+        <td><div className={`deviceMode ${data.study_mode}`}>{data.study_mode}</div></td>
         <td>{data.offline_duration}</td>
-        <td>{data.health_status}</td>
+        <td><i className={'fa fa-heartbeat ' + data.health_status}></i></td>
         <td>{data.sick_reason}</td>
     </>
 );
