@@ -19,9 +19,6 @@ function Navigation() {
                     <LinkContainer to="/">
                         <Nav.Link>Dashboard</Nav.Link>
                     </LinkContainer>
-                    <LinkContainer to="/devices">
-                        <Nav.Link>Devices</Nav.Link>
-                    </LinkContainer>
                     <LinkContainer to="/about">
                         <Nav.Link>About</Nav.Link>
                     </LinkContainer>

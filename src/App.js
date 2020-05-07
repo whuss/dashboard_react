@@ -26,7 +26,6 @@ function AppRouter() {
                     <div id="titlebar" className="row">
                         <Switch>
                             <Route path="/about">About</Route>
-                            <Route path="/devices">Devices</Route>
                             <Route path="/users">Users</Route>
                             <Route path="/plot">Plot</Route>
                             <Route path="/statistics/switch_cycles">On/Off Cycles</Route>
@@ -42,9 +41,6 @@ function AppRouter() {
                 <Switch>
                     <Route path="/about">
                         <About />
-                    </Route>
-                    <Route path="/devices">
-                        <Devices />
                     </Route>
                     <Route path="/users">
                         <Users />
@@ -188,43 +184,29 @@ function About() {
 const Users = () => <div>There are no users!</div>;
 
 function DeviceState(props) {
-    const [error, setError] = useState(null);
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [deviceState, setDeviceState] = useState(null);
+    const [{ data, isLoading, isError }, doFetch] = useDataApi(`/backend/device_state/${props.device_id}`, {});
 
-    useEffect(() => {
-        fetch(`/backend/device_state/${props.device_id}`)
-            .then((res) => res.json())
-            .then(
-                (result) => {
-                    setIsLoaded(true);
-                    setDeviceState(result);
-                },
-                (error) => {
-                    setIsLoaded(true);
-                    setError(error);
-                }
-            );
-    }, []);
+    return (
+        <>
+            {isError && <div>Something went wrong ...</div>}
 
-    if (error) {
-        return <td>Error: {error.message}</td>;
-    } else if (!isLoaded) {
-        return <td colSpan={4}>Loading ...</td>;
-    } else {
-        if (deviceState === null) {
-            return <td colSpan={4}>No state</td>;
-        } else {
-            return (
+            {isLoading ? (
                 <>
-                    <td>{deviceState.study_mode}</td>
-                    <td>{deviceState.offline_duration}</td>
-                    <td>{deviceState.health_status}</td>
-                    <td>{deviceState.sick_reason}</td>
+                    <td></td>
+                    <td>Loading ...</td>
+                    <td></td>
+                    <td></td>
                 </>
-            );
-        }
-    }
+            ) : (
+                <>
+                    <td>{data.study_mode}</td>
+                    <td>{data.offline_duration}</td>
+                    <td>{data.health_status}</td>
+                    <td>{data.sick_reason}</td>
+                </>
+            )}
+        </>
+    );
 }
 
 function SwitchCycles() {
@@ -272,107 +254,6 @@ function SwitchCycles() {
                 </tbody>
             </Table>
         );
-    }
-}
-
-function Devices() {
-    const [error, setError] = useState(null);
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [devices, setDevices] = useState([]);
-
-    useEffect(() => {
-        fetch("/backend/devices")
-            .then((res) => res.json())
-            .then(
-                (result) => {
-                    setIsLoaded(true);
-                    setDevices(result);
-                },
-                (error) => {
-                    setIsLoaded(true);
-                    setError(error);
-                }
-            );
-    }, []);
-
-    if (error) {
-        return <div>Error: {error.message}</div>;
-    } else if (!isLoaded) {
-        return <div>Loading ...</div>;
-    } else {
-        return (
-            <Table className={"dataTable"} hover>
-                <thead>
-                    <tr>
-                        <th>Device</th>
-                        <th>Device Mode</th>
-                        <th>Last Connection</th>
-                        <th colSpan={2}>Health Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {devices.map((device) => (
-                        <tr key={device}>
-                            <th>{device}</th>
-                            <DeviceState device_id={device} />
-                        </tr>
-                    ))}
-                </tbody>
-            </Table>
-        );
-    }
-}
-
-class DevicesC extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            error: null,
-            isLoaded: false,
-            devices: [],
-        };
-    }
-
-    componentDidMount() {
-        fetch("/backend/devices")
-            .then((res) => res.json())
-            .then(
-                (result) => {
-                    this.setState({
-                        isLoaded: true,
-                        devices: result,
-                    });
-                },
-                // Note: it's important to handle errors here
-                // instead of a catch() block so that we don't swallow
-                // exceptions from actual bugs in components.
-                (error) => {
-                    this.setState({
-                        isLoaded: true,
-                        error,
-                    });
-                }
-            );
-    }
-
-    render() {
-        const { error, isLoaded, devices } = this.state;
-        if (error) {
-            return <div>Error: {error.message}</div>;
-        } else if (!isLoaded) {
-            return <div>Loading ...</div>;
-        } else {
-            return (
-                <React.Fragment>
-                    <h2>Devices</h2>
-                    <ul>
-                        {devices.map((device) => (
-                            <li key={device}>{device}</li>
-                        ))}
-                    </ul>
-                </React.Fragment>
-            );
-        }
     }
 }
 
