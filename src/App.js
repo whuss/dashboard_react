@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect } from "react";
+import React, { Component, useState, useEffect, useRef } from "react";
 
 import Jumbotron from "react-bootstrap/Jumbotron";
 import Toast from "react-bootstrap/Toast";
@@ -14,7 +14,7 @@ import Table from "react-bootstrap/Table";
 import { LinkContainer } from "react-router-bootstrap";
 
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import ScriptTag from "react-script-tag";
+//import ScriptTag from "react-script-tag";
 
 import "./App.css";
 
@@ -105,6 +105,8 @@ function AppRouter() {
 }
 
 function Plot(props) {
+    const instance = useRef(null);
+
     const [error, setError] = useState(null);
     const [isLoaded, setIsLoaded] = useState(false);
     const [plot, setPlot] = useState(null);
@@ -129,17 +131,21 @@ function Plot(props) {
     }, []);
 
     useEffect(() => {
-        return () => {
-            console.log("Plot: unmount: ", props.src);
+        if (plot)
+        {
+            console.log("Plot: fully loaded: ", plot);
+            const scriptTag = document.createElement("script");
+            scriptTag.text = plot.script;
+            instance.current.appendChild(scriptTag);
         }
-    });
+        else
+        {
+            console.log("Plot: deleted: ", props.src);
+        }
+    }, [plot]);
 
     useEffect(() => {
         console.log("Plot: src changed: ", props.src);
-
-        return () => {
-            setPlot(null);
-        }
     }, [props.src]);
 
     if (error) {
@@ -149,8 +155,9 @@ function Plot(props) {
     } else if (plot) {
         return (
             <>
-                <ScriptTag type="text/javascript">{plot.script}</ScriptTag>
+                {/* <ScriptTag type="text/javascript">{plot.script}</ScriptTag> */}
                 <div className={plot.class} id={plot.id} data-root-id={plot.data_root_id}></div>
+                <div ref={instance} />
             </>
         );
     } else {
