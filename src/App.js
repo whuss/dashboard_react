@@ -7,7 +7,7 @@ import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
 import Alert from "react-bootstrap/Alert";
 
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route, useParams} from "react-router-dom";
 
 import Navigation from "./Navigation";
 import Dashboard from "./Dashboard";
@@ -15,8 +15,12 @@ import SwitchCycles from "./SwitchCycles";
 import AnalyticsScenes from "./AnalyticsScenes";
 import AnalyticsConnection from "./AnalyticsConnection";
 import AnalyticsKeyboard from "./AnalyticsKeyboard";
+import AnalyticsKeypress from "./AnalyticsKeypress";
+import AnalyticsMouse from "./AnalyticsMouse";
 import SystemStability from "./SystemStability";
 import SystemRestarts from "./SystemRestarts";
+import SystemErrors from "./SystemErrors";
+import SystemLogs from "./SystemLogs";
 import Plot from "./BokehPlot";
 
 import useDataApi, { FetchHackernews } from "./Fetch";
@@ -60,8 +64,14 @@ function AppRouter() {
                     <NavRoute path="/analytics/connection" title="Analytics Connection">
                         <AnalyticsConnection />
                     </NavRoute>
-                    <NavRoute path="/analytics/Keyboard" title="Analytics Keyboard">
+                    <NavRoute path="/analytics/keyboard" title="Analytics Keyboard">
                         <AnalyticsKeyboard />
+                    </NavRoute>
+                    <NavRoute path="/analytics/keypress" title="Analytics Keypress">
+                        <AnalyticsKeypress />
+                    </NavRoute>
+                    <NavRoute path="/analytics/mouse" title="Analytics Mouse">
+                        <AnalyticsMouse />
                     </NavRoute>
                     <NavRoute path="/statistics/switch_cycles" title="Statistics On/Off Cycles">
                         <SwitchCycles />
@@ -72,8 +82,19 @@ function AppRouter() {
                     <NavRoute path="/system/restarts" title="System Restarts">
                         <SystemRestarts/>
                     </NavRoute>
+                    <NavRoute path="/system/errors" title="System Errors">
+                        <SystemErrors/>
+                    </NavRoute>
                     <NavRoute path="/database_size" title="Database Size">
                         <Plot src="/backend/plot_database_size" />
+                    </NavRoute>
+                    <NavRoute path={["/logs/:device/:duration/:log_level/:timestamp",
+                                     "/logs/:device/:duration/:log_level",
+                                     "/logs/:device/:duration",
+                                     "/logs/:device",
+                                     "/logs"]}
+                              title="Logs">
+                        <SystemLogs/>
                     </NavRoute>
                     <NavRoute path="/" title="Dashboard">
                         <Dashboard />

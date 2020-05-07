@@ -28,8 +28,10 @@ function Navigation() {
                     <NavDropdown title="Analytics" id="basic-nav-dropdown">
                         <NavDropLink to="/analytics/scenes" name="Scenes"/>
                         <NavDropLink to="/analytics/connection" name="Connection"/>
-                        <NavDropLink to="/analytics/keyboard" name="Keyboard"/>
                         <NavDropdown.Divider />
+                        <NavDropLink to="/analytics/keyboard" name="Keyboard"/>
+                        <NavDropLink to="/analytics/keypress" name="Keypress"/>
+                        <NavDropLink to="/analytics/mouse" name="Mouse"/>
                     </NavDropdown>
                     <NavDropdown title="Statistics" id="basic-nav-dropdown">
                         <NavDropLink to="/statistics/switch_cycles" name="On/Off Cycles"/>
@@ -37,6 +39,9 @@ function Navigation() {
                     <NavDropdown title="System" id="basic-nav-dropdown">
                         <NavDropLink to="/system/stability" name="Stability"/>
                         <NavDropLink to="/system/restarts" name="Restarts"/>
+                        <NavDropLink to="/system/errors" name="Errors"/>
+                        <NavDropdown.Divider />
+                        <NavDropLink to="/logs" name="Logs"/>
                     </NavDropdown>
                     <NavDropdown title="Database" id="basic-nav-dropdown">
                         <NavDropLink to="/database_size" name="Size"/>

@@ -3,15 +3,8 @@ import React, { Component, useState, useEffect, useRef } from "react";
 import useDataApi from "./Fetch";
 
 import Table from "react-bootstrap/Table";
-import Button from "react-bootstrap/Button";
 
 import DeviceTable from "./DeviceTable";
-
-import Plot from "./BokehPlot";
-
-function plotUrl(device) {
-    return `/backend/plot_system_stability/${device}`;
-}
 
 function Restarts(props) {
     const [{ data, isLoading, isError }, doFetch] = useDataApi(`/backend/system_restarts/${props.device}`, []);
