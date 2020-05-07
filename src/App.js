@@ -13,6 +13,8 @@ import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Navigation from "./Navigation";
 import { Plot, PlotDevice } from "./BokehPlot";
 
+import Fetch from "./Fetch";
+
 import "./App.css";
 
 function AppRouter() {
@@ -60,6 +62,7 @@ function AppRouter() {
                     </Route>
                     <Route path="/">
                         <Dashboard />
+                        <Fetch />
                     </Route>
                 </Switch>
             </Container>
