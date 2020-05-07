@@ -1344,24 +1344,14 @@ def reactify_bokeh(plot):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@app.route('/backend/test_plot_html')
-def backend_test_plot_html():
-    from plots import test_plot
-    plot = test_plot()
-    return reactify_bokeh(plot)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
 @app.route('/backend/plot_database_size')
 def backend_plot_database_size():
-    from plots import plot_database_size
-    from db import DatabaseDelay
-    data = DatabaseDelay().size()
-    if data is None or data.empty:
+    ajax = PlotDatabaseSize(plot_parameters=dict())
+    data = ajax.fetch_data()
+    if data.empty:
         return dict()
 
-    plot = plot_database_size(data)
+    plot = ajax._plot(data)
     return reactify_bokeh(plot)
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -1369,117 +1359,65 @@ def backend_plot_database_size():
 
 @app.route('/backend/plot_switch_cycle/<device>')
 def backend_plot_switch_cycle(device: str):
-    from plots import plot_on_off_cycles
-    from utils.date import start_of_day
-    _start_date = start_of_day(date(2020, 2, 1))
-    data = PresenceDetectorStatistics().on_off_cycle_count(device, _start_date)
-    if data is None or data.empty:
+    ajax = PlotOnOffCycles(plot_parameters=dict(device=device))
+    data = ajax.fetch_data()
+    if data.empty:
         return dict()
 
-    device_data = data.reset_index()
-
-    x_range = _start_date - timedelta(days=1), date.today() + timedelta(days=1)
-
-    plot = plot_on_off_cycles(device_data, x_range=x_range)
+    plot = ajax._plot(data)
     return reactify_bokeh(plot)
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.route('/backend/plot_system_stability/<device>')
 def backend_plot_system_stability(device: str):
-    from plots import plot_on_off_cycles
-    from utils.date import start_of_day
-    _start_date = start_of_day(date(2020, 2, 1))
-    combined_histogram = Errors().crash_restart_histogram(device, _start_date)
-    if combined_histogram is None or combined_histogram.empty:
+    ajax = PlotCrashes(plot_parameters=dict(device=device))
+    data = ajax.fetch_data()
+    if data.empty:
         return dict()
 
-    # compute time range
-    x_range = _start_date, date.today()
-
-    # compute range of y_axis
-    y_range = 0, max(combined_histogram.drop(columns=['end_of_day']).max())
-
-    histogram_data = combined_histogram.reset_index()
-
-    total_number_of_crashes = int(histogram_data.crash_count.sum())
-    total_number_of_restarts = int(histogram_data.restart_count.sum())
-
-    import plots
-    plot = plots.plot_crashes(histogram_data, x_range=x_range, y_range=y_range, device=device)
-    data = reactify_bokeh(plot)
-    data['total_number_of_crashes'] = total_number_of_crashes
-    data['total_number_of_restarts'] = total_number_of_restarts
-    return data
+    plot = ajax._plot(data)
+    return reactify_bokeh(plot)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.route('/backend/plot_analytics_scenes/<device>')
 def backend_plot_analytics_scenes(device: str):
-    from utils.date import start_of_day
-    from analytics.scenes import get_scene_durations
-    _start_date = start_of_day(date(2020, 2, 1))
-    scene_data = get_scene_durations(device, _start_date)
-    scene_data.loc[:, 'total_time'] = scene_data.sum(axis=1)
-    scene_data = scene_data[scene_data.total_time >= timedelta(minutes=30)]
-
-    if scene_data is None or scene_data.empty:
+    ajax = PlotSceneDurations(plot_parameters=dict(device=device))
+    data = ajax.fetch_data()
+    if data.empty:
         return dict()
 
-    import plots
-    fig1 = plots.plot_scene_duration_percentage(scene_data.copy())
-    fig2 = plots.plot_on_duration(scene_data.copy(), x_range=fig1.x_range)
-    fig3 = plots.plot_sporadic_scenes_duration(scene_data, x_range=fig2.x_range)
-    return reactify_bokeh(column([fig1, fig2, fig3]))
+    plot = ajax._plot(data)
+    return reactify_bokeh(plot)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.route('/backend/plot_analytics_connection/<device>')
 def backend_plot_analytics_connection(device: str):
-    from analytics.scenes import get_scene_durations
-    _start_date = date(2020, 2, 1)
-    _end_date = date.today() - timedelta(days=1)
-
-    from analytics.connection import connection_data_per_day
-    connection_data = connection_data_per_day(device, _start_date, _end_date)
-    if connection_data.empty:
+    ajax = PlotConnection(plot_parameters=dict(device=device))
+    data = ajax.fetch_data()
+    if data.empty:
         return dict()
 
-    excluded_days = f"{connection_data.excluded.sum()}&nbsp;days"
-
-    import plots
-    fig1 = plots.plot_excluded_days(connection_data)
-    fig2 = plots.plot_connection_per_day(connection_data, x_range=fig1.x_range)
-    fig3 = plots.plot_datalosses_per_day(connection_data, x_range=fig2.x_range)
-    return reactify_bokeh(column([fig1, fig2, fig3]))
+    plot = ajax._plot(data)
+    return reactify_bokeh(plot)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.route('/backend/plot_analytics_keyboard/<device>')
 def backend_plot_analytics_keyboard(device: str):
-    _start_date = date(2020, 2, 1)
-    _end_date = date.today() - timedelta(days=1)
-
-    from analytics.keyboard import get_keyboard_data
-    keyboard_data = get_keyboard_data(device, _start_date, _end_date)
-    if keyboard_data.empty:
+    ajax = PlotKeyboard(plot_parameters=dict(device=device))
+    data = ajax.fetch_data()
+    if data.empty:
         return dict()
 
-    keyboard_data = keyboard_data.reset_index()
-    keyboard_data['date'] = keyboard_data.timestamp.dt.date
-    keyboard_data = keyboard_data.set_index('timestamp')
-
-    import plots
-    keyboard_data = keyboard_data.resample('1d').sum()
-    fig1 = plots.plot_key_presses(keyboard_data.copy())
-    fig2 = plots.plot_special_key_presses(keyboard_data.copy(), x_range=fig1.x_range)
-    fig3 = plots.plot_special_key_relative_frequency(keyboard_data.copy(), x_range=fig2.x_range)
-    return reactify_bokeh(column([fig1, fig2, fig3]))
+    plot = ajax._plot(data)
+    return reactify_bokeh(plot)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
