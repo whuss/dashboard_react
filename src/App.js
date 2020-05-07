@@ -1,14 +1,13 @@
-import React, { Component, useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
+import ReactDOM from "react-dom";
 
 import Jumbotron from "react-bootstrap/Jumbotron";
 import Toast from "react-bootstrap/Toast";
 import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
 import Alert from "react-bootstrap/Alert";
-import Table from "react-bootstrap/Table";
 
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-//import ScriptTag from "react-script-tag";
 
 import Navigation from "./Navigation";
 import Dashboard from "./Dashboard";
@@ -16,55 +15,62 @@ import SwitchCycles from "./SwitchCycles";
 import AnalyticsScenes from "./AnalyticsScenes";
 import AnalyticsConnection from "./AnalyticsConnection";
 import AnalyticsKeyboard from "./AnalyticsKeyboard";
+import SystemStability from "./SystemStability";
 import Plot from "./BokehPlot";
 
 import useDataApi, { FetchHackernews } from "./Fetch";
 
 import "./App.css";
 
+function Title(props) {
+    const titleBar = document.getElementById("titlebar-root");
+    return ReactDOM.createPortal(<h2>{props.title}</h2>, titleBar);
+}
+
+function NavPortal() {
+    const titleBar = document.getElementById("navbar-root");
+    return ReactDOM.createPortal(<Navigation />, titleBar);
+}
+
 function AppRouter() {
     return (
         <Router>
-            <Container fluid className="sticky-top" style={{ padding: 0 }}>
-                <Navigation />
-                <Container fluid className="border-bottom">
-                    <div id="titlebar" className="row">
-                        <Switch>
-                            <Route path="/about">About</Route>
-                            <Route path="/analytics/scenes">Analytics Scenes</Route>
-                            <Route path="/analytics/connection">Analytics Connection</Route>
-                            <Route path="/analytics/keyboard">Analytics Keyboard</Route>
-                            <Route path="/statistics/switch_cycles">On/Off Cycles</Route>
-                            <Route path="/database_size">Database Size</Route>
-                            <Route path="/">Dashboard</Route>
-                        </Switch>
-                    </div>
-                </Container>
-            </Container>
+            <NavPortal />
             {/* A <Switch> looks through its children <Route>s and
               renders the first one that matches the current URL. */}
             <Container fluid className="p-3">
                 <Switch>
                     <Route path="/about">
+                        <Title title="About" />
                         <About />
                         <FetchHackernews />
                     </Route>
                     <Route path="/analytics/scenes">
+                        <Title title="Analytics Scenes" />
                         <AnalyticsScenes />
                     </Route>
                     <Route path="/analytics/connection">
+                        <Title title="Analytics Connection" />
                         <AnalyticsConnection />
                     </Route>
                     <Route path="/analytics/Keyboard">
+                        <Title title="Analytics Keyboard" />
                         <AnalyticsKeyboard />
                     </Route>
                     <Route path="/statistics/switch_cycles">
-                        <SwitchCycles/>
+                        <Title title="Statistics On/Off Cycles" />
+                        <SwitchCycles />
+                    </Route>
+                    <Route path="/system/stability">
+                        <Title title="System Stability" />
+                        <SystemStability />
                     </Route>
                     <Route path="/database_size">
+                        <Title title="Database Size" />
                         <Plot src="/backend/plot_database_size" />
                     </Route>
                     <Route path="/">
+                        <Title title="Dashboard" />
                         <Dashboard />
                     </Route>
                 </Switch>

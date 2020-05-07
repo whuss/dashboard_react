@@ -45,6 +45,7 @@ const useDataApi = (initialUrl, initialData) => {
                 const result = await axios(url);
 
                 if (!didCancel) {
+                    console.log(result.data);
                     dispatch({ type: "FETCH_SUCCESS", payload: result.data });
                 }
             } catch (error) {
