@@ -64,3 +64,104 @@
         rgba(68, 54, 54, 0.85),
         rgba(141, 123, 123, 0.85) 75%);
 }
+
+.error-table {
+    background-color: white;
+    font-size: 12px;
+    width:100%;
+}
+
+.error-table i {
+    margin: auto;
+    height: 25px;
+    width: 25px;
+    vertical-align: middle;
+    line-height: 25px;
+    border-radius: 5px;
+    color: white;
+}
+
+.error-table thead {
+    color: #555;
+    background-color: white;
+}
+
+.log-filename {
+    color: #a5a5a5;
+    font-weight: bold;
+}
+
+.TRACE {
+    font-weight: bold;
+    color: #87AFFF;
+}
+
+.DEBUG {
+    font-weight: bold;
+    color: green;
+}
+
+.INFO {
+    font-weight: bold;
+    color: black;
+}
+
+.WATCHDOG_INFO {
+    font-weight: bold;
+    color: #0f66ff;
+}
+
+
+.WARNING {
+    font-weight: bold;
+    color: orange;
+}
+
+.ERROR {
+    font-weight: bold;
+    color: red;
+}
+
+.CRITICAL {
+    font-weight: bold;
+    color: #AF0000;
+}
+
+.NORM {
+    background-color: #d5d5d5;
+}
+
+.FULL {
+    background-color: #b3d67e;
+}
+
+.NORM:hover {
+    background-color: #a5a5a5;
+}
+
+.FULL:hover {
+    background-color: #88b04b;
+}
+
+.ON {
+    background-color: #b3d67e;
+}
+
+.OFF {
+    background-color: #d5d5d5;
+}
+
+.HEALTHY {
+    color: white;
+    background-color: #b3d67e;
+}
+
+.IN_TROUBLE {
+    color: white;
+    background-color: #ff8d00;
+}
+
+.SICK {
+    color: white;
+    background-color: #fb6671;
+}

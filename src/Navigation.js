@@ -36,6 +36,7 @@ function Navigation() {
                     </NavDropdown>
                     <NavDropdown title="System" id="basic-nav-dropdown">
                         <NavDropLink to="/system/stability" name="Stability"/>
+                        <NavDropLink to="/system/restarts" name="Restarts"/>
                     </NavDropdown>
                     <NavDropdown title="Database" id="basic-nav-dropdown">
                         <NavDropLink to="/database_size" name="Size"/>

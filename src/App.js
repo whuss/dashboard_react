@@ -16,6 +16,7 @@ import AnalyticsScenes from "./AnalyticsScenes";
 import AnalyticsConnection from "./AnalyticsConnection";
 import AnalyticsKeyboard from "./AnalyticsKeyboard";
 import SystemStability from "./SystemStability";
+import SystemRestarts from "./SystemRestarts";
 import Plot from "./BokehPlot";
 
 import useDataApi, { FetchHackernews } from "./Fetch";
@@ -67,6 +68,9 @@ function AppRouter() {
                     </NavRoute>
                     <NavRoute path="/system/stability" title="System Stability">
                         <SystemStability />
+                    </NavRoute>
+                    <NavRoute path="/system/restarts" title="System Restarts">
+                        <SystemRestarts/>
                     </NavRoute>
                     <NavRoute path="/database_size" title="Database Size">
                         <Plot src="/backend/plot_database_size" />
