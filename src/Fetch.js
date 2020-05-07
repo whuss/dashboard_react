@@ -64,7 +64,7 @@ const useDataApi = (initialUrl, initialData) => {
     return [state, setUrl];
 };
 
-function Fetch() {
+function FetchHackernews() {
     const [{ data, isLoading, isError }, doFetch] = useDataApi("https://hn.algolia.com/api/v1/search?query=redux", {
         hits: [],
     });
@@ -91,4 +91,4 @@ function Fetch() {
 }
 
 export default useDataApi;
-export {Fetch};
+export {FetchHackernews};
