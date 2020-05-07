@@ -34,8 +34,6 @@ function AppRouter() {
                             <Route path="/analytics/scenes">Analytics Scenes</Route>
                             <Route path="/analytics/connection">Analytics Connection</Route>
                             <Route path="/analytics/keyboard">Analytics Keyboard</Route>
-                            <Route path="/users">Users</Route>
-                            <Route path="/plot">Plot</Route>
                             <Route path="/statistics/switch_cycles">On/Off Cycles</Route>
                             <Route path="/database_size">Database Size</Route>
                             <Route path="/">Dashboard</Route>
@@ -60,14 +58,6 @@ function AppRouter() {
                     <Route path="/analytics/Keyboard">
                         <AnalyticsKeyboard />
                     </Route>
-                    <Route path="/users">
-                        <Users />
-                        <Plot src="/backend/test_plot_html" />
-                    </Route>
-                    <Route path="/plot">
-                        <Plot src="/backend/test_plot_html" />
-                        <Plot src="/backend/plot_database_size" />
-                    </Route>
                     <Route path="/statistics/switch_cycles">
                         <SwitchCycles/>
                     </Route>
@@ -80,40 +70,6 @@ function AppRouter() {
                 </Switch>
             </Container>
         </Router>
-    );
-}
-
-function ExTable() {
-    return (
-        <Table className={"dataTable"} hover>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>First Name</th>
-                    <th>Last Name</th>
-                    <th>Username</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>Mark</td>
-                    <td>Otto</td>
-                    <td>@mdo</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Jacob</td>
-                    <td>Thornton</td>
-                    <td>@fat</td>
-                </tr>
-                <tr>
-                    <td>3</td>
-                    <td colSpan="2">Larry the Bird</td>
-                    <td>@twitter</td>
-                </tr>
-            </tbody>
-        </Table>
     );
 }
 
@@ -158,8 +114,6 @@ function About() {
         </Jumbotron>
     );
 }
-
-const Users = () => <div>There are no users!</div>;
 
 const App = () => <AppRouter />;
 
