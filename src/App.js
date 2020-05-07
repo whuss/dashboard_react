@@ -12,6 +12,7 @@ import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
 import Navigation from "./Navigation";
 import Dashboard from "./Dashboard";
+import SwitchCycles from "./SwitchCycles";
 import { Plot, PlotDevice } from "./BokehPlot";
 
 import useDataApi, { FetchHackernews } from "./Fetch";
@@ -144,54 +145,6 @@ function About() {
 }
 
 const Users = () => <div>There are no users!</div>;
-
-function SwitchCycles() {
-    const [error, setError] = useState(null);
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [devices, setDevices] = useState([]);
-
-    useEffect(() => {
-        fetch("/backend/devices")
-            .then((res) => res.json())
-            .then(
-                (result) => {
-                    setIsLoaded(true);
-                    setDevices(result);
-                },
-                (error) => {
-                    setIsLoaded(true);
-                    setError(error);
-                }
-            );
-    }, []);
-
-    if (error) {
-        return <div>Error: {error.message}</div>;
-    } else if (!isLoaded) {
-        return <div>Loading ...</div>;
-    } else {
-        return (
-            <Table className={"dataTable"} hover>
-                <thead>
-                    <tr>
-                        <th>Device ID</th>
-                        <th>Cycles</th>
-                        <th>Download</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {devices.map((device) => (
-                        <tr key={device}>
-                            <th>{device}</th>
-                            <td><PlotDevice src={"/backend/plot_switch_cycle"} device={device}/></td>
-                            <td><Button>Download</Button></td>
-                        </tr>
-                    ))}
-                </tbody>
-            </Table>
-        );
-    }
-}
 
 const App = () => <AppRouter />;
 
