@@ -13,7 +13,7 @@ import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Navigation from "./Navigation";
 import { Plot, PlotDevice } from "./BokehPlot";
 
-import Fetch from "./Fetch";
+import useDataApi, { Fetch } from "./Fetch";
 
 import "./App.css";
 
@@ -134,8 +134,41 @@ const ExampleToast = ({ children }) => {
 
 const App = () => <AppRouter />;
 
-function Dashboard() {
+function DashboardOld() {
     return <ExTable />;
+}
+
+function Dashboard() {
+    const [{ data, isLoading, isError }, doFetch] = useDataApi("/backend/devices", []);
+
+    return (
+        <>
+            {isError && <div>Something went wrong ...</div>}
+
+            {isLoading ? (
+                <div>Loading ...</div>
+            ) : (
+                <Table className={"dataTable"} hover>
+                <thead>
+                    <tr>
+                        <th>Device</th>
+                        <th>Device Mode</th>
+                        <th>Last Connection</th>
+                        <th colSpan={2}>Health Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {data.map((device) => (
+                        <tr key={device}>
+                            <th>{device}</th>
+                            <DeviceState device_id={device} />
+                        </tr>
+                    ))}
+                </tbody>
+            </Table>
+            )}
+        </>
+    );
 }
 
 function About() {
