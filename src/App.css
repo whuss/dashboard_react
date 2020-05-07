@@ -44,3 +44,17 @@
     padding: 10px;
     z-index: -1;
 }
+
+.dataTable th {
+    text-align: center;
+}
+
+.dataTable td {
+    text-align: center;
+}
+
+.dataTable thead {
+    background-color: #343a40;
+    border-color: #454d55;
+    color: white;
+}

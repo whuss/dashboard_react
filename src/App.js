@@ -82,7 +82,7 @@ function AppRouter() {
             </Container>
             {/* A <Switch> looks through its children <Route>s and
               renders the first one that matches the current URL. */}
-            <Container className="p-3">
+            <Container fluid className="p-3">
                 <Switch>
                     <Route path="/about">
                         <About />
@@ -214,7 +214,7 @@ function Plot(props) {
 
 function ExTable() {
     return (
-        <Table striped bordered hover>
+        <Table className={"dataTable"} hover>
             <thead>
                 <tr>
                     <th>#</th>
@@ -336,8 +336,115 @@ function DeviceState(props) {
     }
 }
 
+function PlotSwitchCycle(props) {
+    const instance = useRef(null);
+
+    const [error, setError] = useState(null);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [plot, setPlot] = useState(null);
+
+    useEffect(() => {
+        const url = props.src + "/" + props.device;
+        console.log("Plot: fetch url: ", url);
+        fetch(url)
+            .then((res) => res.json())
+            .then(
+                (result) => {
+                    setIsLoaded(true);
+                    setPlot(result);
+                },
+                (error) => {
+                    setIsLoaded(true);
+                    setError(error);
+                }
+            );
+
+        return () => {
+            setPlot(null);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (plot)
+        {
+            console.log("Plot: fully loaded: ", plot);
+            const scriptTag = document.createElement("script");
+            scriptTag.text = plot.script;
+            instance.current.appendChild(scriptTag);
+        }
+        else
+        {
+            console.log("Plot: deleted: ", props.src);
+        }
+    }, [plot]);
+
+    useEffect(() => {
+        console.log("Plot: src changed: ", props.src);
+    }, [props.src]);
+
+    if (error) {
+        return <div>Error: {error.message}</div>;
+    } else if (!isLoaded) {
+        return <div>Loading ...</div>;
+    } else if (plot) {
+        return (
+            <>
+                {/* <ScriptTag type="text/javascript">{plot.script}</ScriptTag> */}
+                <div className={plot.class} id={plot.id} data-root-id={plot.data_root_id}></div>
+                <div ref={instance} />
+            </>
+        );
+    } else {
+        return <div>Plot is null</div>;
+    }
+}
+
 function SwitchCycles() {
-    return <b>TODO</b>
+    const [error, setError] = useState(null);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [devices, setDevices] = useState([]);
+
+    useEffect(() => {
+        fetch("/backend/devices")
+            .then((res) => res.json())
+            .then(
+                (result) => {
+                    setIsLoaded(true);
+                    setDevices(result);
+                },
+                (error) => {
+                    setIsLoaded(true);
+                    setError(error);
+                }
+            );
+    }, []);
+
+    if (error) {
+        return <div>Error: {error.message}</div>;
+    } else if (!isLoaded) {
+        return <div>Loading ...</div>;
+    } else {
+        return (
+            <Table className={"dataTable"} hover>
+                <thead>
+                    <tr>
+                        <th>Device ID</th>
+                        <th>Cycles</th>
+                        <th>Download</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {devices.map((device) => (
+                        <tr key={device}>
+                            <th>{device}</th>
+                            <td><PlotSwitchCycle src={"/backend/plot_switch_cycle"} device={device}/></td>
+                            <td><Button>Download</Button></td>
+                        </tr>
+                    ))}
+                </tbody>
+            </Table>
+        );
+    }
 }
 
 function Devices() {
@@ -366,27 +473,24 @@ function Devices() {
         return <div>Loading ...</div>;
     } else {
         return (
-            <React.Fragment>
-                <h2>Devices</h2>
-                <Table striped bordered hover>
-                    <thead>
-                        <tr>
-                            <th>Device</th>
-                            <th>Device Mode</th>
-                            <th>Last Connection</th>
-                            <th colSpan={2}>Health Status</th>
+            <Table className={"dataTable"} hover>
+                <thead>
+                    <tr>
+                        <th>Device</th>
+                        <th>Device Mode</th>
+                        <th>Last Connection</th>
+                        <th colSpan={2}>Health Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {devices.map((device) => (
+                        <tr key={device}>
+                            <th>{device}</th>
+                            <DeviceState device_id={device} />
                         </tr>
-                    </thead>
-                    <tbody>
-                        {devices.map((device) => (
-                            <tr key={device}>
-                                <td>{device}</td>
-                                <DeviceState device_id={device} />
-                            </tr>
-                        ))}
-                    </tbody>
-                </Table>
-            </React.Fragment>
+                    ))}
+                </tbody>
+            </Table>
         );
     }
 }
