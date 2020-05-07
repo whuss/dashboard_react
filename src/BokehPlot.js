@@ -8,13 +8,9 @@ function Plot(props) {
     const [{ data, isLoading, isError }, doFetch] = useDataApi(props.src, {});
 
     useEffect(() => {
-        if (data) {
-            const scriptTag = document.createElement("script");
-            scriptTag.text = data.script;
-            instance.current.appendChild(scriptTag);
-        } else {
-            console.log("Plot: deleted: ", props.src);
-        }
+        const scriptTag = document.createElement("script");
+        scriptTag.text = data.script;
+        instance.current.appendChild(scriptTag);
 
         return () => {
             if (instance.current) {
