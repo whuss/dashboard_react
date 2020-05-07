@@ -13,6 +13,7 @@ import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Navigation from "./Navigation";
 import Dashboard from "./Dashboard";
 import SwitchCycles from "./SwitchCycles";
+import AnalyticsScenes from "./AnalyticsScenes";
 import { Plot, PlotDevice } from "./BokehPlot";
 
 import useDataApi, { FetchHackernews } from "./Fetch";
@@ -28,6 +29,7 @@ function AppRouter() {
                     <div id="titlebar" className="row">
                         <Switch>
                             <Route path="/about">About</Route>
+                            <Route path="/analytics/scenes">Analytics Scenes</Route>
                             <Route path="/users">Users</Route>
                             <Route path="/plot">Plot</Route>
                             <Route path="/statistics/switch_cycles">On/Off Cycles</Route>
@@ -44,6 +46,9 @@ function AppRouter() {
                     <Route path="/about">
                         <About />
                         <FetchHackernews />
+                    </Route>
+                    <Route path="/analytics/scenes">
+                        <AnalyticsScenes />
                     </Route>
                     <Route path="/users">
                         <Users />

@@ -19,6 +19,11 @@ function Navigation() {
                     <LinkContainer to="/">
                         <Nav.Link>Dashboard</Nav.Link>
                     </LinkContainer>
+                    <NavDropdown title="Analytics" id="basic-nav-dropdown">
+                        <LinkContainer to="/analytics/scenes">
+                            <NavDropdown.Item>Scenes</NavDropdown.Item>
+                        </LinkContainer>
+                    </NavDropdown>
                     <LinkContainer to="/about">
                         <Nav.Link>About</Nav.Link>
                     </LinkContainer>
