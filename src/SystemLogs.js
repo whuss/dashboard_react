@@ -1,18 +1,13 @@
-import React, { Component, useState, useEffect, useRef } from "react";
-import ReactDOM from "react-dom";
+import React, { useState, useEffect } from "react";
 
-import { BrowserRouter as Router, Switch, Route, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
-import Container from "react-bootstrap/Container";
-import ButtonToolbar from "react-bootstrap/ButtonToolbar";
 import ButtonGroup from "react-bootstrap/ButtonGroup";
 import Dropdown from "react-bootstrap/Dropdown";
 import DropdownButton from "react-bootstrap/DropdownButton";
-import Button from "react-bootstrap/Button";
-import InputGroup from "react-bootstrap/InputGroup";
-import FormControl from "react-bootstrap/FormControl";
 
 import useDataApi from "./Fetch";
+import Toolbar, { useDevice, useTimestamp } from "./Toolbar";
 
 function useLog(url) {
     const [{ data, isLoading, isError }, doFetch] = useDataApi(url, []);
@@ -47,33 +42,6 @@ function logUrl(device, duration, log_level, timestamp) {
     return baseUrl;
 }
 
-function useDevice(device) {
-    const [_device, setDevice] = useState(device);
-    const [{ data, isLoading, isError }, doFetch] = useDataApi("/backend/devices", []);
-
-    const deviceDropdown = (data) => (
-        <>
-            {data.map((_device) => (
-                <Dropdown.Item key={_device} href={`#${_device}`} onSelect={() => setDevice(_device)}>
-                    {_device}
-                </Dropdown.Item>
-            ))}
-        </>
-    );
-
-    const devicePicker = (
-        <ButtonGroup>
-            <span className="label">Device:</span>
-            <DropdownButton id="dropdown-basic-button" variant="light" title={_device}>
-                {isError && <Dropdown.Item>Something went wrong ...</Dropdown.Item>}
-                {isLoading ? <Dropdown.Item>Loading...</Dropdown.Item> : deviceDropdown(data)}
-            </DropdownButton>
-        </ButtonGroup>
-    );
-
-    return [_device, devicePicker];
-}
-
 function useLogLevel(level) {
     const [log_level, setLogLevel] = useState(level);
     const log_levels = ["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"];
@@ -93,27 +61,6 @@ function useLogLevel(level) {
     );
 
     return [log_level, logLevelPicker];
-}
-
-function useTimestamp(_timestamp) {
-    const [timestamp, setTimestamp] = useState(_timestamp);
-    const datetimeSelector = (
-        <ButtonGroup>
-            <ButtonGroup>
-                <span className="label">At&nbsp;time:</span>
-                <InputGroup className="mb-2">
-                    <FormControl defaultValue={timestamp} onChange={(e) => setTimestamp(e.target.value)} />
-                    <InputGroup.Append>
-                        <InputGroup.Text id="basic-addon2">
-                            <i className="fa fa-calendar" aria-hidden="true"></i>
-                        </InputGroup.Text>
-                    </InputGroup.Append>
-                </InputGroup>
-            </ButtonGroup>
-        </ButtonGroup>
-    );
-
-    return [timestamp, datetimeSelector];
 }
 
 function useDuration(_duration) {
@@ -145,23 +92,18 @@ function useLogToolbar(_device, _duration, _log_level, _timestamp) {
     const [duration, setDuration] = useDuration(_duration);
 
     const logToolbar = (
-        <Container id="toolbar">
+        <>
             {setDevice}
             {setLogLevel}
             {setTimestamp}
             {setDuration}
-        </Container>
+        </>
     );
 
     return [{ device, log_level, timestamp, duration }, logToolbar];
 }
 
-function Toolbar(props) {
-    const toolBar = document.getElementById("toolbar-root");
-    return ReactDOM.createPortal(props.children, toolBar);
-}
-
-function SystemLogs(props) {
+function SystemLogs() {
     let params = useParams();
 
     const [{ device, log_level, timestamp, duration }, logToolbar] = useLogToolbar(
