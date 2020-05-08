@@ -5,6 +5,7 @@ import numpy as np
 from typing import Optional
 
 from flask import Flask, render_template, jsonify, request, url_for, json, make_response
+from flask_caching import Cache
 from flask_cors import cross_origin
 import dateutil.parser
 
@@ -82,6 +83,9 @@ def create_app():
     # app.config['BASIC_AUTH_USERNAME'] = "ReproLight"
     # app.config['BASIC_AUTH_PASSWORD'] = "infinity"
     # app.config['BASIC_AUTH_FORCE'] = True
+    app.config['CACHE_TYPE'] = "simple"
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 300
+    app.config['CACHE_THRESHOLD'] = 200
     db.init_app(app)
 
     # basic_auth = BasicAuth(app)
@@ -92,6 +96,7 @@ def create_app():
 
 
 app = create_app()
+cache = Cache(app)
 app.app_context().push()
 db.Model.metadata.reflect(bind=db.engine)
 
@@ -1290,6 +1295,7 @@ def clustering_input_distribution(normalize: str = "raw"):
 
 
 @app.route('/backend/devices')
+@cache.cached()
 def backend_devices():
     return jsonify(get_devices())
 
@@ -1297,6 +1303,7 @@ def backend_devices():
 
 
 @app.route('/backend/device_state/<device>')
+@cache.cached(timeout=60)
 def backend_device_state(device: str):
     data = Dashboard.info(device)
 
@@ -1346,6 +1353,7 @@ def reactify_bokeh(plot):
 
 
 @app.route('/backend/plot_database_size')
+@cache.cached()
 def backend_plot_database_size():
     ajax = PlotDatabaseSize(plot_parameters=dict())
     data = ajax.fetch_data()
