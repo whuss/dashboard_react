@@ -92,9 +92,9 @@ function useLogLevel(level) {
     return [log_level, logLevelPicker];
 }
 
-function DateTimeInput(props) {
-    const [timestamp, setTimestamp] = useState(props.timestamp);
-    return (
+function useTimestamp(_timestamp) {
+    const [timestamp, setTimestamp] = useState(_timestamp);
+    const datetimeSelector = (
         <ButtonGroup>
             <ButtonGroup>
                 <span className="label">At&nbsp;time:</span>
@@ -109,6 +109,8 @@ function DateTimeInput(props) {
             </ButtonGroup>
         </ButtonGroup>
     );
+
+    return [timestamp, datetimeSelector];
 }
 
 function useDuration(_duration) {
@@ -149,10 +151,9 @@ function Toolbar(props) {
 function SystemLogs() {
     let { device, duration, log_level, timestamp } = useParams();
 
-    const [_timestamp, setTimestamp] = useState(timestamp);
-
-    const [_log_level, setLogLevel] = useLogLevel(log_level);
     const [_device, setDevice] = useDevice(device);
+    const [_log_level, setLogLevel] = useLogLevel(log_level);
+    const [_timestamp, setTimestamp] = useTimestamp(timestamp);
     const [_duration, setDuration] = useDuration(duration);
 
     const url = logUrl(_device, _duration, _log_level, _timestamp);
@@ -165,7 +166,7 @@ function SystemLogs() {
                     <ButtonToolbar>
                         {setDevice}
                         {setLogLevel}
-                        <DateTimeInput timestamp={_timestamp} />
+                        {setTimestamp}
                         {setDuration}
                     </ButtonToolbar>
                 </Container>
