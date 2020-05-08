@@ -14,6 +14,7 @@ import { BrowserRouter as Router, Switch, Route, useParams} from "react-router-d
 import Navigation from "./Navigation";
 import Dashboard from "./Dashboard";
 import SwitchCycles from "./SwitchCycles";
+import AnalyticsSensor from "./AnalyticsSensor";
 import AnalyticsScenes from "./AnalyticsScenes";
 import AnalyticsConnection from "./AnalyticsConnection";
 import AnalyticsKeyboard from "./AnalyticsKeyboard";
@@ -57,6 +58,11 @@ function AppRouter() {
                     <NavRoute path="/about" title="About">
                         <About />
                         <FetchHackernews />
+                    </NavRoute>
+                    <NavRoute path={["/analytics/sensor/:device/:sensor/:sample_rate/:start_date/:end_date",
+                                     "/analytics/sensor"]}
+                              title="Analytics Sensor">
+                        <AnalyticsSensor />
                     </NavRoute>
                     <NavRoute path="/analytics/scenes" title="Analytics Scenes">
                         <AnalyticsScenes />

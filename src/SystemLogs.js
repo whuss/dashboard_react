@@ -2,12 +2,8 @@ import React, { useState, useEffect } from "react";
 
 import { useParams } from "react-router-dom";
 
-import ButtonGroup from "react-bootstrap/ButtonGroup";
-import Dropdown from "react-bootstrap/Dropdown";
-import DropdownButton from "react-bootstrap/DropdownButton";
-
 import useDataApi from "./Fetch";
-import Toolbar, { useDevice, useTimestamp } from "./Toolbar";
+import Toolbar, { useDropdown, useDevice, useTimestamp } from "./Toolbar";
 
 function useLog(url) {
     const [{ data, isLoading, isError }, doFetch] = useDataApi(url, []);
@@ -42,54 +38,19 @@ function logUrl(device, duration, log_level, timestamp) {
     return baseUrl;
 }
 
-function useLogLevel(level) {
-    const [log_level, setLogLevel] = useState(level);
-    const log_levels = ["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"];
-
-    const log_span = (level) => <span className={level}>{level}</span>;
-    const logLevelPicker = (
-        <ButtonGroup>
-            <span className="label">Logging&nbsp;level:</span>
-            <DropdownButton id="dropdown-basic-button" variant="light" title={log_span(log_level)}>
-                {log_levels.map((level) => (
-                    <Dropdown.Item key={level} onSelect={() => setLogLevel(level)}>
-                        {log_span(level)}
-                    </Dropdown.Item>
-                ))}
-            </DropdownButton>
-        </ButtonGroup>
-    );
-
-    return [log_level, logLevelPicker];
-}
-
-function useDuration(_duration) {
-    const [duration, setDuration] = useState(_duration);
-    const durations = [1, 5, 10, 30];
-
-    const durationSpan = (duration) => <span>{duration} Minutes</span>;
-
-    const durationPicker = (
-        <ButtonGroup>
-            <span className="label">Duration:</span>
-            <DropdownButton id="dropdown-basic-button" variant="light" title={durationSpan(duration)}>
-                {durations.map((duration) => (
-                    <Dropdown.Item key={duration} onSelect={() => setDuration(duration)}>
-                        {durationSpan(duration)}
-                    </Dropdown.Item>
-                ))}
-            </DropdownButton>
-        </ButtonGroup>
-    );
-
-    return [duration, durationPicker];
-}
-
 function useLogToolbar(_device, _duration, _log_level, _timestamp) {
-    const [device, setDevice] = useDevice(_device);
-    const [log_level, setLogLevel] = useLogLevel(_log_level);
+    const [device, setDevice] = useDevice(_device, false);
+    const [log_level, setLogLevel] = useDropdown(_log_level, {
+        label: "Logging level",
+        values: ["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        format: (level) => <span className={level}>{level}</span>,
+    });
     const [timestamp, setTimestamp] = useTimestamp(_timestamp);
-    const [duration, setDuration] = useDuration(_duration);
+    const [duration, setDuration] = useDropdown(_duration, {
+        label: "Duration",
+        values: [1, 5, 10, 30],
+        format: (duration) => <span>{duration} Minutes</span>
+    });
 
     const logToolbar = (
         <>

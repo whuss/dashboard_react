@@ -26,6 +26,8 @@ function Navigation() {
                 <Nav className="mr-auto">
                 <NavLink to="/" name="Dashboard" />
                     <NavDropdown title="Analytics" id="basic-nav-dropdown">
+                        <NavDropLink to="/analytics/sensor" name="Sensor"/>
+                        <NavDropdown.Divider />
                         <NavDropLink to="/analytics/scenes" name="Scenes"/>
                         <NavDropLink to="/analytics/connection" name="Connection"/>
                         <NavDropdown.Divider />

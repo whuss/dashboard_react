@@ -10,14 +10,14 @@ import FormControl from "react-bootstrap/FormControl";
 
 import useDataApi from "./Fetch";
 
-function useDevice(device) {
+function useDeviceOld(device) {
     const [_device, setDevice] = useState(device);
     const [{ data, isLoading, isError }] = useDataApi("/backend/devices", []);
 
     const deviceDropdown = (data) => (
         <>
             {data.map((_device) => (
-                <Dropdown.Item key={_device} href={`#${_device}`} onSelect={() => setDevice(_device)}>
+                <Dropdown.Item key={_device} onSelect={() => setDevice(_device)}>
                     {_device}
                 </Dropdown.Item>
             ))}
@@ -35,6 +35,42 @@ function useDevice(device) {
     );
 
     return [_device, devicePicker];
+}
+
+function useDropdown(initialValue, config) {
+    let { values, label, format } = config;
+
+    if (!format) {
+        format = (value) => value;
+    }
+
+    const [value, setValue] = useState(initialValue);
+
+    const dropdown = (
+        <ButtonGroup>
+            {label && <span className="label">{label}:</span>}
+            <DropdownButton id="dropdown-basic-button" variant="light" title={format(value)}>
+                {values.map((v) => (
+                    <Dropdown.Item key={v} onSelect={() => setValue(v)}>
+                        {format(v)}
+                    </Dropdown.Item>
+                ))}
+            </DropdownButton>
+        </ButtonGroup>
+    );
+
+    return [value, dropdown];
+}
+
+function useDevice(device, all) {
+    const [{ data, isLoading, isError }] = useDataApi("/backend/devices", []);
+
+    const devices = all ? ["ALL"].concat(data) : data;
+
+    return useDropdown(device, {
+        values: devices,
+        label: "Device",
+    });
 }
 
 function useTimestamp(_timestamp) {
@@ -67,4 +103,4 @@ function Toolbar(props) {
 }
 
 export default Toolbar;
-export { useDevice, useTimestamp };
+export { useDropdown, useDevice, useTimestamp };
