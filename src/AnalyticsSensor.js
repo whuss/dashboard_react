@@ -10,24 +10,22 @@ import Button from "react-bootstrap/Button";
 
 import Plot from "./BokehPlot";
 
-function table(data) {
+function table(devices, sensor, sample_rate, start_date, end_date) {
     return (
         <Table className={"dataTable"} hover>
             <thead>
                 <tr>
                     <th>Device ID</th>
-                    <th>Total errors</th>
-                    <th>Error locations</th>
+                    <th>Time series</th>
                     <th>Download</th>
                 </tr>
             </thead>
             <tbody>
-                {data.map((device) => (
+                {devices.map((device) => (
                     <tr key={device}>
                         <th>{device}</th>
-                        <td></td>
                         <td>
-                            <Plot src={sensorUrl(device)} />
+                            <Plot src={sensorUrl(device, sensor, sample_rate, start_date, end_date)} />
                         </td>
                         <td>
                             <Button>Download</Button>
@@ -39,21 +37,6 @@ function table(data) {
     );
 }
 
-function useTimeseries(url) {
-    const [{ data, isLoading, isError }, doFetch] = useDataApi(url, []);
-
-    useEffect(() => {
-        doFetch(url);
-    });
-
-    return (
-        <>
-            {isError && <div>Something went wrong ...</div>}
-            {isLoading ? <div>Loading ...</div> : <pre dangerouslySetInnerHTML={{ __html: data.log_text }} />}
-        </>
-    );
-}
-
 function sensorUrl(device, sensor, sample_rate, start_date, end_date) {
     const baseUrl = "/backend/plot_sensor";
 
@@ -62,7 +45,7 @@ function sensorUrl(device, sensor, sample_rate, start_date, end_date) {
 
 function useSensorToolbar(_device, _sensor, _sample_rate, _start_date, _end_date) {
     if (!_device) {
-        _device = "ALL";
+        _device = "PTL_RD_AT_001";
     }
     if (!_sensor) {
         _sensor = "temperature";
@@ -115,8 +98,6 @@ function AnalyticsSensor() {
 
     const [url, setUrl] = useState(sensorUrl(device, sensor, sample_rate, start_date, end_date));
 
-    const timeseries = useTimeseries(url);
-
     useEffect(() => {
         const newUrl = sensorUrl(device, sensor, sample_rate, start_date, end_date);
         setUrl(newUrl);
@@ -127,7 +108,7 @@ function AnalyticsSensor() {
         <>
             <Toolbar>{tools}</Toolbar>
             <span>{url}</span>
-            {timeseries}
+            {table([device], sensor, sample_rate, start_date, end_date)}
         </>
     );
 }
