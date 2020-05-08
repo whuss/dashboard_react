@@ -9,7 +9,6 @@ import ButtonGroup from "react-bootstrap/ButtonGroup";
 import Dropdown from "react-bootstrap/Dropdown";
 import DropdownButton from "react-bootstrap/DropdownButton";
 import Button from "react-bootstrap/Button";
-import { DateTime } from "react-datetime-bootstrap";
 import InputGroup from "react-bootstrap/InputGroup";
 import FormControl from "react-bootstrap/FormControl";
 
@@ -47,13 +46,14 @@ function logUrl(params) {
 }
 
 function DevicePicker(props) {
+    const [device, setDevice] = useState(props.device);
     const [{ data, isLoading, isError }, doFetch] = useDataApi("/backend/devices", []);
 
     const deviceDropdown = (data) => (
         <>
-            {data.map((device) => (
-                <Dropdown.Item key={device} href={`#${device}`}>
-                    {device}
+            {data.map((_device) => (
+                <Dropdown.Item key={_device} href={`#${_device}`} onSelect={() => setDevice(_device)}>
+                    {_device}
                 </Dropdown.Item>
             ))}
         </>
@@ -62,7 +62,7 @@ function DevicePicker(props) {
     return (
         <ButtonGroup>
             <span className="label">Device:</span>
-            <DropdownButton id="dropdown-basic-button" variant="light" title={props.device}>
+            <DropdownButton id="dropdown-basic-button" variant="light" title={device}>
                 {isError && <Dropdown.Item>Something went wrong ...</Dropdown.Item>}
                 {isLoading ? <Dropdown.Item>Loading...</Dropdown.Item> : deviceDropdown(data)}
             </DropdownButton>
@@ -71,6 +71,7 @@ function DevicePicker(props) {
 }
 
 function LogLevelPicker(props) {
+    const [log_level, setLogLevel] = useState(props.log_level);
     const log_levels = ["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"];
 
     const log_span = (level) => <span className={level}>{level}</span>;
@@ -78,9 +79,9 @@ function LogLevelPicker(props) {
     return (
         <ButtonGroup>
             <span className="label">Logging&nbsp;level:</span>
-            <DropdownButton id="dropdown-basic-button" variant="light" title={log_span(props.log_level)}>
+            <DropdownButton id="dropdown-basic-button" variant="light" title={log_span(log_level)}>
                 {log_levels.map((level) => (
-                    <Dropdown.Item key={level}>{log_span(level)}</Dropdown.Item>
+                    <Dropdown.Item key={level} onSelect={() => setLogLevel(level)}>{log_span(level)}</Dropdown.Item>
                 ))}
             </DropdownButton>
         </ButtonGroup>
@@ -118,15 +119,14 @@ function DurationPicker(props) {
     );
 }
 
-function LogToolbar() {
-    let { device, duration, log_level, timestamp } = useParams();
+function LogToolbar(props) {
     return (
         <Container id="toolbar">
             <ButtonToolbar>
-                <DevicePicker device={device} />
-                <LogLevelPicker log_level={log_level} />
-                <DateTimeInput timestamp={timestamp} />
-                <DurationPicker duration={duration} />
+                <DevicePicker device={props.device} />
+                <LogLevelPicker log_level={props.log_level} />
+                <DateTimeInput timestamp={props.timestamp} />
+                <DurationPicker duration={props.duration} />
             </ButtonToolbar>
         </Container>
     );
@@ -142,16 +142,21 @@ function SystemLogs() {
 
     const url = logUrl(useParams());
 
+    const [_device, setDevice] = useState(device);
+    const [_duration, setDuration] = useState(duration);
+    const [_log_level, setLogLevel] = useState(log_level);
+    const [_timestamp, setTimestamp] = useState(timestamp);
+
     return (
         <>
             <Toolbar>
-                <LogToolbar />
+                <LogToolbar device={_device} duration={_duration} log_level={_log_level} timestamp={_timestamp}/>
             </Toolbar>
             <ul>
-                <li>device: {device}</li>
-                <li>duration: {duration}</li>
-                <li>level: {log_level}</li>
-                <li>timestamp: {timestamp}</li>
+                <li>device: {_device}</li>
+                <li>duration: {_duration}</li>
+                <li>level: {_log_level}</li>
+                <li>timestamp: {_timestamp}</li>
             </ul>
             <span>{url}</span>
             <div>Logs</div>
