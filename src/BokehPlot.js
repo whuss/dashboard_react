@@ -9,16 +9,21 @@ function Plot(props) {
 
     useEffect(() => {
         const scriptTag = document.createElement("script");
+        const currentElement = instance.current;
         scriptTag.text = data.script;
-        instance.current.appendChild(scriptTag);
+        currentElement.appendChild(scriptTag);
 
         return () => {
-            if (instance.current) {
+            if (currentElement) {
                 // Delete Bokeh script
-                instance.current.innerHtml = "";
+                currentElement.innerHtml = "";
             }
         };
     }, [data]);
+
+    useEffect(() => {
+        doFetch(props.src);
+    }, [doFetch, props.src]);
 
     const addPlot = (plot) => (
         <div align="center" ref={instance}>

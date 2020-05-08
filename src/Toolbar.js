@@ -64,13 +64,29 @@ function useDropdown(initialValue, config) {
 
 function useDevice(device, all) {
     const [{ data, isLoading, isError }] = useDataApi("/backend/devices", []);
+    const devices = data;
 
-    const devices = all ? ["ALL"].concat(data) : data;
+    const values = all ? ["ALL"].concat(devices) : devices;
 
-    return useDropdown(device, {
-        values: devices,
+    const [value, dropdown] = useDropdown(device, {
+        values: values,
         label: "Device",
     });
+
+    if (value === "ALL")
+    {
+        return [devices, dropdown]
+    }
+
+    // TODO: fix ugly api
+    if (all)
+    {
+        return [[value], dropdown];
+    }
+    else
+    {
+        return [value, dropdown];
+    }
 }
 
 function useTimestamp(_timestamp) {

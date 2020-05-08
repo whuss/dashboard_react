@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 
 import { useParams } from "react-router-dom";
 
-import useDataApi from "./Fetch";
 import Toolbar, { useDropdown, useDevice, useTimestamp } from "./Toolbar";
 
 import Table from "react-bootstrap/Table";
@@ -10,7 +9,7 @@ import Button from "react-bootstrap/Button";
 
 import Plot from "./BokehPlot";
 
-function table(devices, sensor, sample_rate, start_date, end_date) {
+function Timeseries(props) {
     return (
         <Table className={"dataTable"} hover>
             <thead>
@@ -21,11 +20,11 @@ function table(devices, sensor, sample_rate, start_date, end_date) {
                 </tr>
             </thead>
             <tbody>
-                {devices.map((device) => (
+                {props.devices.map((device) => (
                     <tr key={device}>
                         <th>{device}</th>
                         <td>
-                            <Plot src={sensorUrl(device, sensor, sample_rate, start_date, end_date)} />
+                            <Plot src={props.deviceUrl(device)} />
                         </td>
                         <td>
                             <Button>Download</Button>
@@ -45,7 +44,7 @@ function sensorUrl(device, sensor, sample_rate, start_date, end_date) {
 
 function useSensorToolbar(_device, _sensor, _sample_rate, _start_date, _end_date) {
     if (!_device) {
-        _device = "PTL_RD_AT_001";
+        _device = "ALL";
     }
     if (!_sensor) {
         _sensor = "temperature";
@@ -54,13 +53,13 @@ function useSensorToolbar(_device, _sensor, _sample_rate, _start_date, _end_date
         _sample_rate = "AUTO";
     }
     if (!_start_date) {
-        _start_date = "2020-05-07";
+        _start_date = "2020-05-07"; // TODO: set current date
     }
     if (!_end_date) {
-        _end_date = "2020-05-08";
+        _end_date = "2020-05-08"; // TODO: set current date
     }
 
-    const [device, setDevice] = useDevice(_device, true);
+    const [devices, setDevice] = useDevice(_device, true);
     const [sensor, setSensor] = useDropdown(_sensor, {
         values: ["ALL", "temperature", "humidity", "pressure", "brightness", "gas", "presence"],
         label: "Sensor",
@@ -82,13 +81,13 @@ function useSensorToolbar(_device, _sensor, _sample_rate, _start_date, _end_date
         </>
     );
 
-    return [{ device, sensor, sample_rate, start_date, end_date }, sensorToolbar];
+    return [{ devices, sensor, sample_rate, start_date, end_date }, sensorToolbar];
 }
 
 function AnalyticsSensor() {
     let params = useParams();
 
-    const [{ device, sensor, sample_rate, start_date, end_date }, tools] = useSensorToolbar(
+    const [{ devices, sensor, sample_rate, start_date, end_date }, tools] = useSensorToolbar(
         params.device,
         params.sensor,
         params.sample_rate,
@@ -96,19 +95,15 @@ function AnalyticsSensor() {
         params.end_date
     );
 
-    const [url, setUrl] = useState(sensorUrl(device, sensor, sample_rate, start_date, end_date));
+    //let url = sensorUrl(devices, sensor, sample_rate, start_date, end_date);
 
-    useEffect(() => {
-        const newUrl = sensorUrl(device, sensor, sample_rate, start_date, end_date);
-        setUrl(newUrl);
-        //props.history.push(newUrl);
-    }, [device, sensor, sample_rate, start_date, end_date]);
+    const deviceUrl = (device) => sensorUrl(device, sensor, sample_rate, start_date, end_date);
 
     return (
         <>
             <Toolbar>{tools}</Toolbar>
-            <span>{url}</span>
-            {table([device], sensor, sample_rate, start_date, end_date)}
+            {/* <span>{url}</span> */}
+            <Timeseries devices={devices} deviceUrl={deviceUrl}/>
         </>
     );
 }
