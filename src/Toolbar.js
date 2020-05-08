@@ -82,31 +82,14 @@ function useDropdown(initialValue, config) {
     return [value, dropdown];
 }
 
-function useDevice(device, all) {
+function useDevice(device) {
     const [{ data, isLoading, isError }] = useDataApi("/backend/devices", []);
     const devices = data;
 
-    const values = all ? ["ALL"].concat(devices) : devices;
-
-    const [value, dropdown] = useDropdown(device, {
-        values: values,
+    return useDropdown(device, {
+        values: devices,
         label: "Device",
     });
-
-    if (value === "ALL")
-    {
-        return [devices, dropdown]
-    }
-
-    // TODO: fix ugly api
-    if (all)
-    {
-        return [[value], dropdown];
-    }
-    else
-    {
-        return [value, dropdown];
-    }
 }
 
 function useTimestamp(_timestamp) {
