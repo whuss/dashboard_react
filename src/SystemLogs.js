@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 
+import Spinner from "react-bootstrap/Spinner";
+
 import { useParams } from "react-router-dom";
 
 import useDataApi from "./Fetch";
@@ -15,7 +17,7 @@ function useLog(url) {
     return (
         <>
             {isError && <div>Something went wrong ...</div>}
-            {isLoading ? <div>Loading ...</div> : <pre dangerouslySetInnerHTML={{ __html: data.log_text }} />}
+            {isLoading ? <Spinner animation="border" size="sm" variant="secondary" /> : <pre dangerouslySetInnerHTML={{ __html: data.log_text }} />}
         </>
     );
 }

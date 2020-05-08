@@ -10,31 +10,29 @@ import FormControl from "react-bootstrap/FormControl";
 
 import useDataApi from "./Fetch";
 
-function useDeviceOld(device) {
-    const [_device, setDevice] = useState(device);
-    const [{ data, isLoading, isError }] = useDataApi("/backend/devices", []);
-
-    const deviceDropdown = (data) => (
-        <>
-            {data.map((_device) => (
-                <Dropdown.Item key={_device} onSelect={() => setDevice(_device)}>
-                    {_device}
-                </Dropdown.Item>
-            ))}
-        </>
-    );
-
-    const devicePicker = (
+function useInput(_value, config) {
+    const { label, prepend, append } = config;
+    const [value, setValue] = useState(_value);
+    const inputField = (
         <ButtonGroup>
-            <span className="label">Device:</span>
-            <DropdownButton id="dropdown-basic-button" variant="light" title={_device}>
-                {isError && <Dropdown.Item>Something went wrong ...</Dropdown.Item>}
-                {isLoading ? <Dropdown.Item>Loading...</Dropdown.Item> : deviceDropdown(data)}
-            </DropdownButton>
+            {label && <span className="label">{label}</span>}
+            <InputGroup className="mb-1">
+                {prepend && (
+                    <InputGroup.Prepend>
+                        <InputGroup.Text>{prepend}</InputGroup.Text>
+                    </InputGroup.Prepend>
+                )}
+                <FormControl defaultValue={value} onChange={(e) => setValue(e.target.value)} />
+                {append && (
+                    <InputGroup.Append>
+                        <InputGroup.Text>{append}</InputGroup.Text>
+                    </InputGroup.Append>
+                )}
+            </InputGroup>
         </ButtonGroup>
     );
 
-    return [_device, devicePicker];
+    return [value, inputField];
 }
 
 function useDropdown(initialValue, config) {
@@ -119,4 +117,4 @@ function Toolbar(props) {
 }
 
 export default Toolbar;
-export { useDropdown, useDevice, useTimestamp };
+export { useInput, useDropdown, useDevice, useTimestamp };

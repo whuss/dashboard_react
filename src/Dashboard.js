@@ -2,12 +2,16 @@ import React from "react";
 
 import Table from "react-bootstrap/Table";
 
+import Spinner from "react-bootstrap/Spinner";
+
 import useDataApi from "./Fetch";
 import DeviceTable from "./DeviceTable";
 
 const loading_row = () => (
     <>
-        <td>Loading ...</td>
+        <td>
+            <Spinner animation="border" size="sm" variant="secondary" />
+        </td>
         <td></td>
         <td></td>
         <td></td>
@@ -16,9 +20,13 @@ const loading_row = () => (
 
 const format_row = (data) => (
     <>
-        <td><div className={`deviceMode ${data.study_mode}`}>{data.study_mode}</div></td>
+        <td>
+            <div className={`deviceMode ${data.study_mode}`}>{data.study_mode}</div>
+        </td>
         <td>{data.offline_duration}</td>
-        <td><i className={'fa fa-heartbeat ' + data.health_status}></i></td>
+        <td>
+            <i className={"fa fa-heartbeat " + data.health_status}></i>
+        </td>
         <td>{data.sick_reason}</td>
     </>
 );
@@ -32,7 +40,7 @@ const DeviceState = (props) => {
             {isLoading ? loading_row() : format_row(data)}
         </>
     );
-}
+};
 
 const table = (data) => (
     <Table className={"dataTable"} hover>

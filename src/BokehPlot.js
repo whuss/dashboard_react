@@ -1,5 +1,7 @@
 import React, { Component, useState, useEffect, useRef } from "react";
 
+import Spinner from "react-bootstrap/Spinner";
+
 import useDataApi from "./Fetch";
 
 function Plot(props) {
@@ -34,7 +36,7 @@ function Plot(props) {
     return (
         <>
             {isError && <div>Something went wrong ...</div>}
-            {isLoading ? <div>Loading ...</div> : addPlot(data)}
+            {isLoading ? <Spinner animation="border" size="sm" variant="secondary" /> : addPlot(data)}
         </>
     );
 }

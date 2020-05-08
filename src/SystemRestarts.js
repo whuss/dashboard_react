@@ -4,6 +4,8 @@ import useDataApi from "./Fetch";
 
 import Table from "react-bootstrap/Table";
 
+import Spinner from "react-bootstrap/Spinner";
+
 import DeviceTable from "./DeviceTable";
 
 function Restarts(props) {
@@ -12,7 +14,7 @@ function Restarts(props) {
     return (
         <>
             {isError && <div>Something went wrong ...</div>}
-            {isLoading ? <div>Loading ...</div> : <div dangerouslySetInnerHTML={{ __html: data.table}}/>}
+            {isLoading ? <Spinner animation="border" size="sm" variant="secondary" /> : <div dangerouslySetInnerHTML={{ __html: data.table}}/>}
         </>
     );
 }
