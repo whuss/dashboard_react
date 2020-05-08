@@ -14,8 +14,12 @@ import FormControl from "react-bootstrap/FormControl";
 
 import useDataApi from "./Fetch";
 
-function FetchLogs(props) {
-    const [{ data, isLoading, isError }, doFetch] = useDataApi(props.url, []);
+function useLog(url) {
+    const [{ data, isLoading, isError }, doFetch] = useDataApi(url, []);
+
+    useEffect(() => {
+        doFetch(url);
+    });
 
     return (
         <>
@@ -42,7 +46,6 @@ function logUrl(device, duration, log_level, timestamp) {
     }
     return baseUrl;
 }
-
 
 function useDevice(device) {
     const [_device, setDevice] = useState(device);
@@ -117,13 +120,15 @@ function useDuration(_duration) {
     const [duration, setDuration] = useState(_duration);
     const durations = [1, 5, 10, 30];
 
+    const durationSpan = (duration) => <span>{duration} Minutes</span>;
+
     const durationPicker = (
         <ButtonGroup>
             <span className="label">Duration:</span>
-            <DropdownButton id="dropdown-basic-button" variant="light" title={duration}>
+            <DropdownButton id="dropdown-basic-button" variant="light" title={durationSpan(duration)}>
                 {durations.map((duration) => (
                     <Dropdown.Item key={duration} onSelect={() => setDuration(duration)}>
-                        <span>{duration} Minutes</span>
+                        {durationSpan(duration)}
                     </Dropdown.Item>
                 ))}
             </DropdownButton>
@@ -133,14 +138,22 @@ function useDuration(_duration) {
     return [duration, durationPicker];
 }
 
+function useLogToolbar(_device, _duration, _log_level, _timestamp) {
+    const [device, setDevice] = useDevice(_device);
+    const [log_level, setLogLevel] = useLogLevel(_log_level);
+    const [timestamp, setTimestamp] = useTimestamp(_timestamp);
+    const [duration, setDuration] = useDuration(_duration);
 
-function LogToolbar(props) {
-    return (
+    const logToolbar = (
         <Container id="toolbar">
-            <ButtonToolbar>
-            </ButtonToolbar>
+            {setDevice}
+            {setLogLevel}
+            {setTimestamp}
+            {setDuration}
         </Container>
     );
+
+    return [{ device, log_level, timestamp, duration }, logToolbar];
 }
 
 function Toolbar(props) {
@@ -148,38 +161,30 @@ function Toolbar(props) {
     return ReactDOM.createPortal(props.children, toolBar);
 }
 
-function SystemLogs() {
-    let { device, duration, log_level, timestamp } = useParams();
+function SystemLogs(props) {
+    let params = useParams();
 
-    const [_device, setDevice] = useDevice(device);
-    const [_log_level, setLogLevel] = useLogLevel(log_level);
-    const [_timestamp, setTimestamp] = useTimestamp(timestamp);
-    const [_duration, setDuration] = useDuration(duration);
+    const [{ device, log_level, timestamp, duration }, logToolbar] = useLogToolbar(
+        params.device,
+        params.duration,
+        params.log_level,
+        params.timestamp
+    );
 
-    const url = logUrl(_device, _duration, _log_level, _timestamp);
+    const [url, setUrl] = useState(logUrl(device, duration, log_level, timestamp));
+
+    const logText = useLog(url);
+
+    useEffect(() => {
+        const newUrl = logUrl(device, duration, log_level, timestamp);
+        setUrl(newUrl);
+        //props.history.push(newUrl);
+    }, [device, log_level, timestamp, duration]);
 
     return (
         <>
-            <Toolbar>
-                {/* <LogToolbar device={_device} duration={_duration} log_level={_log_level} timestamp={_timestamp} /> */}
-                <Container id="toolbar">
-                    <ButtonToolbar>
-                        {setDevice}
-                        {setLogLevel}
-                        {setTimestamp}
-                        {setDuration}
-                    </ButtonToolbar>
-                </Container>
-            </Toolbar>
-            <ul>
-                <li>device: {_device}</li>
-                <li>duration: {_duration}</li>
-                <li>level: {_log_level}</li>
-                <li>timestamp: {_timestamp}</li>
-            </ul>
-            <span>{url}</span>
-            <div>Logs</div>
-            <FetchLogs url={url} />
+            <Toolbar>{logToolbar}</Toolbar>
+            {logText}
         </>
     );
 }
