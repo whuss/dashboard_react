@@ -1,3 +1,5 @@
+import "./App.css";
+
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
 
@@ -24,8 +26,6 @@ import SystemLogs from "./SystemLogs";
 import Plot from "./BokehPlot";
 
 import useDataApi, { FetchHackernews } from "./Fetch";
-
-import "./App.css";
 
 function Title(props) {
     const titleBar = document.getElementById("titlebar-root");
