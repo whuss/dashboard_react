@@ -2,7 +2,7 @@ import React from "react";
 
 import { useParams } from "react-router-dom";
 
-import Toolbar, { useDropdown, useDevice, useTimestamp } from "./Toolbar";
+import Toolbar, { useDropdown, useDeviceFilter, useTimestamp } from "./Toolbar";
 
 import Table from "react-bootstrap/Table";
 import Button from "react-bootstrap/Button";
@@ -43,9 +43,6 @@ function sensorUrl(device, sensor, sample_rate, start_date, end_date) {
 }
 
 function useSensorToolbar(_device, _sensor, _sample_rate, _start_date, _end_date) {
-    if (!_device) {
-        _device = "ALL";
-    }
     if (!_sensor) {
         _sensor = "temperature";
     }
@@ -59,7 +56,7 @@ function useSensorToolbar(_device, _sensor, _sample_rate, _start_date, _end_date
         _end_date = "2020-05-08"; // TODO: set current date
     }
 
-    const [devices, setDevice] = useDevice(_device, true);
+    const [devices, setFilterStr] = useDeviceFilter();
     const [sensor, setSensor] = useDropdown(_sensor, {
         values: ["ALL", "temperature", "humidity", "pressure", "brightness", "gas", "presence"],
         label: "Sensor",
@@ -73,7 +70,7 @@ function useSensorToolbar(_device, _sensor, _sample_rate, _start_date, _end_date
 
     const sensorToolbar = (
         <>
-            {setDevice}
+            {setFilterStr}
             {setStartDate}
             {setEndDate}
             {setSensor}

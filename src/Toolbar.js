@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 
 import Container from "react-bootstrap/Container";
@@ -34,6 +34,28 @@ function useInput(_value, config) {
 
     return [value, inputField];
 }
+
+function useDeviceFilter() {
+    const [{ data, isLoading, isError }, doFetch] = useDataApi("/backend/devices", []);
+    const devices = data;
+    const [filterStr, setFilterStr] = useInput(useDeviceFilter.filter, {
+        prepend: (
+            <>
+                <i className="fa fa-lightbulb-o" aria-hidden="true"></i>
+                <span className="label">Filter:</span>
+            </>
+        ),
+    });
+
+    useEffect(() => {
+        useDeviceFilter.filter = filterStr;
+    }, [filterStr]);
+
+    const selectedDevices = devices.filter((s) => s.includes(filterStr));
+
+    return [selectedDevices, setFilterStr];
+}
+useDeviceFilter.filter = "";
 
 function useDropdown(initialValue, config) {
     let { values, label, format } = config;
@@ -117,4 +139,4 @@ function Toolbar(props) {
 }
 
 export default Toolbar;
-export { useInput, useDropdown, useDevice, useTimestamp };
+export { useInput, useDeviceFilter, useDropdown, useDevice, useTimestamp };
