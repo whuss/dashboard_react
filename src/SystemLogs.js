@@ -25,9 +25,7 @@ function FetchLogs(props) {
     );
 }
 
-function logUrl(params) {
-    let { device, duration, log_level, timestamp } = params;
-
+function logUrl(device, duration, log_level, timestamp) {
     const baseUrl = "/backend/logs";
 
     if (timestamp) {
@@ -149,6 +147,27 @@ function DurationPicker(props) {
     );
 }
 
+function useDurationPicker(_duration) {
+    const [duration, setDuration] = useState(_duration);
+    const durations = [1, 5, 10, 30];
+
+    const durationPicker = (
+        <ButtonGroup>
+            <span className="label">Duration:</span>
+            <DropdownButton id="dropdown-basic-button" variant="light" title={duration}>
+                {durations.map((duration) => (
+                    <Dropdown.Item key={duration} onSelect={() => setDuration(duration)}>
+                        <span>{duration} Minutes</span>
+                    </Dropdown.Item>
+                ))}
+            </DropdownButton>
+        </ButtonGroup>
+    );
+
+    return [duration, durationPicker];
+}
+
+
 function LogToolbar(props) {
     return (
         <Container id="toolbar">
@@ -169,25 +188,24 @@ function Toolbar(props) {
 function SystemLogs() {
     let { device, duration, log_level, timestamp } = useParams();
 
-    const url = logUrl(useParams());
-
-    const [_duration, setDuration] = useState(duration);
-
     const [_timestamp, setTimestamp] = useState(timestamp);
 
-    const [_log_level, logLevelPicker] = useLogLevel(log_level);
-    const [_device, devicePicker] = useDevicePicker(device);
+    const [_log_level, setLogLevel] = useLogLevel(log_level);
+    const [_device, setDevice] = useDevicePicker(device);
+    const [_duration, setDuration] = useDurationPicker(duration);
 
+    const url = logUrl(_device, _duration, _log_level, _timestamp);
+    
     return (
         <>
             <Toolbar>
                 {/* <LogToolbar device={_device} duration={_duration} log_level={_log_level} timestamp={_timestamp} /> */}
                 <Container id="toolbar">
                     <ButtonToolbar>
-                        {devicePicker}
-                        {logLevelPicker}
+                        {setDevice}
+                        {setLogLevel}
                         <DateTimeInput timestamp={_timestamp} />
-                        <DurationPicker duration={_duration} />
+                        {setDuration}
                     </ButtonToolbar>
                 </Container>
             </Toolbar>
