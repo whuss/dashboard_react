@@ -167,15 +167,23 @@ function SystemLogs() {
 
     const [_device, setDevice] = useState(device);
     const [_duration, setDuration] = useState(duration);
-    const [_log_level, setLogLevel] = useState(log_level);
+
     const [_timestamp, setTimestamp] = useState(timestamp);
 
-    //const [_log_level, logLevelPicker] = useLogLevel(log_level);
+    const [_log_level, logLevelPicker] = useLogLevel(log_level);
 
     return (
         <>
             <Toolbar>
-                <LogToolbar device={_device} duration={_duration} log_level={_log_level} timestamp={_timestamp} />
+                {/* <LogToolbar device={_device} duration={_duration} log_level={_log_level} timestamp={_timestamp} /> */}
+                <Container id="toolbar">
+                    <ButtonToolbar>
+                        <DevicePicker device={_device} />
+                        {logLevelPicker}
+                        <DateTimeInput timestamp={_timestamp} />
+                        <DurationPicker duration={_duration} />
+                    </ButtonToolbar>
+                </Container>
             </Toolbar>
             <ul>
                 <li>device: {_device}</li>
