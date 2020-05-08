@@ -70,24 +70,31 @@ function DevicePicker(props) {
     );
 }
 
-function LogLevelPicker(props) {
-    const [log_level, setLogLevel] = useState(props.log_level);
-    const log_levels = ["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"];
+function useDevicePicker(device) {
+    const [_device, setDevice] = useState(device);
+    const [{ data, isLoading, isError }, doFetch] = useDataApi("/backend/devices", []);
 
-    const log_span = (level) => <span className={level}>{level}</span>;
+    const deviceDropdown = (data) => (
+        <>
+            {data.map((_device) => (
+                <Dropdown.Item key={_device} href={`#${_device}`} onSelect={() => setDevice(_device)}>
+                    {_device}
+                </Dropdown.Item>
+            ))}
+        </>
+    );
 
-    return (
+    const devicePicker = (
         <ButtonGroup>
-            <span className="label">Logging&nbsp;level:</span>
-            <DropdownButton id="dropdown-basic-button" variant="light" title={log_span(log_level)}>
-                {log_levels.map((level) => (
-                    <Dropdown.Item key={level} onSelect={() => setLogLevel(level)}>
-                        {log_span(level)}
-                    </Dropdown.Item>
-                ))}
+            <span className="label">Device:</span>
+            <DropdownButton id="dropdown-basic-button" variant="light" title={_device}>
+                {isError && <Dropdown.Item>Something went wrong ...</Dropdown.Item>}
+                {isLoading ? <Dropdown.Item>Loading...</Dropdown.Item> : deviceDropdown(data)}
             </DropdownButton>
         </ButtonGroup>
     );
+
+    return [_device, devicePicker];
 }
 
 function useLogLevel(level) {
@@ -147,7 +154,6 @@ function LogToolbar(props) {
         <Container id="toolbar">
             <ButtonToolbar>
                 <DevicePicker device={props.device} />
-                <LogLevelPicker log_level={props.log_level} />
                 <DateTimeInput timestamp={props.timestamp} />
                 <DurationPicker duration={props.duration} />
             </ButtonToolbar>
@@ -165,12 +171,12 @@ function SystemLogs() {
 
     const url = logUrl(useParams());
 
-    const [_device, setDevice] = useState(device);
     const [_duration, setDuration] = useState(duration);
 
     const [_timestamp, setTimestamp] = useState(timestamp);
 
     const [_log_level, logLevelPicker] = useLogLevel(log_level);
+    const [_device, devicePicker] = useDevicePicker(device);
 
     return (
         <>
@@ -178,7 +184,7 @@ function SystemLogs() {
                 {/* <LogToolbar device={_device} duration={_duration} log_level={_log_level} timestamp={_timestamp} /> */}
                 <Container id="toolbar">
                     <ButtonToolbar>
-                        <DevicePicker device={_device} />
+                        {devicePicker}
                         {logLevelPicker}
                         <DateTimeInput timestamp={_timestamp} />
                         <DurationPicker duration={_duration} />
