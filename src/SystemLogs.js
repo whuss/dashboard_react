@@ -81,11 +81,34 @@ function LogLevelPicker(props) {
             <span className="label">Logging&nbsp;level:</span>
             <DropdownButton id="dropdown-basic-button" variant="light" title={log_span(log_level)}>
                 {log_levels.map((level) => (
-                    <Dropdown.Item key={level} onSelect={() => setLogLevel(level)}>{log_span(level)}</Dropdown.Item>
+                    <Dropdown.Item key={level} onSelect={() => setLogLevel(level)}>
+                        {log_span(level)}
+                    </Dropdown.Item>
                 ))}
             </DropdownButton>
         </ButtonGroup>
     );
+}
+
+function useLogLevel(level) {
+    const [log_level, setLogLevel] = useState(level);
+    const log_levels = ["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"];
+
+    const log_span = (level) => <span className={level}>{level}</span>;
+    const logLevelPicker = (
+        <ButtonGroup>
+            <span className="label">Logging&nbsp;level:</span>
+            <DropdownButton id="dropdown-basic-button" variant="light" title={log_span(log_level)}>
+                {log_levels.map((level) => (
+                    <Dropdown.Item key={level} onSelect={() => setLogLevel(level)}>
+                        {log_span(level)}
+                    </Dropdown.Item>
+                ))}
+            </DropdownButton>
+        </ButtonGroup>
+    );
+
+    return [log_level, logLevelPicker];
 }
 
 function DateTimeInput(props) {
@@ -147,10 +170,12 @@ function SystemLogs() {
     const [_log_level, setLogLevel] = useState(log_level);
     const [_timestamp, setTimestamp] = useState(timestamp);
 
+    //const [_log_level, logLevelPicker] = useLogLevel(log_level);
+
     return (
         <>
             <Toolbar>
-                <LogToolbar device={_device} duration={_duration} log_level={_log_level} timestamp={_timestamp}/>
+                <LogToolbar device={_device} duration={_duration} log_level={_log_level} timestamp={_timestamp} />
             </Toolbar>
             <ul>
                 <li>device: {_device}</li>
