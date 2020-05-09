@@ -8,6 +8,9 @@ import useDataApi from "./Fetch";
 
 import Toolbar, { useDeviceFilter } from "./Toolbar";
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons'
+
 function DeviceTable(props) {
     const [selectedDevices, setFilterStr] = useDeviceFilter();
 
@@ -74,6 +77,14 @@ const DashboardTable = (props) => {
         return d;
     }
 
+    const SortIcon = () => {
+        if (ascending)
+        {
+            return <FontAwesomeIcon icon={faSortDown} />;
+        }
+        return <FontAwesomeIcon icon={faSortUp} />
+    }
+
     const devices = props.data.sort();
 
     useEffect(() => {
@@ -84,7 +95,7 @@ const DashboardTable = (props) => {
     return (<Table className={"dataTable"} hover>
         <thead>
             <tr>
-                <th id="head_device" onClick={()=> setAscenting(!ascending)}>Device</th>
+                <th id="head_device" onClick={()=> setAscenting(!ascending)}>Device <SortIcon/></th>
                 <TableHeader />
             </tr>
         </thead>
