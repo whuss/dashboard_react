@@ -37,36 +37,6 @@ function useInput(_value, config) {
     return [value, inputField];
 }
 
-function useDeviceFilter(initialValue) {
-    const [{ data, isLoading, isError }] = useDataApi("/backend/devices", []);
-    const devices = data;
-
-    const [filterStr, setFilterStr] = useInput(initialValue ? initialValue : useDeviceFilter.filter, {
-        prepend: (
-            <>
-                <i className="fa fa-lightbulb-o" aria-hidden="true"></i>
-                <span className="label">Filter:</span>
-            </>
-        ),
-    });
-
-    useEffect(() => {
-        useDeviceFilter.filter = filterStr;
-    }, [filterStr]);
-
-    const selectedDevices = devices.filter((s) => s.includes(filterStr));
-
-    const deviceFilter = (
-        <>
-            {isError && <div>Something went wrong ...</div>}
-            {isLoading ? <Spinner animation="border" size="sm" variant="secondary" /> : setFilterStr}
-        </>
-    );
-
-    return [selectedDevices, deviceFilter];
-}
-useDeviceFilter.filter = "";
-
 function useDropdown(initialValue, config) {
     let { values, label, format } = config;
 
@@ -92,23 +62,52 @@ function useDropdown(initialValue, config) {
     return [value, dropdown];
 }
 
-function useDevice(device) {
+function useDevice() {
     const [{ data, isLoading, isError }] = useDataApi("/backend/devices", []);
     const devices = data;
 
-    const [selectedDevice, dropdown] = useDropdown(device, {
+    const loadingAnimation = (props) => (
+        <>
+            {isError && <div>Something went wrong ...</div>}
+            {isLoading ? <Spinner animation="border" size="sm" variant="secondary" /> : <props.children/>}
+        </>
+    );
+
+    return [devices, loadingAnimation]
+}
+
+
+function useDeviceFilter(initialValue) {
+    const [devices, loadingAnimation] = useDevice();
+
+    const [filterStr, deviceFilter] = useInput(initialValue ? initialValue : useDeviceFilter.filter, {
+        prepend: (
+            <>
+                <i className="fa fa-lightbulb-o" aria-hidden="true"></i>
+                <span className="label">Filter:</span>
+            </>
+        ),
+    });
+
+    useEffect(() => {
+        useDeviceFilter.filter = filterStr;
+    }, [filterStr]);
+
+    const selectedDevices = devices.filter((s) => s.includes(filterStr));
+
+    return [selectedDevices, <loadingAnimation>{deviceFilter}</loadingAnimation>];
+}
+useDeviceFilter.filter = "";
+
+function useDeviceDropdown(device) {
+    const [devices, loadingAnimation] = useDevice();
+
+    const [selectedDevice, deviceDropdown] = useDropdown(device, {
         values: devices,
         label: "Device",
     });
 
-    const deviceDropdown = (
-        <>
-            {isError && <div>Something went wrong ...</div>}
-            {isLoading ? <Spinner animation="border" size="sm" variant="secondary" /> : dropdown}
-        </>
-    );
-
-    return [selectedDevice, deviceDropdown];
+    return [selectedDevice, <loadingAnimation>{deviceDropdown}</loadingAnimation>];
 }
 
 function useTimestamp(_timestamp) {
@@ -141,4 +140,4 @@ function Toolbar(props) {
 }
 
 export default Toolbar;
-export { useInput, useDeviceFilter, useDropdown, useDevice, useTimestamp };
+export { useInput, useDeviceFilter, useDropdown, useDeviceDropdown, useTimestamp };

@@ -5,7 +5,7 @@ import Spinner from "react-bootstrap/Spinner";
 import { useParams } from "react-router-dom";
 
 import useDataApi from "./Fetch";
-import Toolbar, { useDropdown, useDevice, useTimestamp } from "./Toolbar";
+import Toolbar, { useDropdown, useDeviceDropdown, useTimestamp } from "./Toolbar";
 
 function useLog(url) {
     const [{ data, isLoading, isError }, doFetch] = useDataApi(url, []);
@@ -41,7 +41,7 @@ function logUrl(device, duration, log_level, timestamp) {
 }
 
 function useLogToolbar(_device, _duration, _log_level, _timestamp) {
-    const [device, setDevice] = useDevice(_device);
+    const [device, setDevice] = useDeviceDropdown(_device);
     const [log_level, setLogLevel] = useDropdown(_log_level, {
         label: "Logging level",
         values: ["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
