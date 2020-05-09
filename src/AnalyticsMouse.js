@@ -3,7 +3,7 @@ import React from "react";
 import Button from "react-bootstrap/Button";
 
 import Plot from "./BokehPlot";
-import { DeviceTableNew } from "./DeviceTable";
+import DeviceTable from "./DeviceTable";
 
 function plotUrl(device) {
     return `/backend/plot_analytics_mouse/${device}`;
@@ -29,6 +29,6 @@ const TableRow = (props) => {
     );
 };
 
-const AnalyticsMouse = () => <DeviceTableNew format_header={TableHeader} format_row={TableRow} />;
+const AnalyticsMouse = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
 
 export default AnalyticsMouse;

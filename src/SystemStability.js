@@ -2,7 +2,7 @@ import React from "react";
 
 import Button from "react-bootstrap/Button";
 
-import { DeviceTableNew } from "./DeviceTable";
+import DeviceTable from "./DeviceTable";
 
 import Plot from "./BokehPlot";
 
@@ -34,6 +34,6 @@ const TableRow = (props) => {
     );
 };
 
-const AnalyticsScenes = () => <DeviceTableNew format_header={TableHeader} format_row={TableRow} />;
+const AnalyticsScenes = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
 
 export default AnalyticsScenes;

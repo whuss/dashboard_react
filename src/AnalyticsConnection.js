@@ -3,7 +3,7 @@ import React from "react";
 import Button from "react-bootstrap/Button";
 
 import Plot from "./BokehPlot";
-import { DeviceTableNew } from "./DeviceTable";
+import DeviceTable from "./DeviceTable";
 
 function plotUrl(device) {
     return `/backend/plot_analytics_connection/${device}`;
@@ -40,7 +40,7 @@ const AnalyticsConnection = () => (
             <b>Note:</b> There is no connection data available for dates before 12.03.2020, these dates are always
             considered to have 0% downtime.
         </p>
-        <DeviceTableNew format_header={TableHeader} format_row={TableRow} />;
+        <DeviceTable format_header={TableHeader} format_row={TableRow} />;
     </>
 );
 

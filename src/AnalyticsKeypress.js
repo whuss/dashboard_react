@@ -3,7 +3,7 @@ import React from "react";
 import Button from "react-bootstrap/Button";
 
 import Plot from "./BokehPlot";
-import { DeviceTableNew } from "./DeviceTable";
+import DeviceTable from "./DeviceTable";
 
 function plotUrl(device) {
     return `/backend/plot_analytics_keypress/${device}`;
@@ -29,6 +29,6 @@ const TableRow = (props) => {
     );
 };
 
-const AnalyticsKeypress = () => <DeviceTableNew format_header={TableHeader} format_row={TableRow} />;
+const AnalyticsKeypress = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
 
 export default AnalyticsKeypress;

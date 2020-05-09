@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 
 import Spinner from "react-bootstrap/Spinner";
 
-import { DeviceTableNew } from "./DeviceTable";
+import DeviceTable from "./DeviceTable";
 
 import useDataApi from "./Fetch";
 
@@ -49,6 +49,6 @@ const TableHeader = () => (
     </>
 );
 
-const Dashboard = () => <DeviceTableNew format_header={TableHeader} format_row={TableRow}/>;
+const Dashboard = () => <DeviceTable format_header={TableHeader} format_row={TableRow}/>;
 
 export default Dashboard;

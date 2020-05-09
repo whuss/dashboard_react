@@ -4,7 +4,7 @@ import Button from "react-bootstrap/Button";
 
 import Plot from "./BokehPlot";
 
-import { DeviceTableNew } from "./DeviceTable";
+import DeviceTable from "./DeviceTable";
 
 
 function plotUrl(device) {
@@ -31,7 +31,7 @@ const TableRow = (props) => {
     );
 };
 
-const SwitchCycles = () => <DeviceTableNew format_header={TableHeader} format_row={TableRow} />;
+const SwitchCycles = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
 
 
 export default SwitchCycles;

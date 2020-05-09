@@ -3,7 +3,7 @@ import React from "react";
 import Button from "react-bootstrap/Button";
 
 import Plot from "./BokehPlot";
-import { DeviceTableNew } from "./DeviceTable";
+import DeviceTable from "./DeviceTable";
 
 function plotUrl(device) {
     return `/backend/plot_analytics_scenes/${device}`;
@@ -36,7 +36,7 @@ const AnalyticsScenes = () => (
             <b>Note:</b> Data from days where the total time of all scenes is less than 30 minutes are excluded form the
             dataset.
         </p>
-        <DeviceTableNew format_header={TableHeader} format_row={TableRow} />
+        <DeviceTable format_header={TableHeader} format_row={TableRow} />
     </>
 );
 

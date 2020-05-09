@@ -2,11 +2,9 @@ import React, { Component, useState, useEffect, useRef } from "react";
 
 import useDataApi from "./Fetch";
 
-import Table from "react-bootstrap/Table";
-
 import Spinner from "react-bootstrap/Spinner";
 
-import { DeviceTableNew } from "./DeviceTable";
+import DeviceTable from "./DeviceTable";
 
 function Restarts(props) {
     const [{ data, isLoading, isError }, doFetch] = useDataApi(`/backend/system_restarts/${props.device}`, []);
@@ -33,6 +31,6 @@ const TableRow = (props) => {
     );
 };
 
-const SystemRestarts = () => <DeviceTableNew format_header={TableHeader} format_row={TableRow} />;
+const SystemRestarts = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
 
 export default SystemRestarts;

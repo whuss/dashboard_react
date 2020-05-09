@@ -53,7 +53,7 @@ const DrawTable = (props) => {
 };
 DrawTable.ascending = true;
 
-function DeviceTableNew(props) {
+function DeviceTable(props) {
     const [selectedDevices, setFilterStr] = useDeviceFilter();
 
     return (
@@ -64,16 +64,4 @@ function DeviceTableNew(props) {
     );
 }
 
-function DeviceTable(props) {
-    const [selectedDevices, setFilterStr] = useDeviceFilter();
-
-    return (
-        <>
-            <Toolbar>{setFilterStr}</Toolbar>
-            {props.format_table(selectedDevices)}
-        </>
-    );
-}
-
 export default DeviceTable;
-export { DeviceTableNew };
