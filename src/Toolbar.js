@@ -8,6 +8,8 @@ import DropdownButton from "react-bootstrap/DropdownButton";
 import InputGroup from "react-bootstrap/InputGroup";
 import FormControl from "react-bootstrap/FormControl";
 
+import Spinner from "react-bootstrap/Spinner";
+
 import useDataApi from "./Fetch";
 
 function useInput(_value, config) {
@@ -36,7 +38,7 @@ function useInput(_value, config) {
 }
 
 function useDeviceFilter(initialValue) {
-    const [{ data, isLoading, isError }, doFetch] = useDataApi("/backend/devices", []);
+    const [{ data, isLoading, isError }] = useDataApi("/backend/devices", []);
     const devices = data;
 
     const [filterStr, setFilterStr] = useInput(initialValue ? initialValue : useDeviceFilter.filter, {
@@ -54,7 +56,14 @@ function useDeviceFilter(initialValue) {
 
     const selectedDevices = devices.filter((s) => s.includes(filterStr));
 
-    return [selectedDevices, setFilterStr];
+    const deviceFilter = (
+        <>
+            {isError && <div>Something went wrong ...</div>}
+            {isLoading ? <Spinner animation="border" size="sm" variant="secondary" /> : setFilterStr}
+        </>
+    );
+
+    return [selectedDevices, deviceFilter];
 }
 useDeviceFilter.filter = "";
 
@@ -87,10 +96,19 @@ function useDevice(device) {
     const [{ data, isLoading, isError }] = useDataApi("/backend/devices", []);
     const devices = data;
 
-    return useDropdown(device, {
+    const [selectedDevice, dropdown] = useDropdown(device, {
         values: devices,
         label: "Device",
     });
+
+    const deviceDropdown = (
+        <>
+            {isError && <div>Something went wrong ...</div>}
+            {isLoading ? <Spinner animation="border" size="sm" variant="secondary" /> : dropdown}
+        </>
+    );
+
+    return [selectedDevice, deviceDropdown];
 }
 
 function useTimestamp(_timestamp) {

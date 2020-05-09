@@ -1,4 +1,4 @@
-import React, { Fragment, useState, useEffect, useReducer } from "react";
+import React, { useState, useEffect, useReducer } from "react";
 import axios from "axios";
 
 const dataFetchReducer = (state, action) => {
@@ -68,7 +68,7 @@ const useDataApi = (initialUrl, initialData) => {
 };
 
 function FetchHackernews() {
-    const [{ data, isLoading, isError }, doFetch] = useDataApi("https://hn.algolia.com/api/v1/search?query=redux", {
+    const [{ data, isLoading, isError }] = useDataApi("https://hn.algolia.com/api/v1/search?query=redux", {
         hits: [],
     });
 

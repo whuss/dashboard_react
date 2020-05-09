@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 
 import Spinner from "react-bootstrap/Spinner";
 
@@ -31,7 +31,7 @@ const format_row = (data) => (
 );
 
 const TableRow = (props) => {
-    const [{ data, isLoading, isError }, doFetch] = useDataApi(`/backend/device_state/${props.device_id}`, {});
+    const [{ data, isLoading, isError }] = useDataApi(`/backend/device_state/${props.device_id}`, {});
 
     return (
         <>

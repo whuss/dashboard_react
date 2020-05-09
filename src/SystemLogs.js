@@ -41,7 +41,7 @@ function logUrl(device, duration, log_level, timestamp) {
 }
 
 function useLogToolbar(_device, _duration, _log_level, _timestamp) {
-    const [device, setDevice] = useDevice(_device, false);
+    const [device, setDevice] = useDevice(_device);
     const [log_level, setLogLevel] = useDropdown(_log_level, {
         label: "Logging level",
         values: ["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],

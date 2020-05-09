@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect, useRef } from "react";
+import React from "react";
 
 import useDataApi from "./Fetch";
 
@@ -7,7 +7,7 @@ import Spinner from "react-bootstrap/Spinner";
 import DeviceTable from "./DeviceTable";
 
 function Restarts(props) {
-    const [{ data, isLoading, isError }, doFetch] = useDataApi(`/backend/system_restarts/${props.device}`, []);
+    const [{ data, isLoading, isError }] = useDataApi(`/backend/system_restarts/${props.device}`, []);
 
     return (
         <>

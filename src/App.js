@@ -9,7 +9,7 @@ import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
 import Alert from "react-bootstrap/Alert";
 
-import { BrowserRouter as Router, Switch, Route, useParams} from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route} from "react-router-dom";
 
 import Navigation from "./Navigation";
 import Dashboard from "./Dashboard";
@@ -26,7 +26,7 @@ import SystemErrors from "./SystemErrors";
 import SystemLogs from "./SystemLogs";
 import Plot from "./BokehPlot";
 
-import useDataApi, { FetchHackernews } from "./Fetch";
+import { FetchHackernews } from "./Fetch";
 
 function Title(props) {
     const titleBar = document.getElementById("titlebar-root");
