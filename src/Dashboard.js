@@ -17,7 +17,7 @@ function DeviceTable(props) {
     return (
         <>
             <Toolbar>{setFilterStr}</Toolbar>
-            <props.format_table data={selectedDevices}/>
+            <DrawTable devices={selectedDevices} format_header={props.format_header} format_row={props.format_row} />
         </>
     );
 }
@@ -46,7 +46,7 @@ const format_row = (data) => (
     </>
 );
 
-const DeviceState = (props) => {
+const TableRow = (props) => {
     const [{ data, isLoading, isError }, doFetch] = useDataApi(`/backend/device_state/${props.device_id}`, {});
 
     return (
@@ -65,8 +65,8 @@ const TableHeader = () => (
     </>
 );
 
-const DashboardTable = (props) => {
-    const [ascending, setAscenting] = useState(DashboardTable.ascending);
+const DrawTable = (props) => {
+    const [ascending, setAscenting] = useState(DrawTable.ascending);
 
     function sort(d)
     {
@@ -85,32 +85,32 @@ const DashboardTable = (props) => {
         return <FontAwesomeIcon icon={faSortUp} />
     }
 
-    const devices = props.data.sort();
+    const devices = props.devices.sort();
 
     useEffect(() => {
         console.log("Set sorting: ", ascending);
-        DashboardTable.ascending = ascending;
+        DrawTable.ascending = ascending;
     }, [ascending]);
 
     return (<Table className={"dataTable"} hover>
         <thead>
             <tr>
                 <th id="head_device" onClick={()=> setAscenting(!ascending)}>Device <SortIcon/></th>
-                <TableHeader />
+                <props.format_header />
             </tr>
         </thead>
         <tbody>
             {sort(devices).map((device) => (
                 <tr key={device}>
                     <th>{device}</th>
-                    <DeviceState device_id={device} />
+                    <props.format_row device_id={device} />
                 </tr>
             ))}
         </tbody>
     </Table>);
 };
-DashboardTable.ascending = true;
+DrawTable.ascending = true;
 
-const Dashboard = () => <DeviceTable format_table={DashboardTable} />;
+const Dashboard = () => <DeviceTable format_header={TableHeader} format_row={TableRow}/>;
 
 export default Dashboard;
