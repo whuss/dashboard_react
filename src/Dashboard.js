@@ -1,11 +1,23 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 import Table from "react-bootstrap/Table";
 
 import Spinner from "react-bootstrap/Spinner";
 
 import useDataApi from "./Fetch";
-import DeviceTable from "./DeviceTable";
+
+import Toolbar, { useDeviceFilter } from "./Toolbar";
+
+function DeviceTable(props) {
+    const [selectedDevices, setFilterStr] = useDeviceFilter();
+
+    return (
+        <>
+            <Toolbar>{setFilterStr}</Toolbar>
+            <props.format_table data={selectedDevices}/>
+        </>
+    );
+}
 
 const loading_row = () => (
     <>
@@ -42,27 +54,52 @@ const DeviceState = (props) => {
     );
 };
 
-const table = (data) => (
-    <Table className={"dataTable"} hover>
+const TableHeader = () => (
+    <>
+        <th>Device Mode</th>
+        <th>Last Connection</th>
+        <th colSpan={2}>Health Status</th>
+    </>
+);
+
+const DashboardTable = (props) => {
+    const [ascending, setAscenting] = useState(DashboardTable.ascending);
+
+    function sort(d)
+    {
+        if (!ascending)
+        {
+            return d.reverse();
+        }
+        return d;
+    }
+
+    const devices = props.data.sort();
+
+    useEffect(() => {
+        console.log("Set sorting: ", ascending);
+        DashboardTable.ascending = ascending;
+    }, [ascending]);
+
+    return (<Table className={"dataTable"} hover>
         <thead>
             <tr>
-                <th>Device</th>
-                <th>Device Mode</th>
-                <th>Last Connection</th>
-                <th colSpan={2}>Health Status</th>
+                <th id="head_device" onClick={()=> setAscenting(!ascending)}>Device</th>
+                <TableHeader />
             </tr>
         </thead>
         <tbody>
-            {data.map((device) => (
+            {sort(devices).map((device) => (
                 <tr key={device}>
                     <th>{device}</th>
                     <DeviceState device_id={device} />
                 </tr>
             ))}
         </tbody>
-    </Table>
-);
+    </Table>);
+};
+DashboardTable.ascending = true;
 
-const Dashboard = () => <DeviceTable format_table={table} />;
+const Dashboard = () => <DeviceTable format_table={DashboardTable} />;
 
 export default Dashboard;
