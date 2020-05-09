@@ -1,41 +1,33 @@
 import React from "react";
 
-import Table from "react-bootstrap/Table";
 import Button from "react-bootstrap/Button";
 
 import Plot from "./BokehPlot";
-import DeviceTable from "./DeviceTable";
+import { DeviceTableNew } from "./DeviceTable";
 
 function plotUrl(device) {
     return `/backend/plot_analytics_connection/${device}`;
 }
 
-function table(data) {
+const TableHeader = () => (
+    <>
+        <th>Cycles</th>
+        <th>Download</th>
+    </>
+);
+
+const TableRow = (props) => {
     return (
-        <Table className={"dataTable"} hover>
-            <thead>
-                <tr>
-                    <th>Device ID</th>
-                    <th>Cycles</th>
-                    <th>Download</th>
-                </tr>
-            </thead>
-            <tbody>
-                {data.map((device) => (
-                    <tr key={device}>
-                        <th>{device}</th>
-                        <td>
-                            <Plot src={plotUrl(device)} />
-                        </td>
-                        <td>
-                            <Button>Download</Button>
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </Table>
+        <>
+            <td>
+                <Plot src={plotUrl(props.device_id)} />
+            </td>
+            <td>
+                <Button>Download</Button>
+            </td>
+        </>
     );
-}
+};
 
 const AnalyticsConnection = () => (
     <>
@@ -48,7 +40,7 @@ const AnalyticsConnection = () => (
             <b>Note:</b> There is no connection data available for dates before 12.03.2020, these dates are always
             considered to have 0% downtime.
         </p>
-        <DeviceTable format_table={table} />
+        <DeviceTableNew format_header={TableHeader} format_row={TableRow} />;
     </>
 );
 
