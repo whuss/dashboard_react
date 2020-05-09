@@ -1,42 +1,34 @@
 import React from "react";
 
-import Table from "react-bootstrap/Table";
 import Button from "react-bootstrap/Button";
 
 import Plot from "./BokehPlot";
-import DeviceTable from "./DeviceTable";
+import { DeviceTableNew } from "./DeviceTable";
 
 function plotUrl(device) {
     return `/backend/plot_analytics_mouse/${device}`;
 }
 
-function table(data) {
-    return (
-        <Table className={"dataTable"} hover>
-            <thead>
-                <tr>
-                    <th>Device ID</th>
-                    <th>Keyboard data</th>
-                    <th>Download</th>
-                </tr>
-            </thead>
-            <tbody>
-                {data.map((device) => (
-                    <tr key={device}>
-                        <th>{device}</th>
-                        <td>
-                            <Plot src={plotUrl(device)} />
-                        </td>
-                        <td>
-                            <Button>Download</Button>
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </Table>
-    );
-}
+const TableHeader = () => (
+    <>
+        <th>Mouse data</th>
+        <th>Download</th>
+    </>
+);
 
-const AnalyticsMouse = () => <DeviceTable format_table={table} />;
+const TableRow = (props) => {
+    return (
+        <>
+            <td>
+                <Plot src={plotUrl(props.device_id)} />
+            </td>
+            <td>
+                <Button>Download</Button>
+            </td>
+        </>
+    );
+};
+
+const AnalyticsMouse = () => <DeviceTableNew format_header={TableHeader} format_row={TableRow} />;
 
 export default AnalyticsMouse;

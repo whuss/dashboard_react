@@ -1,11 +1,8 @@
-import React, { Component, useState, useEffect, useRef } from "react";
+import React from "react";
 
-import useDataApi from "./Fetch";
-
-import Table from "react-bootstrap/Table";
 import Button from "react-bootstrap/Button";
 
-import DeviceTable from "./DeviceTable";
+import { DeviceTableNew } from "./DeviceTable";
 
 import Plot from "./BokehPlot";
 
@@ -13,37 +10,30 @@ function plotUrl(device) {
     return `/backend/plot_system_stability/${device}`;
 }
 
-function table(data) {
-    return (
-        <Table className={"dataTable"} hover>
-            <thead>
-                <tr>
-                    <th>Device ID</th>
-                    <th>Total crashes</th>
-                    <th>Total restarts</th>
-                    <th>Stability</th>
-                    <th>Download</th>
-                </tr>
-            </thead>
-            <tbody>
-                {data.map((device) => (
-                    <tr key={device}>
-                        <th>{device}</th>
-                        <td></td>
-                        <td></td>
-                        <td>
-                            <Plot src={plotUrl(device)} />
-                        </td>
-                        <td>
-                            <Button>Download</Button>
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </Table>
-    );
-}
+const TableHeader = () => (
+    <>
+        <th>Total crashes</th>
+        <th>Total restarts</th>
+        <th>Stability</th>
+        <th>Download</th>
+    </>
+);
 
-const AnalyticsScenes = () => <DeviceTable format_table={table}/>;
+const TableRow = (props) => {
+    return (
+        <>
+            <td></td>
+            <td></td>
+            <td>
+                <Plot src={plotUrl(props.device_id)} />
+            </td>
+            <td>
+                <Button>Download</Button>
+            </td>
+        </>
+    );
+};
+
+const AnalyticsScenes = () => <DeviceTableNew format_header={TableHeader} format_row={TableRow} />;
 
 export default AnalyticsScenes;
