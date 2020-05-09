@@ -1,8 +1,5 @@
-import React, { Component, useState, useEffect, useRef } from "react";
+import React from "react";
 
-import useDataApi from "./Fetch";
-
-import Table from "react-bootstrap/Table";
 import Button from "react-bootstrap/Button";
 
 import DeviceTable from "./DeviceTable";
@@ -13,35 +10,28 @@ function plotUrl(device) {
     return `/backend/plot_system_errors/${device}`;
 }
 
-function table(data) {
-    return (
-        <Table className={"dataTable"} hover>
-            <thead>
-                <tr>
-                    <th>Device ID</th>
-                    <th>Total errors</th>
-                    <th>Error locations</th>
-                    <th>Download</th>
-                </tr>
-            </thead>
-            <tbody>
-                {data.map((device) => (
-                    <tr key={device}>
-                        <th>{device}</th>
-                        <td></td>
-                        <td>
-                            <Plot src={plotUrl(device)} />
-                        </td>
-                        <td>
-                            <Button>Download</Button>
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </Table>
-    );
-}
+const TableHeader = () => (
+    <>
+        <th>Total errors</th>
+        <th>Error locations</th>
+        <th>Download</th>
+    </>
+);
 
-const SystemErrors = () => <DeviceTable format_table={table}/>;
+const TableRow = (props) => {
+    return (
+        <>
+            <td></td>
+            <td>
+                <Plot src={plotUrl(props.device_id)} />
+            </td>
+            <td>
+                <Button>Download</Button>
+            </td>
+        </>
+    );
+};
+
+const SystemErrors = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
 
 export default SystemErrors;

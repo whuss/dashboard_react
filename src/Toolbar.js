@@ -35,10 +35,11 @@ function useInput(_value, config) {
     return [value, inputField];
 }
 
-function useDeviceFilter() {
+function useDeviceFilter(initialValue) {
     const [{ data, isLoading, isError }, doFetch] = useDataApi("/backend/devices", []);
     const devices = data;
-    const [filterStr, setFilterStr] = useInput(useDeviceFilter.filter, {
+
+    const [filterStr, setFilterStr] = useInput(initialValue ? initialValue : useDeviceFilter.filter, {
         prepend: (
             <>
                 <i className="fa fa-lightbulb-o" aria-hidden="true"></i>

@@ -4,28 +4,27 @@ import Table from "react-bootstrap/Table";
 
 import Toolbar, { useDeviceFilter } from "./Toolbar";
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons'
+import { useParams } from "react-router-dom";
+
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSortDown, faSortUp } from "@fortawesome/free-solid-svg-icons";
 
 const DrawTable = (props) => {
     const [ascending, setAscenting] = useState(DrawTable.ascending);
 
-    function sort(d)
-    {
-        if (!ascending)
-        {
+    function sort(d) {
+        if (!ascending) {
             return d.reverse();
         }
         return d;
     }
 
     const SortIcon = () => {
-        if (ascending)
-        {
+        if (ascending) {
             return <FontAwesomeIcon icon={faSortDown} />;
         }
-        return <FontAwesomeIcon icon={faSortUp} />
-    }
+        return <FontAwesomeIcon icon={faSortUp} />;
+    };
 
     const devices = props.devices.sort();
 
@@ -34,31 +33,39 @@ const DrawTable = (props) => {
         DrawTable.ascending = ascending;
     }, [ascending]);
 
-    return (<Table className={"dataTable"} hover>
-        <thead>
-            <tr>
-                <th id="head_device" onClick={()=> setAscenting(!ascending)}>Device <SortIcon/></th>
-                <props.format_header />
-            </tr>
-        </thead>
-        <tbody>
-            {sort(devices).map((device) => (
-                <tr key={device}>
-                    <th>{device}</th>
-                    <props.format_row device_id={device} />
+    return (
+        <Table className={"dataTable"} hover>
+            <thead>
+                <tr>
+                    <th id="head_device" onClick={() => setAscenting(!ascending)}>
+                        Device <SortIcon />
+                    </th>
+                    <props.format_header />
                 </tr>
-            ))}
-        </tbody>
-    </Table>);
+            </thead>
+            <tbody>
+                {sort(devices).map((device) => (
+                    <tr key={device}>
+                        <th>{device}</th>
+                        <props.format_row device_id={device} />
+                    </tr>
+                ))}
+            </tbody>
+        </Table>
+    );
 };
 DrawTable.ascending = true;
 
 function DeviceTable(props) {
-    const [selectedDevices, setFilterStr] = useDeviceFilter();
+    let params = useParams()
+    const [selectedDevices, setFilterStr] = useDeviceFilter(params.device);
 
     return (
         <>
-            <Toolbar>{setFilterStr}</Toolbar>
+            <Toolbar>
+                {setFilterStr}
+                {props.toolbar && props.toolbar}
+            </Toolbar>
             <DrawTable devices={selectedDevices} format_header={props.format_header} format_row={props.format_row} />
         </>
     );
