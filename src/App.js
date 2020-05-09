@@ -14,7 +14,7 @@ import { BrowserRouter as Router, Switch, Route, useParams} from "react-router-d
 import Navigation from "./Navigation";
 import Dashboard from "./Dashboard";
 import SwitchCycles from "./SwitchCycles";
-import AnalyticsSensor from "./AnalyticsSensorNew";
+import AnalyticsSensor from "./AnalyticsSensor";
 import AnalyticsScenes from "./AnalyticsScenes";
 import AnalyticsConnection from "./AnalyticsConnection";
 import AnalyticsKeyboard from "./AnalyticsKeyboard";

@@ -2,47 +2,19 @@ import React from "react";
 
 import { useParams } from "react-router-dom";
 
-import Toolbar, { useDropdown, useDeviceFilter, useTimestamp } from "./Toolbar";
-
-import Table from "react-bootstrap/Table";
 import Button from "react-bootstrap/Button";
 
 import Plot from "./BokehPlot";
+import DeviceTable from "./DeviceTable";
 
-function Timeseries(props) {
-    return (
-        <Table className={"dataTable"} hover>
-            <thead>
-                <tr>
-                    <th>Device ID</th>
-                    <th>Time series</th>
-                    <th>Download</th>
-                </tr>
-            </thead>
-            <tbody>
-                {props.devices.map((device) => (
-                    <tr key={device}>
-                        <th>{device}</th>
-                        <td>
-                            <Plot src={props.deviceUrl(device)} />
-                        </td>
-                        <td>
-                            <Button>Download</Button>
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </Table>
-    );
-}
+import { useDropdown, useTimestamp } from "./Toolbar";
 
 function sensorUrl(device, sensor, sample_rate, start_date, end_date) {
     const baseUrl = "/backend/plot_sensor";
-
     return `${baseUrl}/${device}/${sensor}/${sample_rate}/${start_date}/${end_date}`;
 }
 
-function useSensorToolbar(_device, _sensor, _sample_rate, _start_date, _end_date) {
+function useSensorToolbar(_sensor, _sample_rate, _start_date, _end_date) {
     if (!_sensor) {
         _sensor = "temperature";
     }
@@ -50,13 +22,12 @@ function useSensorToolbar(_device, _sensor, _sample_rate, _start_date, _end_date
         _sample_rate = "AUTO";
     }
     if (!_start_date) {
-        _start_date = "2020-05-07"; // TODO: set current date
+        _start_date = "2020-04-04"; // TODO: set current date
     }
     if (!_end_date) {
-        _end_date = "2020-05-08"; // TODO: set current date
+        _end_date = "2020-04-05"; // TODO: set current date
     }
 
-    const [devices, setFilterStr] = useDeviceFilter();
     const [sensor, setSensor] = useDropdown(_sensor, {
         values: ["ALL", "temperature", "humidity", "pressure", "brightness", "gas", "presence"],
         label: "Sensor",
@@ -70,7 +41,6 @@ function useSensorToolbar(_device, _sensor, _sample_rate, _start_date, _end_date
 
     const sensorToolbar = (
         <>
-            {setFilterStr}
             {setStartDate}
             {setEndDate}
             {setSensor}
@@ -78,29 +48,40 @@ function useSensorToolbar(_device, _sensor, _sample_rate, _start_date, _end_date
         </>
     );
 
-    return [{ devices, sensor, sample_rate, start_date, end_date }, sensorToolbar];
-}
+    const plotUrl = (device) => sensorUrl(device, sensor, sample_rate, start_date, end_date);
 
-function AnalyticsSensor() {
-    let params = useParams();
-
-    const [{ devices, sensor, sample_rate, start_date, end_date }, tools] = useSensorToolbar(
-        params.device,
-        params.sensor,
-        params.sample_rate,
-        params.start_date,
-        params.end_date
+    const tableRow = (props) => (
+        <>
+            <td>
+                <Plot src={plotUrl(props.device_id)} />
+            </td>
+            <td>
+                <Button>Download</Button>
+            </td>
+        </>
     );
 
-    //let url = sensorUrl(devices, sensor, sample_rate, start_date, end_date);
+    return [tableRow, sensorToolbar];
+}
 
-    const deviceUrl = (device) => sensorUrl(device, sensor, sample_rate, start_date, end_date);
+const TableHeader = () => (
+    <>
+        <th>Time series</th>
+        <th>Download</th>
+    </>
+);
+
+function AnalyticsSensor() {
+    const { sensor, sample_rate, start_date, end_date } = useParams();
+    const [tableRow, tools] = useSensorToolbar(sensor, sample_rate, start_date, end_date);
 
     return (
         <>
-            <Toolbar>{tools}</Toolbar>
-            {/* <span>{url}</span> */}
-            <Timeseries devices={devices} deviceUrl={deviceUrl}/>
+            <p>
+                <b>Note:</b> If Sensor data is not cached, downloading of sensor data can take up to 1 minutes per day
+                and device.
+            </p>
+            <DeviceTable format_header={TableHeader} format_row={tableRow} toolbar={tools} />
         </>
     );
 }
