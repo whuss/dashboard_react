@@ -63,10 +63,12 @@ function useDropdown(initialValue, config) {
 }
 
 const LoadingAnimation = (props) => {
+    const spinner = props.silent ? <></> : <Spinner animation="border" size="sm" variant="secondary" />;
+
     return (
         <>
             {props.isError && <div>Something went wrong ...</div>}
-            {props.isLoading ? <Spinner animation="border" size="sm" variant="secondary" /> : props.children}
+            {props.isLoading ? spinner : props.children}
         </>
     );
 };
