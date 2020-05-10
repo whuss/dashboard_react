@@ -62,23 +62,24 @@ function useDropdown(initialValue, config) {
     return [value, dropdown];
 }
 
+const LoadingAnimation = (props) => {
+    return (
+        <>
+            {props.isError && <div>Something went wrong ...</div>}
+            {props.isLoading ? <Spinner animation="border" size="sm" variant="secondary" /> : props.children}
+        </>
+    );
+};
+
 function useDevice() {
     const [{ data, isLoading, isError }] = useDataApi("/backend/devices", []);
     const devices = data;
 
-    const loadingAnimation = (props) => (
-        <>
-            {isError && <div>Something went wrong ...</div>}
-            {isLoading ? <Spinner animation="border" size="sm" variant="secondary" /> : <props.children/>}
-        </>
-    );
-
-    return [devices, loadingAnimation]
+    return [devices, isLoading, isError];
 }
 
-
 function useDeviceFilter(initialValue) {
-    const [devices, loadingAnimation] = useDevice();
+    const [devices, isLoading, isError] = useDevice();
 
     const [filterStr, deviceFilter] = useInput(initialValue ? initialValue : useDeviceFilter.filter, {
         prepend: (
@@ -93,21 +94,25 @@ function useDeviceFilter(initialValue) {
         useDeviceFilter.filter = filterStr;
     }, [filterStr]);
 
+    const loadingDeviceFilter = <LoadingAnimation isLoading={isLoading} isError={isError}>{deviceFilter}</LoadingAnimation>
+
     const selectedDevices = devices.filter((s) => s.includes(filterStr));
 
-    return [selectedDevices, <loadingAnimation>{deviceFilter}</loadingAnimation>];
+    return [selectedDevices, loadingDeviceFilter];
 }
 useDeviceFilter.filter = "";
 
 function useDeviceDropdown(device) {
-    const [devices, loadingAnimation] = useDevice();
+    const [devices, isLoading, isError] = useDevice();
 
     const [selectedDevice, deviceDropdown] = useDropdown(device, {
         values: devices,
         label: "Device",
     });
 
-    return [selectedDevice, <loadingAnimation>{deviceDropdown}</loadingAnimation>];
+    const loadingDeviceDropdown = <LoadingAnimation isLoading={isLoading} isError={isError}>{deviceDropdown}</LoadingAnimation>
+
+    return [selectedDevice, loadingDeviceDropdown];
 }
 
 function useTimestamp(_timestamp) {
@@ -140,4 +145,4 @@ function Toolbar(props) {
 }
 
 export default Toolbar;
-export { useInput, useDeviceFilter, useDropdown, useDeviceDropdown, useTimestamp };
+export { useInput, useDeviceFilter, useDropdown, useDeviceDropdown, useTimestamp, LoadingAnimation };

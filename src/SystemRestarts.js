@@ -2,19 +2,15 @@ import React from "react";
 
 import useDataApi from "./Fetch";
 
-import Spinner from "react-bootstrap/Spinner";
+import { LoadingAnimation } from "./Toolbar";
 
 import DeviceTable from "./DeviceTable";
 
 function Restarts(props) {
     const [{ data, isLoading, isError }] = useDataApi(`/backend/system_restarts/${props.device}`, []);
 
-    return (
-        <>
-            {isError && <div>Something went wrong ...</div>}
-            {isLoading ? <Spinner animation="border" size="sm" variant="secondary" /> : <div dangerouslySetInnerHTML={{ __html: data.table}}/>}
-        </>
-    );
+    const restartTable = <div dangerouslySetInnerHTML={{ __html: data.table}}/>;
+    return <LoadingAnimation isLoading={isLoading} isError={isError}>{restartTable}</LoadingAnimation>;
 }
 
 const TableHeader = () => (

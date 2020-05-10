@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 
-import Spinner from "react-bootstrap/Spinner";
+import { LoadingAnimation } from "./Toolbar";
 
 import useDataApi from "./Fetch";
 
@@ -33,12 +33,7 @@ function Plot(props) {
         </div>
     );
 
-    return (
-        <>
-            {isError && <div>Something went wrong ...</div>}
-            {isLoading ? <Spinner animation="border" size="sm" variant="secondary" /> : addPlot(data)}
-        </>
-    );
+    return <LoadingAnimation isLoading={isLoading} isError={isError}>{addPlot(data)}</LoadingAnimation>;
 }
 
 export default Plot;

@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
 
-import Spinner from "react-bootstrap/Spinner";
-
 import { useParams } from "react-router-dom";
 
 import useDataApi from "./Fetch";
-import Toolbar, { useDropdown, useDeviceDropdown, useTimestamp } from "./Toolbar";
+import Toolbar, { useDropdown, useDeviceDropdown, useTimestamp, LoadingAnimation } from "./Toolbar";
 
 function useLog(url) {
     const [{ data, isLoading, isError }, doFetch] = useDataApi(url, []);
@@ -14,12 +12,9 @@ function useLog(url) {
         doFetch(url);
     });
 
-    return (
-        <>
-            {isError && <div>Something went wrong ...</div>}
-            {isLoading ? <Spinner animation="border" size="sm" variant="secondary" /> : <pre dangerouslySetInnerHTML={{ __html: data.log_text }} />}
-        </>
-    );
+    const logText = <pre dangerouslySetInnerHTML={{ __html: data.log_text }} />;
+
+    return <LoadingAnimation isLoading={isLoading} isError={isError}>{logText}</LoadingAnimation>;
 }
 
 function logUrl(device, duration, log_level, timestamp) {
