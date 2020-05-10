@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import Table from "react-bootstrap/Table";
+import Col from 'react-bootstrap/Col';
 
 import Toolbar, { useDeviceFilter } from "./Toolbar";
 
@@ -63,7 +64,7 @@ function DeviceTable(props) {
     return (
         <>
             <Toolbar>
-                {setFilterStr}
+                <Col lg={3}>{setFilterStr}</Col>
                 {props.toolbar && props.toolbar}
             </Toolbar>
             <DrawTable devices={selectedDevices} format_header={props.format_header} format_row={props.format_row} />

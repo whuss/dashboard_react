@@ -7,7 +7,8 @@ import Dropdown from "react-bootstrap/Dropdown";
 import DropdownButton from "react-bootstrap/DropdownButton";
 import InputGroup from "react-bootstrap/InputGroup";
 import FormControl from "react-bootstrap/FormControl";
-
+import Row from 'react-bootstrap/Row'
+import Col from 'react-bootstrap/Col'
 import Spinner from "react-bootstrap/Spinner";
 
 import useDataApi from "./Fetch";
@@ -141,7 +142,7 @@ function useTimestamp(_timestamp) {
 function Toolbar(props) {
     const toolBarRoot = document.getElementById("toolbar-root");
 
-    const toolBar = <Container id="toolbar">{props.children}</Container>;
+    const toolBar = <Container fluid id="toolbar"><Row lg={12}>{props.children}</Row></Container>;
 
     return ReactDOM.createPortal(toolBar, toolBarRoot);
 }

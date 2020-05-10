@@ -3,9 +3,12 @@ import React from "react";
 import { useParams } from "react-router-dom";
 
 import Button from "react-bootstrap/Button";
+import Col from 'react-bootstrap/Col';
 
 import Plot from "./BokehPlot";
 import DeviceTable from "./DeviceTable";
+
+import useDateRange, { formatDate, parseDate } from "./DatePicker";
 
 import { useDropdown, useTimestamp } from "./Toolbar";
 
@@ -36,19 +39,22 @@ function useSensorToolbar(_sensor, _sample_rate, _start_date, _end_date) {
         values: ["AUTO", "1s", "10s"],
         label: "Sample rate",
     });
-    const [start_date, setStartDate] = useTimestamp(_start_date);
-    const [end_date, setEndDate] = useTimestamp(_end_date);
+
+    
+    //const [start_date, setStartDate] = useTimestamp(_start_date);
+    //const [end_date, setEndDate] = useTimestamp(_end_date);
+
+    const [start_date, end_date, setDateRange] = useDateRange(parseDate(_start_date).toDate(), parseDate(_end_date).toDate());
 
     const sensorToolbar = (
         <>
-            {setStartDate}
-            {setEndDate}
-            {setSensor}
-            {setSampleRate}
+            <Col lg={4}>{setDateRange}</Col>
+            <Col lg={2}>{setSensor}</Col>
+            <Col lg={2}>{setSampleRate}</Col>
         </>
     );
 
-    const plotUrl = (device) => sensorUrl(device, sensor, sample_rate, start_date, end_date);
+    const plotUrl = (device) => sensorUrl(device, sensor, sample_rate, formatDate(start_date), formatDate(end_date));
 
     const tableRow = (props) => (
         <>

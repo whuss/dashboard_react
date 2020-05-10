@@ -9,7 +9,9 @@ import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
 import Alert from "react-bootstrap/Alert";
 
-import { BrowserRouter as Router, Switch, Route} from "react-router-dom";
+import useDateRange, { formatDate } from "./DatePicker";
+
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
 import Navigation from "./Navigation";
 import Dashboard from "./Dashboard";
@@ -59,9 +61,13 @@ function AppRouter() {
                         <About />
                         <FetchHackernews />
                     </NavRoute>
-                    <NavRoute path={["/analytics/sensor/:device/:sensor/:sample_rate/:start_date/:end_date",
-                                     "/analytics/sensor"]}
-                              title="Analytics Sensor">
+                    <NavRoute
+                        path={[
+                            "/analytics/sensor/:device/:sensor/:sample_rate/:start_date/:end_date",
+                            "/analytics/sensor",
+                        ]}
+                        title="Analytics Sensor"
+                    >
                         <AnalyticsSensor />
                     </NavRoute>
                     <NavRoute path="/analytics/scenes" title="Analytics Scenes">
@@ -86,21 +92,25 @@ function AppRouter() {
                         <SystemStability />
                     </NavRoute>
                     <NavRoute path="/system/restarts" title="System Restarts">
-                        <SystemRestarts/>
+                        <SystemRestarts />
                     </NavRoute>
                     <NavRoute path="/system/errors" title="System Errors">
-                        <SystemErrors/>
+                        <SystemErrors />
                     </NavRoute>
                     <NavRoute path="/database_size" title="Database Size">
                         <Plot src="/backend/plot_database_size" />
                     </NavRoute>
-                    <NavRoute path={["/logs/:device/:duration/:log_level/:timestamp",
-                                     "/logs/:device/:duration/:log_level",
-                                     "/logs/:device/:duration",
-                                     "/logs/:device",
-                                     "/logs"]}
-                              title="Logs">
-                        <SystemLogs/>
+                    <NavRoute
+                        path={[
+                            "/logs/:device/:duration/:log_level/:timestamp",
+                            "/logs/:device/:duration/:log_level",
+                            "/logs/:device/:duration",
+                            "/logs/:device",
+                            "/logs",
+                        ]}
+                        title="Logs"
+                    >
+                        <SystemLogs />
                     </NavRoute>
                     <NavRoute path="/" title="Dashboard">
                         <Dashboard />
@@ -113,12 +123,8 @@ function AppRouter() {
 
 function Example() {
     return (
-        <Alert dismissible variant="danger">
-            <Alert.Heading>Error!</Alert.Heading>
-            <p>
-                Change and <i>try</i> again.
-            </p>
-        </Alert>
+        <div>Altert</div>
+        // s
     );
 }
 
@@ -140,16 +146,22 @@ const ExampleToast = ({ children }) => {
 };
 
 function About() {
+    const [from, to, dateRange] = useDateRange(new Date("2020-04-05T00:00:00"), new Date("2020-05-04T00:00:00"));
+
     return (
-        <Jumbotron>
-            <h1 className="header">Welcome To React-Bootstrap</h1>
-            <ExampleToast>
-                We now have Bootstrap
-                <span role="img" aria-label="tada">
-                    🎉
-                </span>
-            </ExampleToast>
-        </Jumbotron>
+        <div>
+            {dateRange}
+            <Jumbotron>
+                <h1 className="header">Welcome To React-Bootstrap</h1>
+                <ExampleToast>
+                    We now have Bootstrap
+                    <span role="img" aria-label="tada">
+                        🎉
+                    </span>
+                </ExampleToast>
+            </Jumbotron>
+        
+        </div>
     );
 }
 

@@ -179,6 +179,7 @@ table .deviceMode {
 }
 
 .label {
+    white-space: nowrap;
     padding-left:1em;
     padding-right:10px;
 }
@@ -192,10 +193,7 @@ table .deviceMode {
 }
 
 #toolbar .btn-group {
-    align-items: center;
-}
-
-#toolbar .input-group {
     margin-top: 8px;
     margin-bottom: 8px;
+    align-items: center;
 }
