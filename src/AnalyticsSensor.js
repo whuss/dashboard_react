@@ -49,8 +49,8 @@ function useSensorToolbar(_sensor, _sample_rate, _start_date, _end_date) {
     const sensorToolbar = (
         <>
             <Col lg={4}>{setDateRange}</Col>
-            <Col lg={2}>{setSensor}</Col>
-            <Col lg={2}>{setSampleRate}</Col>
+            <Col lg={2} nowrap>{setSensor}</Col>
+            <Col lg={2} nowrap>{setSampleRate}</Col>
         </>
     );
 

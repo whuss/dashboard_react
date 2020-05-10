@@ -48,6 +48,7 @@ function useDropdown(initialValue, config) {
     const [value, setValue] = useState(initialValue);
 
     const dropdown = (
+        <>
         <ButtonGroup>
             {label && <span className="label">{label}:</span>}
             <DropdownButton id="dropdown-basic-button" variant="light" title={format(value)}>
@@ -58,6 +59,7 @@ function useDropdown(initialValue, config) {
                 ))}
             </DropdownButton>
         </ButtonGroup>
+        </>
     );
 
     return [value, dropdown];
