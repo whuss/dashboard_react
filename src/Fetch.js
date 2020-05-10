@@ -21,6 +21,7 @@ const dataFetchReducer = (state, action) => {
                 ...state,
                 isLoading: false,
                 isError: true,
+                errorMsg: action.payload,
             };
         default:
             throw new Error();
@@ -33,6 +34,7 @@ const useDataApi = (initialUrl, initialData) => {
         isLoading: false,
         isError: false,
         data: initialData,
+        errorMsg: {}
     });
 
     useEffect(() => {
@@ -52,7 +54,7 @@ const useDataApi = (initialUrl, initialData) => {
             } catch (error) {
                 if (!didCancel) {
                     console.log("Fetch error: ", error);
-                    dispatch({ type: "FETCH_FAILURE" });
+                    dispatch({ type: "FETCH_FAILURE", payload: error });
                 }
             }
         };

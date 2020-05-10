@@ -7,7 +7,7 @@ import useDataApi from "./Fetch";
 function Plot(props) {
     const instance = useRef(null);
 
-    const [{ data, isLoading, isError }, doFetch] = useDataApi(props.src, {});
+    const [{ data, isLoading, isError, errorMsg }, doFetch] = useDataApi(props.src, {});
 
     useEffect(() => {
         const scriptTag = document.createElement("script");
@@ -33,7 +33,7 @@ function Plot(props) {
         </div>
     );
 
-    return <LoadingAnimation isLoading={isLoading} isError={isError}>{addPlot(data)}</LoadingAnimation>;
+    return <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>{addPlot(data)}</LoadingAnimation>;
 }
 
 export default Plot;
