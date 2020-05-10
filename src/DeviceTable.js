@@ -64,7 +64,7 @@ function DeviceTable(props) {
     return (
         <>
             <Toolbar>
-                <Col lg={3}>{setFilterStr}</Col>
+                {setFilterStr}
                 {props.toolbar && props.toolbar}
             </Toolbar>
             <DrawTable devices={selectedDevices} format_header={props.format_header} format_row={props.format_row} />
