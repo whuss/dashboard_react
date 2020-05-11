@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 import { LoadingAnimation } from "./Toolbar";
 
@@ -43,6 +43,41 @@ function PlotNew(props) {
     return <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>{addPlot(data)}</LoadingAnimation>;
 }
 
+function usePlot(plot_name, plot_parameters) {
+    const url = plotUrl(plot_name);
+
+    const instance = useRef(null);
+
+    const [{ data, isLoading, isError, errorMsg }, doFetch] = usePostApi(url, plot_parameters);
+
+    useEffect(() => {
+        const scriptTag = document.createElement("script");
+        const currentElement = instance.current;
+        scriptTag.text = data.script;
+        currentElement.appendChild(scriptTag);
+
+        return () => {
+            if (currentElement) {
+                // Delete Bokeh script
+                currentElement.innerHtml = "";
+            }
+        };
+    }, [data]);
+
+    useEffect(() => {
+        doFetch(url, plot_parameters);
+    }, [doFetch, url, plot_parameters]);
+
+    const addPlot = (plot) => (
+        <div align="center" ref={instance}>
+            <div className={plot.class} id={plot.id} data-root-id={plot.data_root_id}></div>
+        </div>
+    );
+
+    return [{ data, isLoading, isError, errorMsg }, addPlot(data)];
+}
+
+
 function Plot(props) {
     const instance = useRef(null);
 
@@ -75,5 +110,32 @@ function Plot(props) {
     return <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>{addPlot(data)}</LoadingAnimation>;
 }
 
+function PlotData(props) {
+    const instance = useRef(null);
+    const data = props.data;
+
+    useEffect(() => {
+        const scriptTag = document.createElement("script");
+        const currentElement = instance.current;
+        scriptTag.text = data.script;
+        currentElement.appendChild(scriptTag);
+
+        return () => {
+            if (currentElement) {
+                // Delete Bokeh script
+                currentElement.innerHtml = "";
+            }
+        };
+    }, [data]);
+
+    return (
+        <>
+        <div align="center" ref={instance}>
+            <div className={data.class} id={data.id} data-root-id={data.data_root_id}></div>
+        </div>
+        </>
+    );
+}
+
 export default Plot;
-export { PlotNew };
+export { PlotData, PlotNew, usePlot, plotUrl };
