@@ -69,31 +69,21 @@ const useDataApi = (initialUrl, initialData) => {
     return [state, setUrl];
 };
 
-function FetchHackernews() {
-    const [{ data, isLoading, isError }] = useDataApi("https://hn.algolia.com/api/v1/search?query=redux", {
-        hits: [],
-    });
-
-    return (
-        <>
-            <span>Fetch</span>
-
-            {isError && <div>Something went wrong ...</div>}
-
-            {isLoading ? (
-                <div>Loading ...</div>
-            ) : (
-                <ul>
-                    {data.hits.map((item) => (
-                        <li key={item.objectID}>
-                            <a href={item.url}>{item.title}</a>
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </>
-    );
+function downloadFile(url, filename)
+{
+    axios({
+        url: url,
+        method: 'GET',
+        responseType: 'blob',
+    }).then((response) => {
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+    })
 }
 
 export default useDataApi;
-export {FetchHackernews};
+export { downloadFile };

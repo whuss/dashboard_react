@@ -40,11 +40,8 @@ function useSensorToolbar(_sensor, _sample_rate, _start_date, _end_date) {
         label: "Sample rate",
     });
 
-    
-    //const [start_date, setStartDate] = useTimestamp(_start_date);
-    //const [end_date, setEndDate] = useTimestamp(_end_date);
-
     const [start_date, end_date, setDateRange] = useDateRange(parseDate(_start_date).toDate(), parseDate(_end_date).toDate());
+    const params = `/analytics/sensor/${sensor}/${sample_rate}/${formatDate(start_date)}/${formatDate(end_date)}`;
 
     const sensorToolbar = (
         <>
@@ -67,7 +64,7 @@ function useSensorToolbar(_sensor, _sample_rate, _start_date, _end_date) {
         </>
     );
 
-    return [tableRow, sensorToolbar];
+    return [tableRow, sensorToolbar, params];
 }
 
 const TableHeader = () => (
@@ -79,7 +76,7 @@ const TableHeader = () => (
 
 function AnalyticsSensor() {
     const { sensor, sample_rate, start_date, end_date } = useParams();
-    const [tableRow, tools] = useSensorToolbar(sensor, sample_rate, start_date, end_date);
+    const [tableRow, tools, params] = useSensorToolbar(sensor, sample_rate, start_date, end_date);
 
     return (
         <>
@@ -87,7 +84,7 @@ function AnalyticsSensor() {
                 <b>Note:</b> If Sensor data is not cached, downloading of sensor data can take up to 1 minutes per day
                 and device.
             </p>
-            <DeviceTable format_header={TableHeader} format_row={tableRow} toolbar={tools} />
+            <DeviceTable format_header={TableHeader} format_row={tableRow} toolbar={tools} params={params}/>
         </>
     );
 }

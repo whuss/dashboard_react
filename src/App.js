@@ -59,7 +59,6 @@ function AppRouter() {
                 <Switch>
                     <NavRoute path="/about" title="About">
                         <About />
-                        <FetchHackernews />
                     </NavRoute>
                     <NavRoute
                         path={[
