@@ -16,7 +16,7 @@ const TableHeader = () => (
 );
 
 const TableRow = (props) => {
-    const plot_name = 'PlotKeypress';
+    const plot_name = "PlotKeypress";
     const plot_parameters = { device: props.device_id };
     const file_name = `analytics_keypress_${props.device_id}.xlsx`;
     const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters);
@@ -29,7 +29,9 @@ const TableRow = (props) => {
                 </LoadingAnimation>
             </td>
             <td>
-                <Button onClick={() => downloadFile(plot_name, plot_parameters, file_name)}>Download</Button>
+                {!isLoading && !isError && (
+                    <Button onClick={() => downloadFile(plot_name, plot_parameters, file_name)}>Download</Button>
+                )}
             </td>
         </>
     );

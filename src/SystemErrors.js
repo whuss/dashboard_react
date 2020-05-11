@@ -32,7 +32,9 @@ const TableRow = (props) => {
                 </LoadingAnimation>
             </td>
             <td>
-                <Button onClick={() => downloadFile(plot_name, plot_parameters, file_name)}>Download</Button>
+                {!isLoading && !isError && (
+                    <Button onClick={() => downloadFile(plot_name, plot_parameters, file_name)}>Download</Button>
+                )}
             </td>
         </>
     );

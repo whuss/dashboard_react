@@ -16,23 +16,28 @@ const TableHeader = () => (
     </>
 );
 
-
 const TableRow = (props) => {
-    const[{ data, isLoading, isError, errorMsg }, plot] = usePlot('PlotOnOffCycles', {device: props.device_id});
+    const plot_name = "PlotOnOffCyclesCrashes";
+    const plot_parameters = { device: props.device_id };
+    const file_name = `system_stability_${props.device_id}.xlsx`;
+    const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters);
 
     return (
         <>
             <td>
-                <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>{plot}</LoadingAnimation>
+                <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>
+                    {plot}
+                </LoadingAnimation>
             </td>
             <td>
-                <Button onClick={() => downloadFile('PlotOnOffCycles', {device: props.device_id}, `analytics_scenes_${props.device_id}.xlsx`)}>Download</Button>
+                {!isLoading && !isError && (
+                    <Button onClick={() => downloadFile(plot_name, plot_parameters, file_name)}>Download</Button>
+                )}
             </td>
         </>
     );
-}
+};
 
 const SwitchCycles = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
-
 
 export default SwitchCycles;
