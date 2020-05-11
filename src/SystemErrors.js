@@ -4,13 +4,10 @@ import Button from "react-bootstrap/Button";
 
 import DeviceTable from "./DeviceTable";
 
-import Plot from "./BokehPlot";
+import { usePlot } from "./BokehPlot";
+import { LoadingAnimation } from "./Toolbar";
 
 import { downloadFile } from "./Fetch";
-
-function plotUrl(device) {
-    return `/backend/plot_system_errors/${device}`;
-}
 
 const TableHeader = () => (
     <>
@@ -21,20 +18,21 @@ const TableHeader = () => (
 );
 
 const TableRow = (props) => {
+    const plot_name = "PlotErrors";
+    const plot_parameters = { device: props.device_id };
+    const file_name = `system_errors_${props.device_id}.xlsx`;
+    const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters);
+
     return (
         <>
-            <td></td>
+            <td>{fields && fields.total_number_of_errors}</td>
             <td>
-                <Plot src={plotUrl(props.device_id)} />
+                <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>
+                    {plot}
+                </LoadingAnimation>
             </td>
             <td>
-                <Button
-                    onClick={() =>
-                        downloadFile("PlotErrors", { device: props.device_id }, `system_errors_${props.device_id}.xlsx`)
-                    }
-                >
-                    Download
-                </Button>
+                <Button onClick={() => downloadFile(plot_name, plot_parameters, file_name)}>Download</Button>
             </td>
         </>
     );

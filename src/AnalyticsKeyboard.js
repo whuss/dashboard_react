@@ -2,13 +2,11 @@ import React from "react";
 
 import Button from "react-bootstrap/Button";
 
-import Plot from "./BokehPlot";
 import DeviceTable from "./DeviceTable";
-import { downloadFile } from "./Fetch";
 
-function plotUrl(device) {
-    return `/backend/plot_analytics_keyboard/${device}`;
-}
+import { usePlot } from "./BokehPlot";
+import { LoadingAnimation } from "./Toolbar";
+import { downloadFile } from "./Fetch";
 
 const TableHeader = () => (
     <>
@@ -18,13 +16,20 @@ const TableHeader = () => (
 );
 
 const TableRow = (props) => {
+    const plot_name = "PlotKeyboard";
+    const plot_parameters = { device: props.device_id };
+    const file_name = `analytics_keyboard_${props.device_id}.xlsx`;
+    const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters);
+
     return (
         <>
             <td>
-                <Plot src={plotUrl(props.device_id)} />
+                <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>
+                    {plot}
+                </LoadingAnimation>
             </td>
             <td>
-                <Button onClick={() => downloadFile('PlotKeyboard', {device: props.device_id}, `analytics_keyboard_${props.device_id}.xlsx`)}>Download</Button>
+            <Button onClick={() => downloadFile(plot_name, plot_parameters, file_name)}>Download</Button>
             </td>
         </>
     );
