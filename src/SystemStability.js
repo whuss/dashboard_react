@@ -19,7 +19,9 @@ const TableHeader = () => (
 );
 
 const TableRow = (props) => {
-    const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot("PlotCrashes", { device: props.device_id });
+    const plot_name = "PlotCrashes";
+    const plot_parameters = { device: props.device_id };
+    const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters);
 
     return (
         <>
@@ -33,11 +35,7 @@ const TableRow = (props) => {
             <td>
                 <Button
                     onClick={() =>
-                        downloadFile(
-                            "PlotCrashes",
-                            { device: props.device_id },
-                            `system_stability_${props.device_id}.xlsx`
-                        )
+                        downloadFile(plot_name, plot_parameters)
                     }
                 >
                     Download
