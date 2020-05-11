@@ -5,6 +5,8 @@ import Button from "react-bootstrap/Button";
 import Plot from "./BokehPlot";
 import DeviceTable from "./DeviceTable";
 
+import { downloadFile } from "./Fetch";
+
 function plotUrl(device) {
     return `/backend/plot_analytics_mouse/${device}`;
 }
@@ -23,7 +25,7 @@ const TableRow = (props) => {
                 <Plot src={plotUrl(props.device_id)} />
             </td>
             <td>
-                <Button>Download</Button>
+                <Button onClick={() => downloadFile('PlotMouse', {device: props.device_id}, `analytics_mouse_${props.device_id}.xlsx`)}>Download</Button>
             </td>
         </>
     );

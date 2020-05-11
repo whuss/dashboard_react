@@ -6,6 +6,8 @@ import DeviceTable from "./DeviceTable";
 
 import Plot from "./BokehPlot";
 
+import { downloadFile } from "./Fetch";
+
 function plotUrl(device) {
     return `/backend/plot_system_stability/${device}`;
 }
@@ -28,7 +30,13 @@ const TableRow = (props) => {
                 <Plot src={plotUrl(props.device_id)} />
             </td>
             <td>
-                <Button>Download</Button>
+            <Button
+                    onClick={() =>
+                        downloadFile("PlotCrashes", { device: props.device_id }, `system_stability_${props.device_id}.xlsx`)
+                    }
+                >
+                    Download
+                </Button>
             </td>
         </>
     );

@@ -10,10 +10,6 @@ function plotUrl(device) {
     return `/backend/plot_analytics_keyboard/${device}`;
 }
 
-function downloadUrl(device) {
-    return `/backend/download_analytics_keyboard/${device}`;
-}
-
 const TableHeader = () => (
     <>
         <th>Keyboard data</th>
@@ -28,7 +24,7 @@ const TableRow = (props) => {
                 <Plot src={plotUrl(props.device_id)} />
             </td>
             <td>
-                <Button onClick={() => downloadFile(downloadUrl(props.device_id), `analytics_keyboard_${props.device_id}.xlsx`)}>Download</Button>
+                <Button onClick={() => downloadFile('PlotKeyboard', {device: props.device_id}, `analytics_keyboard_${props.device_id}.xlsx`)}>Download</Button>
             </td>
         </>
     );

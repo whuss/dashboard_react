@@ -2,14 +2,11 @@ import React from "react";
 
 import Button from "react-bootstrap/Button";
 
-import Plot from "./BokehPlot";
+import { PlotNew } from "./BokehPlot";
 
 import DeviceTable from "./DeviceTable";
 
-
-function plotUrl(device) {
-    return `/backend/plot_switch_cycle/${device}`;
-}
+import { downloadFile } from "./Fetch";
 
 const TableHeader = () => (
     <>
@@ -22,14 +19,14 @@ const TableRow = (props) => {
     return (
         <>
             <td>
-                <Plot src={plotUrl(props.device_id)} />
+                <PlotNew plot_name='PlotOnOffCycles' plot_parameters={{device: props.device_id}} />
             </td>
             <td>
-                <Button>Download</Button>
+                <Button onClick={() => downloadFile('PlotOnOffCycles', {device: props.device_id}, `analytics_scenes_${props.device_id}.xlsx`)}>Download</Button>
             </td>
         </>
     );
-};
+}
 
 const SwitchCycles = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
 

@@ -4,6 +4,7 @@ import Button from "react-bootstrap/Button";
 
 import Plot from "./BokehPlot";
 import DeviceTable from "./DeviceTable";
+import { downloadFile } from "./Fetch";
 
 function plotUrl(device) {
     return `/backend/plot_analytics_connection/${device}`;
@@ -23,7 +24,7 @@ const TableRow = (props) => {
                 <Plot src={plotUrl(props.device_id)} />
             </td>
             <td>
-                <Button>Download</Button>
+                <Button onClick={() => downloadFile('PlotConnection', {device: props.device_id}, `analytics_connection_${props.device_id}.xlsx`)}>Download</Button>
             </td>
         </>
     );

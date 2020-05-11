@@ -69,11 +69,69 @@ const useDataApi = (initialUrl, initialData) => {
     return [state, setUrl];
 };
 
-function downloadFile(url, filename)
+const usePostApi = (initialUrl, _parameters) => {
+    const [url, setUrl] = useState(initialUrl);
+    const [parameters, setParameters] = useState(_parameters);
+    const [state, dispatch] = useReducer(dataFetchReducer, {
+        isLoading: false,
+        isError: false,
+        data: {},
+        errorMsg: {}
+    });
+
+    function doFetch(newUrl, newParameters) {
+        setUrl(newUrl);
+        setParameters(newParameters);
+    };
+
+    useEffect(() => {
+        let didCancel = false;
+
+        const fetchData = async () => {
+            dispatch({ type: "FETCH_INIT" });
+
+            try {
+                console.log("Fetch url: ", url);
+                const result = await axios({
+                    url: url,
+                    method: 'POST',
+                    data: parameters,
+                    responseType: 'json',
+                });
+
+                if (!didCancel) {
+                    console.log("Fetch result: ", result.data);
+                    dispatch({ type: "FETCH_SUCCESS", payload: result.data });
+                }
+            } catch (error) {
+                if (!didCancel) {
+                    console.log("Fetch error: ", error);
+                    dispatch({ type: "FETCH_FAILURE", payload: error });
+                }
+            }
+        };
+
+        fetchData();
+
+        return () => {
+            didCancel = true;
+        };
+    }, [url, parameters]);
+
+    return [state, doFetch];
+};
+
+
+function downloadUrl(plotname) {
+    return `/backend/download_excel/${plotname}`;
+}
+
+function downloadFile(plotname, data, filename)
 {
     axios({
-        url: url,
-        method: 'GET',
+        url: downloadUrl(plotname),
+        method: 'POST',
+        data: data,
         responseType: 'blob',
     }).then((response) => {
         const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -86,4 +144,4 @@ function downloadFile(url, filename)
 }
 
 export default useDataApi;
-export { downloadFile };
+export { downloadFile, usePostApi };
