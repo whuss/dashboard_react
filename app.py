@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from typing import Optional
 
-from flask import Flask, render_template, jsonify, request, url_for, json, make_response
+from flask import Flask, render_template, jsonify, request, url_for, json, make_response, Response
 from flask_caching import Cache
 from flask_cors import cross_origin
 import dateutil.parser
@@ -1439,6 +1439,44 @@ def backend_plot_analytics_keyboard(device: str):
 
     plot = ajax._plot(data)
     return reactify_bokeh(plot)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/backend/download_analytics_keyboard/<device>')
+def backend_download_analytics_keyboard(device: str):
+    ajax = PlotKeyboard(plot_parameters=dict(device=device))
+    data = ajax.fetch_data()
+
+    return Response(convert_to_excel(data),
+                    mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-disposition":
+                             "attachment; filename=data.xlsx"})
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/backend/plot/<plot_name>', methods=['POST'])
+def backend_plot(plot_name: str):
+    plot_parameters = request.get_json()
+    logging.info(f"plot_name: {plot_name} plot_parameters: {plot_parameters}")
+    ajax = AjaxFactory._create_plot(plot_name, plot_parameters)
+    return ajax.react_render()
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/backend/download_excel/<plot_name>', methods=['POST'])
+def backend_download_excel(plot_name: str):
+    plot_parameters = request.get_json()
+    logging.info(f"plot_name: {plot_name} plot_parameters: {plot_parameters}")
+    plot = AjaxFactory._create_plot(plot_name, plot_parameters)
+    data = plot.fetch_data()
+    return Response(convert_to_excel(data),
+                    mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-disposition":
+                                 "attachment; filename=data.xlsx"})
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 

@@ -29,7 +29,7 @@ from analytics.mouse import get_mouse_data_raw, get_mouse_data_aggregated
 import clustering.clustering as clustering
 from config import Config
 from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
-from utils.date import start_of_day, end_of_day, format_time_span, date_range
+from utils.date import start_of_day, end_of_day, format_time_span, date_range, parse_date
 from utils.interval import find_intervals
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -115,6 +115,11 @@ class AjaxField:
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def json(self):
+        return self._value
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     @property
     def html(self):
         return f'<div class="bokeh-plot" data-ajaxid="{self._id}" data-fieldname="{self.name}">' \
@@ -164,6 +169,14 @@ class AjaxFieldTable(AjaxField):
 
         return self._value.__html__()
 
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def json(self):
+        if self._value is None:
+            return ""
+        else:
+            return self._value.__html__()
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -206,6 +219,11 @@ class AjaxFieldPlotBokeh(AjaxField):
         else:
             script, div = components(self._value)
             self._final_html = render_template('bokeh_plot.html', div_plot=div, script_plot=script)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def json(self):
+        return ""
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -316,6 +334,30 @@ class Ajax:
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+def reactify_bokeh(plot):
+    script, div = components(plot)
+
+    script = script.replace('\n<script type=\"text/javascript\">', '') \
+        .replace('\n</script>', '')
+
+    div_ = "{" + div.replace('\n<div ', '') \
+        .replace('></div>', '') \
+        .replace(' ', ',') \
+        .replace('data-root-id=', '"data_root_id":') \
+        .replace('id=', '"id":') \
+        .replace('class=', '"class":') + "}"
+
+    print(div_)
+
+    from ast import literal_eval
+    data = literal_eval(div_)
+    print(data)
+    data['script'] = script
+    data['div'] = div
+
+    return data
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 class AjaxPlotBokeh(Ajax):
     def __init__(self, plot_parameters: dict):
@@ -362,6 +404,20 @@ class AjaxPlotBokeh(Ajax):
     @abstractmethod
     def _plot(self):
         pass
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def react_render(self):
+        data = self.fetch_data()
+        if data.empty:
+            return dict()
+
+        plot = self._plot(data)
+        json_plot = reactify_bokeh(plot)
+        json_fields = dict()
+        for name, field in self.field.items():
+            json_fields[name] = field.json()
+        return dict(plot=json_plot, fields=json_fields)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -687,8 +743,8 @@ class PlotDatabaseDelay(AjaxPlotBokeh):
 class PlotSensors(AjaxPlotBokeh):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
-        self.start_date = self.parameters.get('start_date')
-        self.end_date = self.parameters.get('end_date')
+        self.start_date = parse_date(self.parameters.get('start_date'))
+        self.end_date = parse_date(self.parameters.get('end_date'))
         self.sensors = self.parameters.get('sensors')
         self.device = self.parameters.get('device')
         self.sample_rate = self.parameters.get('sample_rate')

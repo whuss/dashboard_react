@@ -6,7 +6,7 @@ import dateutil.parser
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def parse_date(timestamp: Union[datetime, str]) -> datetime:
+def parse_date_(timestamp: Union[datetime, str]) -> datetime:
     if isinstance(timestamp, datetime):
         return timestamp
     try:
@@ -49,7 +49,9 @@ def parse_datetime(datetime_str: str) -> datetime:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def parse_date(date_str: str) -> date:
+def parse_date(date_str: Union[date, str]) -> date:
+    if isinstance(date_str, date):
+        return date_str
     dt = dateutil.parser.parse(date_str)
     return dt.date()
 
