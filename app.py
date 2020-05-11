@@ -1325,35 +1325,10 @@ def backend_test_plot():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def reactify_bokeh(plot):
-    script, div = components(plot)
-
-    script = script.replace('\n<script type=\"text/javascript\">', '') \
-        .replace('\n</script>', '')
-
-    div_ = "{" + div.replace('\n<div ', '') \
-        .replace('></div>', '') \
-        .replace(' ', ',') \
-        .replace('data-root-id=', '"data_root_id":') \
-        .replace('id=', '"id":') \
-        .replace('class=', '"class":') + "}"
-
-    print(div_)
-
-    from ast import literal_eval
-    data = literal_eval(div_)
-    print(data)
-    data['script'] = script
-    data['div'] = div
-
-    return data
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
 @app.route('/backend/plot_database_size')
 @cache.cached()
 def backend_plot_database_size():
+    from ajax_plots import reactify_bokeh
     ajax = PlotDatabaseSize(plot_parameters=dict())
     data = ajax.fetch_data()
     if data.empty:
@@ -1361,97 +1336,6 @@ def backend_plot_database_size():
 
     plot = ajax._plot(data)
     return reactify_bokeh(plot)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.route('/backend/plot_switch_cycle/<device>')
-def backend_plot_switch_cycle(device: str):
-    ajax = PlotOnOffCycles(plot_parameters=dict(device=device))
-    data = ajax.fetch_data()
-    if data.empty:
-        return dict()
-
-    plot = ajax._plot(data)
-    return reactify_bokeh(plot)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.route('/backend/plot_system_stability/<device>')
-def backend_plot_system_stability(device: str):
-    ajax = PlotCrashes(plot_parameters=dict(device=device))
-    data = ajax.fetch_data()
-    if data.empty:
-        return dict()
-
-    plot = ajax._plot(data)
-    return reactify_bokeh(plot)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.route('/backend/plot_system_errors/<device>')
-def backend_plot_system_errors(device: str):
-    ajax = PlotErrors(plot_parameters=dict(device=device))
-    data = ajax.fetch_data()
-    if data.empty:
-        return dict()
-
-    plot = ajax._plot(data)
-    return reactify_bokeh(plot)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.route('/backend/plot_analytics_scenes/<device>')
-def backend_plot_analytics_scenes(device: str):
-    ajax = PlotSceneDurations(plot_parameters=dict(device=device))
-    data = ajax.fetch_data()
-    if data.empty:
-        return dict()
-
-    plot = ajax._plot(data)
-    return reactify_bokeh(plot)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.route('/backend/plot_analytics_connection/<device>')
-def backend_plot_analytics_connection(device: str):
-    ajax = PlotConnection(plot_parameters=dict(device=device))
-    data = ajax.fetch_data()
-    if data.empty:
-        return dict()
-
-    plot = ajax._plot(data)
-    return reactify_bokeh(plot)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.route('/backend/plot_analytics_keyboard/<device>')
-def backend_plot_analytics_keyboard(device: str):
-    ajax = PlotKeyboard(plot_parameters=dict(device=device))
-    data = ajax.fetch_data()
-    if data.empty:
-        return dict()
-
-    plot = ajax._plot(data)
-    return reactify_bokeh(plot)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.route('/backend/download_analytics_keyboard/<device>')
-def backend_download_analytics_keyboard(device: str):
-    ajax = PlotKeyboard(plot_parameters=dict(device=device))
-    data = ajax.fetch_data()
-
-    return Response(convert_to_excel(data),
-                    mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    headers={"Content-disposition":
-                             "attachment; filename=data.xlsx"})
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1476,34 +1360,6 @@ def backend_download_excel(plot_name: str):
                     mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers={"Content-disposition":
                                  "attachment; filename=data.xlsx"})
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.route('/backend/plot_analytics_keypress/<device>')
-def backend_plot_analytics_keypress(device: str):
-    ajax = PlotKeypress(plot_parameters=dict(device=device))
-    data = ajax.fetch_data()
-    if data.empty:
-        return dict()
-
-    plot = ajax._plot(data)
-    return reactify_bokeh(plot)
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.route('/backend/plot_analytics_mouse/<device>')
-def backend_plot_analytics_mouse(device: str):
-    ajax = PlotMouse(plot_parameters=dict(device=device))
-    data = ajax.fetch_data()
-    if data.empty:
-        return dict()
-
-    plot = ajax._plot(data)
-    return reactify_bokeh(plot)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1553,6 +1409,7 @@ def backend_plot_sensor(device: Optional[str] = None,
         return dict()
 
     plot = ajax._plot(data)
+    from ajax_plots import reactify_bokeh
     return reactify_bokeh(plot)
 
 # ----------------------------------------------------------------------------------------------------------------------
