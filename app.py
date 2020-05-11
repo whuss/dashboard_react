@@ -1295,7 +1295,6 @@ def clustering_input_distribution(normalize: str = "raw"):
 
 
 @app.route('/backend/devices')
-@cache.cached()
 def backend_devices():
     return jsonify(get_devices())
 
@@ -1480,6 +1479,7 @@ def backend_system_restarts(device: str):
 
 
 @app.route('/backend/plot_sensor')
+@app.route('/backend/plot_sensor/<device>')
 @app.route('/backend/plot_sensor/<device>/<sensor>/<sample_rate>/<start_date>/<end_date>')
 def backend_plot_sensor(device: Optional[str] = None,
                         start_date: Optional[str] = None,
