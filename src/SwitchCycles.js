@@ -2,7 +2,7 @@ import React from "react";
 
 import Button from "react-bootstrap/Button";
 
-import { PlotData, PlotNew, usePlot, plotUrl } from "./BokehPlot";
+import { PlotData, PlotNew, usePlot } from "./BokehPlot";
 
 import DeviceTable from "./DeviceTable";
 import { LoadingAnimation } from "./Toolbar";
@@ -16,15 +16,14 @@ const TableHeader = () => (
     </>
 );
 
+
 const TableRow = (props) => {
-    const url = plotUrl('PlotOnOffCycles');
-    const [{ data, isLoading, isError, errorMsg }, doFetch] = usePostApi(url, {device: props.device_id});
+    const[{ data, isLoading, isError, errorMsg }, plot] = usePlot('PlotOnOffCycles', {device: props.device_id});
 
     return (
         <>
             <td>
-                <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}><PlotData data={data}/></LoadingAnimation>
-                {/* <PlotNew plot_name='PlotOnOffCycles' plot_parameters={{device: props.device_id}} /> */}
+                <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>{plot}</LoadingAnimation>
             </td>
             <td>
                 <Button onClick={() => downloadFile('PlotOnOffCycles', {device: props.device_id}, `analytics_scenes_${props.device_id}.xlsx`)}>Download</Button>

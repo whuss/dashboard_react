@@ -43,41 +43,6 @@ function PlotNew(props) {
     return <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>{addPlot(data)}</LoadingAnimation>;
 }
 
-function usePlot(plot_name, plot_parameters) {
-    const url = plotUrl(plot_name);
-
-    const instance = useRef(null);
-
-    const [{ data, isLoading, isError, errorMsg }, doFetch] = usePostApi(url, plot_parameters);
-
-    useEffect(() => {
-        const scriptTag = document.createElement("script");
-        const currentElement = instance.current;
-        scriptTag.text = data.script;
-        currentElement.appendChild(scriptTag);
-
-        return () => {
-            if (currentElement) {
-                // Delete Bokeh script
-                currentElement.innerHtml = "";
-            }
-        };
-    }, [data]);
-
-    useEffect(() => {
-        doFetch(url, plot_parameters);
-    }, [doFetch, url, plot_parameters]);
-
-    const addPlot = (plot) => (
-        <div align="center" ref={instance}>
-            <div className={plot.class} id={plot.id} data-root-id={plot.data_root_id}></div>
-        </div>
-    );
-
-    return [{ data, isLoading, isError, errorMsg }, addPlot(data)];
-}
-
-
 function Plot(props) {
     const instance = useRef(null);
 
@@ -135,6 +100,15 @@ function PlotData(props) {
         </div>
         </>
     );
+}
+
+function usePlot(plot_name, plot_parameters)
+{
+    const url = plotUrl(plot_name);
+    const [{ data, isLoading, isError, errorMsg }, doFetch] = usePostApi(url, plot_parameters);
+
+    const plot = <PlotData data={data}/>;
+    return [{data, isLoading, isError, errorMsg}, plot];
 }
 
 export default Plot;
