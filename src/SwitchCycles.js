@@ -17,7 +17,7 @@ const TableHeader = () => (
 );
 
 const TableRow = (props) => {
-    const plot_name = "PlotOnOffCyclesCrashes";
+    const plot_name = "PlotOnOffCycles";
     const plot_parameters = { device: props.device_id };
     const file_name = `system_stability_${props.device_id}.xlsx`;
     const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters);

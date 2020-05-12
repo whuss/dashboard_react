@@ -4,7 +4,12 @@ import { LoadingAnimation } from "./Toolbar";
 
 import useDataApi, { usePostApi } from "./Fetch";
 
-function plotUrl(plotname) {
+function plotUrl(plotname, cached) {
+    if (cached === false)
+    {
+        return `/backend/plot_uncached/${plotname}`;
+        
+    }
     return `/backend/plot/${plotname}`;
 }
 
@@ -102,13 +107,13 @@ function PlotData(props) {
     );
 }
 
-function usePlot(plot_name, plot_parameters)
+function usePlot(plot_name, plot_parameters, cached)
 {
-    const url = plotUrl(plot_name);
+    const url = plotUrl(plot_name, cached);
     const [{ data, isLoading, isError, errorMsg }, doFetch] = usePostApi(url, plot_parameters);
 
     const { plot, fields } = data;
-    const plotElement = plot && <PlotData data={plot}/>;
+    const plotElement = plot && <PlotData data={plot} />;
     return [{fields, isLoading, isError, errorMsg}, plotElement];
 }
 
