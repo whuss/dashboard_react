@@ -27,3 +27,9 @@ the **_host** variable in db.py
 Setup redis:
 
 https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-redis-on-ubuntu-18-04
+
+# Changes to redis config:
+
+maxmemory 500mb
+maxmemory-policy volatile-lfu
+supervised systemd
