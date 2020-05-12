@@ -410,7 +410,7 @@ class AjaxPlotBokeh(Ajax):
     def react_render(self, data=None):
         if data is None:
             data = self.fetch_data()
-        if data.empty:
+        if data is None or data.empty:
             return dict()
 
         plot = self._plot(data)
@@ -979,6 +979,7 @@ class PlotMouse(AjaxPlotBokeh):
     def _plot(self, mouse_data):
         plot_data = mouse_data[[('click_count', 'sum'), ('double_click_count', 'sum'), ('rotation_distance', 'sum')]]
         plot_data = plot_data.transpose().reset_index(level=1, drop=True).transpose()
+
         if plot_data.empty:
             return None
         fig1 = plots.plot_mouse_clicks(plot_data)

@@ -23,3 +23,7 @@ on the terminal:
 
 The location of the database can be changed by editing
 the **_host** variable in db.py
+
+Setup redis:
+
+https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-redis-on-ubuntu-18-04

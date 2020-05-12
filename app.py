@@ -1349,6 +1349,9 @@ def fetch_data(plot_name: str, plot_parameters):
     data = ajax.fetch_data()
     return data
 
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 @cache.memoize()
 def react_render(plot_name: str, plot_parameters):
     data = fetch_data(plot_name, plot_parameters)
@@ -1356,14 +1359,24 @@ def react_render(plot_name: str, plot_parameters):
     ajax = AjaxFactory._create_plot(plot_name, plot_parameters)
     return ajax.react_render(data)
 
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 @app.route('/backend/plot/<plot_name>', methods=['POST'])
 def backend_plot(plot_name: str):
     plot_parameters = request.get_json()
-    logging.info(f"plot_name: {plot_name} plot_parameters: {plot_parameters}")
-    ajax = AjaxFactory._create_plot(plot_name, plot_parameters)
+    logging.info(f"Plot Cached: plot_name: {plot_name} plot_parameters: {plot_parameters}")
     return react_render(plot_name, plot_parameters)
-    #return ajax.react_render()
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/backend/plot_uncached/<plot_name>', methods=['POST'])
+def backend_plot_uncached(plot_name: str):
+    plot_parameters = request.get_json()
+    logging.info(f"Plot Uncached: plot_name: {plot_name} plot_parameters: {plot_parameters}")
+    ajax = AjaxFactory._create_plot(plot_name, plot_parameters)
+    return ajax.react_render()
 
 # ----------------------------------------------------------------------------------------------------------------------
 
