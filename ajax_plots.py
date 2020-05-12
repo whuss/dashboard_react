@@ -407,8 +407,9 @@ class AjaxPlotBokeh(Ajax):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def react_render(self):
-        data = self.fetch_data()
+    def react_render(self, data=None):
+        if data is None:
+            data = self.fetch_data()
         if data.empty:
             return dict()
 

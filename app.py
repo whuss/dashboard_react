@@ -83,9 +83,11 @@ def create_app():
     # app.config['BASIC_AUTH_USERNAME'] = "ReproLight"
     # app.config['BASIC_AUTH_PASSWORD'] = "infinity"
     # app.config['BASIC_AUTH_FORCE'] = True
-    app.config['CACHE_TYPE'] = "simple"
-    app.config['CACHE_DEFAULT_TIMEOUT'] = 300
-    app.config['CACHE_THRESHOLD'] = 200
+    app.config['CACHE_TYPE'] = "redis"
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 60 * 60 * 24  # 1 day
+    app.config['CACHE_REDIS_HOST'] = "127.0.0.1"
+    app.config['CACHE_REDIS_PORT'] = 6379
+    #app.config['CACHE_THRESHOLD'] = 200
     db.init_app(app)
 
     # basic_auth = BasicAuth(app)
@@ -1326,10 +1328,10 @@ def backend_test_plot():
 
 
 @app.route('/backend/plot_database_size')
-@cache.cached()
 def backend_plot_database_size():
     from ajax_plots import reactify_bokeh
     ajax = PlotDatabaseSize(plot_parameters=dict())
+
     data = ajax.fetch_data()
     if data.empty:
         return dict()
@@ -1340,12 +1342,28 @@ def backend_plot_database_size():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+@cache.memoize()
+def fetch_data(plot_name: str, plot_parameters):
+    logging.info(f"fetch render data: {plot_name}, {plot_parameters}")
+    ajax = AjaxFactory._create_plot(plot_name, plot_parameters)
+    data = ajax.fetch_data()
+    return data
+
+@cache.memoize()
+def react_render(plot_name: str, plot_parameters):
+    data = fetch_data(plot_name, plot_parameters)
+    logging.info(f"render plot: {plot_name}, {plot_parameters}")
+    ajax = AjaxFactory._create_plot(plot_name, plot_parameters)
+    return ajax.react_render(data)
+
+
 @app.route('/backend/plot/<plot_name>', methods=['POST'])
 def backend_plot(plot_name: str):
     plot_parameters = request.get_json()
     logging.info(f"plot_name: {plot_name} plot_parameters: {plot_parameters}")
     ajax = AjaxFactory._create_plot(plot_name, plot_parameters)
-    return ajax.react_render()
+    return react_render(plot_name, plot_parameters)
+    #return ajax.react_render()
 
 # ----------------------------------------------------------------------------------------------------------------------
 
