@@ -98,6 +98,8 @@ def create_app():
 
 
 app = create_app()
+# secret_key is needed for POST requests to gunicorn (otherwise we get error code 500 on post methods)
+app.secret_key = "ddm,n.490fsdfgjlk34rdflöja3sdfsaderoivnsdfsadr2430ß56200".encode('utf8')
 cache = Cache(app)
 cors = CORS(app, resources={r"/backend/*": {"origins": "*"}})
 app.app_context().push()

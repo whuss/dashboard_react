@@ -33,3 +33,8 @@ https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-redis
 maxmemory 500mb
 maxmemory-policy volatile-lfu
 supervised systemd
+
+# Deployment with docker and gunicorn
+
+$ docker build -t flask/dashboard .
+$ docker run -p 8003:8003 --network="host" flask/dashboard
