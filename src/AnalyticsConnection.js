@@ -37,7 +37,7 @@ const TableRow = (props) => {
     );
 };
 
-const AnalyticsConnection = () => (
+const AnalyticsConnection = (props) => (
     <>
         <p>A data loss is detected when no data is received from the device for at least two minutes.</p>
         <p>
@@ -48,7 +48,7 @@ const AnalyticsConnection = () => (
             <b>Note:</b> There is no connection data available for dates before 12.03.2020, these dates are always
             considered to have 0% downtime.
         </p>
-        <DeviceTable format_header={TableHeader} format_row={TableRow} />;
+        <DeviceTable format_header={TableHeader} format_row={TableRow} devices={props.devices}/>;
     </>
 );
 

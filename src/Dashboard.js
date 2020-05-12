@@ -31,6 +31,6 @@ const TableHeader = () => (
     </>
 );
 
-const Dashboard = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
+const Dashboard = (props) => <DeviceTable format_header={TableHeader} format_row={TableRow} devices={props.devices}/>;
 
 export default Dashboard;

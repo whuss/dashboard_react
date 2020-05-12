@@ -28,7 +28,7 @@ import SystemErrors from "./SystemErrors";
 import SystemLogs from "./SystemLogs";
 import Plot from "./BokehPlot";
 
-import { FetchHackernews } from "./Fetch";
+import { useDevice, LoadingAnimation } from "./Toolbar";
 
 function Title(props) {
     const titleBar = document.getElementById("titlebar-root");
@@ -49,73 +49,78 @@ function NavRoute(props) {
     );
 }
 
+const MainView = (props) => {
+    const devices = props.devices;
+    return (
+        <Container fluid className="p-3">
+            {/* A <Switch> looks through its children <Route>s and
+              renders the first one that matches the current URL. */}
+            <Switch>
+                <NavRoute path="/about" title="About">
+                    <About />
+                </NavRoute>
+                <NavRoute
+                    path={["/analytics/sensor/:device/:sensor/:sample_rate/:start_date/:end_date", "/analytics/sensor"]}
+                    title="Analytics Sensor"
+                >
+                    <AnalyticsSensor devices={devices}/>
+                </NavRoute>
+                <NavRoute path="/analytics/scenes" title="Analytics Scenes">
+                    <AnalyticsScenes devices={devices}/>
+                </NavRoute>
+                <NavRoute path="/analytics/connection" title="Analytics Connection">
+                    <AnalyticsConnection devices={devices}/>
+                </NavRoute>
+                <NavRoute path="/analytics/keyboard" title="Analytics Keyboard">
+                    <AnalyticsKeyboard devices={devices}/>
+                </NavRoute>
+                <NavRoute path="/analytics/keypress" title="Analytics Keypress">
+                    <AnalyticsKeypress devices={devices}/>
+                </NavRoute>
+                <NavRoute path="/analytics/mouse" title="Analytics Mouse">
+                    <AnalyticsMouse devices={devices}/>
+                </NavRoute>
+                <NavRoute path="/statistics/switch_cycles" title="Statistics On/Off Cycles">
+                    <SwitchCycles devices={devices}/>
+                </NavRoute>
+                <NavRoute path="/system/stability" title="System Stability">
+                    <SystemStability devices={devices}/>
+                </NavRoute>
+                <NavRoute path="/system/restarts" title="System Restarts">
+                    <SystemRestarts devices={devices}/>
+                </NavRoute>
+                <NavRoute path="/system/errors" title="System Errors">
+                    <SystemErrors devices={devices}/>
+                </NavRoute>
+                <NavRoute path="/database_size" title="Database Size">
+                    <Plot src="/backend/plot_database_size" />
+                </NavRoute>
+                <NavRoute
+                    path={[
+                        "/logs/:device/:duration/:log_level/:timestamp",
+                        "/logs/:device/:duration/:log_level",
+                        "/logs/:device/:duration",
+                        "/logs/:device",
+                        "/logs",
+                    ]}
+                    title="Logs"
+                >
+                    <SystemLogs devices={devices}/>
+                </NavRoute>
+                <NavRoute path="/" title="Dashboard">
+                    <Dashboard devices={devices}/>
+                </NavRoute>
+            </Switch>
+        </Container>
+    );
+}
+
 function AppRouter() {
+    const [devices, isLoading, isError] = useDevice();
     return (
         <Router>
             <NavPortal />
-            {/* A <Switch> looks through its children <Route>s and
-              renders the first one that matches the current URL. */}
-            <Container fluid className="p-3">
-                <Switch>
-                    <NavRoute path="/about" title="About">
-                        <About />
-                    </NavRoute>
-                    <NavRoute
-                        path={[
-                            "/analytics/sensor/:device/:sensor/:sample_rate/:start_date/:end_date",
-                            "/analytics/sensor",
-                        ]}
-                        title="Analytics Sensor"
-                    >
-                        <AnalyticsSensor />
-                    </NavRoute>
-                    <NavRoute path="/analytics/scenes" title="Analytics Scenes">
-                        <AnalyticsScenes />
-                    </NavRoute>
-                    <NavRoute path="/analytics/connection" title="Analytics Connection">
-                        <AnalyticsConnection />
-                    </NavRoute>
-                    <NavRoute path="/analytics/keyboard" title="Analytics Keyboard">
-                        <AnalyticsKeyboard />
-                    </NavRoute>
-                    <NavRoute path="/analytics/keypress" title="Analytics Keypress">
-                        <AnalyticsKeypress />
-                    </NavRoute>
-                    <NavRoute path="/analytics/mouse" title="Analytics Mouse">
-                        <AnalyticsMouse />
-                    </NavRoute>
-                    <NavRoute path="/statistics/switch_cycles" title="Statistics On/Off Cycles">
-                        <SwitchCycles />
-                    </NavRoute>
-                    <NavRoute path="/system/stability" title="System Stability">
-                        <SystemStability />
-                    </NavRoute>
-                    <NavRoute path="/system/restarts" title="System Restarts">
-                        <SystemRestarts />
-                    </NavRoute>
-                    <NavRoute path="/system/errors" title="System Errors">
-                        <SystemErrors />
-                    </NavRoute>
-                    <NavRoute path="/database_size" title="Database Size">
-                        <Plot src="/backend/plot_database_size" />
-                    </NavRoute>
-                    <NavRoute
-                        path={[
-                            "/logs/:device/:duration/:log_level/:timestamp",
-                            "/logs/:device/:duration/:log_level",
-                            "/logs/:device/:duration",
-                            "/logs/:device",
-                            "/logs",
-                        ]}
-                        title="Logs"
-                    >
-                        <SystemLogs />
-                    </NavRoute>
-                    <NavRoute path="/" title="Dashboard">
-                        <Dashboard />
-                    </NavRoute>
-                </Switch>
-            </Container>
+            <LoadingAnimation isLoading={isLoading} isError={isError}><MainView devices={devices}/></LoadingAnimation>
         </Router>
     );
 }
@@ -159,7 +164,6 @@ function About() {
                     </span>
                 </ExampleToast>
             </Jumbotron>
-        
         </div>
     );
 }

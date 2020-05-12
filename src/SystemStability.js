@@ -41,6 +41,6 @@ const TableRow = (props) => {
     );
 };
 
-const AnalyticsScenes = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
+const AnalyticsScenes = (props) => <DeviceTable format_header={TableHeader} format_row={TableRow} devices={props.devices} />;
 
 export default AnalyticsScenes;

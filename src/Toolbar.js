@@ -83,9 +83,7 @@ function useDevice() {
     return [devices, isLoading, isError];
 }
 
-function useDeviceFilter(initialValue) {
-    const [devices, isLoading, isError] = useDevice();
-
+function useDeviceFilter(initialValue, devices) {
     const [filterStr, deviceFilter] = useInput(initialValue ? initialValue : useDeviceFilter.filter, {
         prepend: (
             <>
@@ -99,25 +97,19 @@ function useDeviceFilter(initialValue) {
         useDeviceFilter.filter = filterStr;
     }, [filterStr]);
 
-    const loadingDeviceFilter = <LoadingAnimation isLoading={isLoading} isError={isError}>{deviceFilter}</LoadingAnimation>
-
     const selectedDevices = devices.filter((s) => s.includes(filterStr));
 
-    return [selectedDevices, loadingDeviceFilter];
+    return [selectedDevices, deviceFilter];
 }
 useDeviceFilter.filter = "";
 
-function useDeviceDropdown(device) {
-    const [devices, isLoading, isError] = useDevice();
-
+function useDeviceDropdown(device, devices) {
     const [selectedDevice, deviceDropdown] = useDropdown(device, {
         values: devices,
         label: "Device",
     });
 
-    const loadingDeviceDropdown = <LoadingAnimation isLoading={isLoading} isError={isError}>{deviceDropdown}</LoadingAnimation>
-
-    return [selectedDevice, loadingDeviceDropdown];
+    return [selectedDevice, deviceDropdown];
 }
 
 function useTimestamp(_timestamp) {
@@ -150,4 +142,4 @@ function Toolbar(props) {
 }
 
 export default Toolbar;
-export { useInput, useDeviceFilter, useDropdown, useDeviceDropdown, useTimestamp, LoadingAnimation };
+export { useInput, useDeviceFilter, useDropdown, useDeviceDropdown, useTimestamp, LoadingAnimation, useDevice };

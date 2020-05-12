@@ -38,13 +38,13 @@ const TableRow = (props) => {
     );
 };
 
-const AnalyticsScenes = () => (
+const AnalyticsScenes = (props) => (
     <>
         <p>
             <b>Note:</b> Data from days where the total time of all scenes is less than 30 minutes are excluded form the
             dataset.
         </p>
-        <DeviceTable format_header={TableHeader} format_row={TableRow} />
+        <DeviceTable format_header={TableHeader} format_row={TableRow} devices={props.devices}/>
     </>
 );
 

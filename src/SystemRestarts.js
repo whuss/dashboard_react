@@ -27,6 +27,6 @@ const TableRow = (props) => {
     );
 };
 
-const SystemRestarts = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
+const SystemRestarts = (props) => <DeviceTable format_header={TableHeader} format_row={TableRow} devices={props.devices} />;
 
 export default SystemRestarts;

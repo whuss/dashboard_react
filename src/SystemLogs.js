@@ -35,8 +35,8 @@ function logUrl(device, duration, log_level, timestamp) {
     return baseUrl;
 }
 
-function useLogToolbar(_device, _duration, _log_level, _timestamp) {
-    const [device, setDevice] = useDeviceDropdown(_device);
+function useLogToolbar(_device, _duration, _log_level, _timestamp, devices) {
+    const [device, setDevice] = useDeviceDropdown(_device, devices);
     const [log_level, setLogLevel] = useDropdown(_log_level, {
         label: "Logging level",
         values: ["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
@@ -61,14 +61,15 @@ function useLogToolbar(_device, _duration, _log_level, _timestamp) {
     return [{ device, log_level, timestamp, duration }, logToolbar];
 }
 
-function SystemLogs() {
+function SystemLogs(props) {
     let params = useParams();
 
     const [{ device, log_level, timestamp, duration }, logToolbar] = useLogToolbar(
         params.device,
         params.duration,
         params.log_level,
-        params.timestamp
+        params.timestamp,
+        props.devices
     );
 
     const [url, setUrl] = useState(logUrl(device, duration, log_level, timestamp));

@@ -40,6 +40,6 @@ const TableRow = (props) => {
     );
 };
 
-const SystemErrors = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
+const SystemErrors = (props) => <DeviceTable format_header={TableHeader} format_row={TableRow} devices={props.devices} />;
 
 export default SystemErrors;

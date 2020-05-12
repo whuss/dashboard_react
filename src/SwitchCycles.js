@@ -38,6 +38,6 @@ const TableRow = (props) => {
     );
 };
 
-const SwitchCycles = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
+const SwitchCycles = (props) => <DeviceTable format_header={TableHeader} format_row={TableRow} devices={props.devices}/>;
 
 export default SwitchCycles;

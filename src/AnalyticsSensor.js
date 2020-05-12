@@ -99,7 +99,7 @@ const TableHeader = () => (
     </>
 );
 
-function AnalyticsSensor() {
+const AnalyticsSensor = (props) => {
     const { sensor, sample_rate, start_date, end_date } = useParams();
     const [tableRow, tools, params] = useSensorToolbar(sensor, sample_rate, start_date, end_date);
 
@@ -109,7 +109,7 @@ function AnalyticsSensor() {
                 <b>Note:</b> If Sensor data is not cached, downloading of sensor data can take up to 1 minutes per day
                 and device.
             </p>
-            <DeviceTable format_header={TableHeader} format_row={tableRow} toolbar={tools} params={params} />
+            <DeviceTable format_header={TableHeader} format_row={tableRow} toolbar={tools} params={params}  devices={props.devices}/>
         </>
     );
 }

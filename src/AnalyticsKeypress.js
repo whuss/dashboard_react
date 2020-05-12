@@ -37,6 +37,6 @@ const TableRow = (props) => {
     );
 };
 
-const AnalyticsKeypress = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
+const AnalyticsKeypress = (props) => <DeviceTable format_header={TableHeader} format_row={TableRow}  devices={props.devices}/>;
 
 export default AnalyticsKeypress;

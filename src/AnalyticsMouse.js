@@ -37,6 +37,6 @@ const TableRow = (props) => {
     );
 };
 
-const AnalyticsMouse = () => <DeviceTable format_header={TableHeader} format_row={TableRow} />;
+const AnalyticsMouse = (props) => <DeviceTable format_header={TableHeader} format_row={TableRow}  devices={props.devices}/>;
 
 export default AnalyticsMouse;

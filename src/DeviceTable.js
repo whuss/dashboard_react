@@ -59,7 +59,7 @@ DrawTable.ascending = true;
 
 function DeviceTable(props) {
     let params = useParams()
-    const [selectedDevices, setFilterStr] = useDeviceFilter(params.device);
+    const [selectedDevices, setFilterStr] = useDeviceFilter(params.device, props.devices);
 
     return (
         <>
