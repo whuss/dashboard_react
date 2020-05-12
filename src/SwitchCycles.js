@@ -2,12 +2,12 @@ import React from "react";
 
 import Button from "react-bootstrap/Button";
 
-import { PlotData, PlotNew, usePlot } from "./BokehPlot";
+import { usePlot } from "./BokehPlot";
 
 import DeviceTable from "./DeviceTable";
 import { LoadingAnimation } from "./Toolbar";
 
-import { downloadFile, usePostApi } from "./Fetch";
+import { downloadFile } from "./Fetch";
 
 const TableHeader = () => (
     <>

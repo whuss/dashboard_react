@@ -108,9 +108,6 @@ function usePlot(plot_name, plot_parameters)
     const [{ data, isLoading, isError, errorMsg }, doFetch] = usePostApi(url, plot_parameters);
 
     const { plot, fields } = data;
-    //console.log("usePlot: data=", data);
-    //console.log("usePlot: plot=", plot);
-    //console.log("usePlot: fileds=", fields);
     const plotElement = plot && <PlotData data={plot}/>;
     return [{fields, isLoading, isError, errorMsg}, plotElement];
 }
