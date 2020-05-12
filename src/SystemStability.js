@@ -21,7 +21,7 @@ const TableRow = (props) => {
     const plot_name = "PlotCrashes";
     const plot_parameters = { device: props.device_id };
     const file_name = `system_stability_${props.device_id}.xlsx`;
-    const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters, false);
+    const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters);
 
     return (
         <>

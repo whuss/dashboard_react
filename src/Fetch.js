@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useReducer } from "react";
 import axios from "axios";
 
+const baseURL = "http://10.0.101.27:8003"
+
 const dataFetchReducer = (state, action) => {
     switch (action.type) {
         case "FETCH_INIT":
@@ -45,7 +47,7 @@ const useDataApi = (initialUrl, initialData) => {
 
             try {
                 console.log("Fetch url: ", url);
-                const result = await axios(url, {baseURL: "http://10.0.101.27:8003"});
+                const result = await axios(url, {baseURL: baseURL});
 
                 if (!didCancel) {
                     console.log("Fetch result: ", result.data);
@@ -97,7 +99,7 @@ const usePostApi = (initialUrl, _parameters) => {
                     method: 'POST',
                     data: parameters,
                     responseType: 'json',
-                    baseURL: "http://10.0.101.27:8003"
+                    baseURL: baseURL,
                 });
 
                 if (!didCancel) {
