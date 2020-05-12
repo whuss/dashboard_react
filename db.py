@@ -58,17 +58,6 @@ class CacheDeviceDatePackage(db.Model):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class DataFramePackage(db.Model):
-    __bind_key__ = "cache"
-    id = db.Column(db.Integer, primary_key=True)
-    device = db.Column(db.String(20))
-    date = db.Column(db.Date)
-    query = db.Column(db.String(100))
-    data = db.Column(PickleTypeMedium)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
 class DeadManPackage(db.Model):
     __tablename__ = 'DeadManPackage'
     __table_args__ = dict(extend_existing=True)
