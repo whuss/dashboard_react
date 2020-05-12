@@ -6,7 +6,7 @@ from typing import Optional
 
 from flask import Flask, render_template, jsonify, request, url_for, json, make_response, Response
 from flask_caching import Cache
-from flask_cors import cross_origin
+from flask_cors import CORS, cross_origin
 import dateutil.parser
 
 from config import Config
@@ -99,6 +99,7 @@ def create_app():
 
 app = create_app()
 cache = Cache(app)
+cors = CORS(app, resources={r"/backend/*": {"origins": "*"}})
 app.app_context().push()
 db.Model.metadata.reflect(bind=db.engine)
 
