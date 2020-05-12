@@ -3,8 +3,6 @@ import React from "react";
 import Navbar from "react-bootstrap/Navbar";
 import Nav from "react-bootstrap/Nav";
 import NavDropdown from "react-bootstrap/NavDropdown";
-//import Form from "react-bootstrap/Form";
-//import FormControl from "react-bootstrap/FormControl";
 import { LinkContainer } from "react-router-bootstrap";
 
 function NavDropLink(props) {
@@ -50,10 +48,6 @@ function Navigation() {
                     </NavDropdown>
                     <NavLink to="/about" name="About" />
                 </Nav>
-                {/* <Form inline>
-                    <FormControl type="text" placeholder="Search" className="mr-sm-2" />
-                    <Button>Search</Button>
-                </Form> */}
             </Navbar.Collapse>
             <Navbar.Brand>
                 <img src="/dot_bartenbach.png" height="50px" alt="Bartenbach" />

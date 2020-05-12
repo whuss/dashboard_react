@@ -45,7 +45,7 @@ const useDataApi = (initialUrl, initialData) => {
 
             try {
                 console.log("Fetch url: ", url);
-                const result = await axios(url);
+                const result = await axios(url, {baseURL: "http://10.0.101.27:8003"});
 
                 if (!didCancel) {
                     console.log("Fetch result: ", result.data);
@@ -97,6 +97,7 @@ const usePostApi = (initialUrl, _parameters) => {
                     method: 'POST',
                     data: parameters,
                     responseType: 'json',
+                    baseURL: "http://10.0.101.27:8003"
                 });
 
                 if (!didCancel) {
