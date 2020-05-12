@@ -115,7 +115,6 @@ function useDeviceDropdown(device, devices) {
 function useTimestamp(_timestamp) {
     const [timestamp, setTimestamp] = useState(_timestamp);
     const datetimeSelector = (
-        <ButtonGroup>
             <ButtonGroup>
                 <span className="label">At&nbsp;time:</span>
                 <InputGroup className="mb-2">
@@ -127,7 +126,6 @@ function useTimestamp(_timestamp) {
                     </InputGroup.Append>
                 </InputGroup>
             </ButtonGroup>
-        </ButtonGroup>
     );
 
     return [timestamp, datetimeSelector];
