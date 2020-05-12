@@ -26,7 +26,7 @@ db = SQLAlchemy()
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PickleTypeMedium(db.PickleType):
+class PickleTypeLong(db.PickleType):
     impl = mysql.LONGBLOB
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ class CachePackage(db.Model):
     query = db.Column(db.String(100), index=True, nullable=False)
     sha256 = db.Column(db.String(64), index=True, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
-    data = db.Column(PickleTypeMedium, nullable=False)
+    data = db.Column(PickleTypeLong, nullable=False)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ class CacheDeviceDatePackage(db.Model):
     query = db.Column(db.String(100), index=True, nullable=False)
     sha256 = db.Column(db.String(64), index=True, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
-    data = db.Column(PickleTypeMedium, nullable=False)
+    data = db.Column(PickleTypeLong, nullable=False)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -63,16 +63,6 @@ class DataFramePackage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     device = db.Column(db.String(20))
     date = db.Column(db.Date)
-    query = db.Column(db.String(100))
-    data = db.Column(PickleTypeMedium)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-class DeviceDataFramePackage(db.Model):
-    __bind_key__ = "cache"
-    id = db.Column(db.Integer, primary_key=True)
-    device = db.Column(db.String(20))
     query = db.Column(db.String(100))
     data = db.Column(PickleTypeMedium)
 
@@ -1452,46 +1442,6 @@ def _timeseries(data, sensor: str):
 def dataframe_from_query(query):
     """Return the result of a SQLAlchemy query as a pandas dataframe"""
     return pd.read_sql(query.statement, query.session.bind)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-def query_cache(device: str, data_date: Optional[date], query_name: str) -> bool:
-    if data_date:
-        dfp = DataFramePackage
-        query = db.session.query(dfp.id) \
-            .filter(dfp.device == device) \
-            .filter(dfp.date == data_date) \
-            .filter(dfp.query == query_name)
-    else:
-        dfp = DeviceDataFramePackage
-        query = db.session.query(dfp.id) \
-            .filter(dfp.device == device) \
-            .filter(dfp.query == query_name)
-
-    return query.first() is not None
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-def get_cached_data(device: str, data_date: Optional[date], query_name: str) -> Optional[pd.DataFrame]:
-    if data_date:
-        dfp = DataFramePackage
-        query = db.session.query(dfp.data) \
-            .filter(dfp.device == device) \
-            .filter(dfp.date == data_date) \
-            .filter(dfp.query == query_name)
-    else:
-        dfp = DeviceDataFramePackage
-        query = db.session.query(dfp.data) \
-            .filter(dfp.device == device) \
-            .filter(dfp.query == query_name)
-
-    data = query.first()
-    if data:
-        return data[0]
-
-    return None
 
 # ----------------------------------------------------------------------------------------------------------------------
 

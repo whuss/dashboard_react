@@ -10,7 +10,7 @@ from plumbum.cli.terminal import get_terminal_size
 import pandas as pd
 
 from app import db
-from db import query_cache, Dashboard, CachePackage, CacheDeviceDatePackage, Errors, PresenceDetectorStatistics
+from db import Dashboard, CachePackage, CacheDeviceDatePackage, Errors, PresenceDetectorStatistics
 from analytics.sensors import get_sensor_data_for_day
 from analytics.scenes import get_scene_durations
 from analytics.connection import connection_data_per_day
