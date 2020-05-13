@@ -89,7 +89,7 @@ function useDeviceFilter(initialValue, devices) {
         prepend: (
             <>
                 <i className="fa fa-lightbulb-o" aria-hidden="true"></i>
-                <span className="label">Filter:</span>
+                <span className="label">&nbsp;Filter:</span>
             </>
         ),
     });
@@ -103,6 +103,22 @@ function useDeviceFilter(initialValue, devices) {
     return [selectedDevices, deviceFilter];
 }
 useDeviceFilter.filter = "";
+
+function useFilter(initialValue, config) {
+    let { values, label } = config;
+    const [filterStr, valueFilter] = useInput(initialValue, {
+        prepend: (
+            <>
+                {label && <span className="label">{label}</span>}
+            </>
+        ),
+    });
+
+    const selectedValues = values.filter((s) => s.includes(filterStr));
+
+    return [selectedValues, valueFilter];
+}
+
 
 function useDeviceDropdown(device, devices) {
     const [selectedDevice, deviceDropdown] = useDropdown(device, {
@@ -141,4 +157,4 @@ function Toolbar(props) {
 }
 
 export default Toolbar;
-export { useInput, useDeviceFilter, useDropdown, useDeviceDropdown, useTimestamp, LoadingAnimation, useDevice };
+export { useInput, useDeviceFilter, useDropdown, useDeviceDropdown, useTimestamp, LoadingAnimation, useDevice, useFilter };

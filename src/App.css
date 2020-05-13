@@ -180,8 +180,8 @@ table .deviceMode {
 
 .label {
     white-space: nowrap;
-    padding-left:1em;
-    padding-right:10px;
+    padding-left:0;
+    padding-right:5px;
 }
 
 
@@ -195,5 +195,6 @@ table .deviceMode {
 #toolbar .btn-group {
     margin-top: 8px;
     margin-bottom: 8px;
+    margin-right: 12px;
     align-items: center;
 }

@@ -36,25 +36,25 @@ const BigSpinner = (props) => (
     </div>
 );
 
-function useClusteringToolbar(_transformation) {
-    if (!_transformation) {
-        _transformation = "none";
+function useClusteringToolbar(_dimension) {
+    if (!_dimension) {
+        _dimension = 4;
     }
 
-    const [transformation, setTransformation] = useDropdown(_transformation, {
-        values: ["none", "power transform"],
-        label: "Transformation",
+    const [plotDimensions, setPlotDimensions] = useDropdown(_dimension, {
+        values: [2, 3, 4, 5, 6],
+        label: "Dimensions",
     });
 
     //const params = `/clustring/input_distributation/${transformation}`;
 
-    const sensorToolbar = <>{setTransformation}</>;
+    const sensorToolbar = <>{setPlotDimensions}</>;
 
     function plot_parameters(device) {
         return {
             device: device,
             sample_size: 5000,
-            dimensions: 4
+            dimensions: plotDimensions
         };
     }
 
@@ -110,8 +110,8 @@ const TableHeader = () => (
 );
 
 const ClusteringScatterPlot = (props) => {
-    const { transformation } = useParams();
-    const [tools, plot_parameters] = useClusteringToolbar(transformation);
+    const { dimension } = useParams();
+    const [tools, plot_parameters] = useClusteringToolbar(dimension);
     const TableRow = rowFactory(plot_parameters);
 
     return (
@@ -119,7 +119,7 @@ const ClusteringScatterPlot = (props) => {
             <p>
                 <b>Warning:</b> Plotting of the distributions can take a very long time.
             </p>
-            <DeviceTable format_header={TableHeader} format_row={TableRow} toolbar={tools} devices={props.devices} />;
+            <DeviceTable format_header={TableHeader} format_row={TableRow} toolbar={tools} devices={props.devices} />
         </>
     );
 };

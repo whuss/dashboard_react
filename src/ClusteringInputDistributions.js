@@ -15,7 +15,7 @@ import { usePlot } from "./BokehPlot";
 import { LoadingAnimation } from "./Toolbar";
 import { downloadFile } from "./Fetch";
 
-import { useDropdown } from "./Toolbar";
+import { useDropdown, useFilter } from "./Toolbar";
 
 import Spinner from "react-bootstrap/Spinner";
 
@@ -39,8 +39,6 @@ const columns = [
     "gesture_deviation",
     "gesture_duration_seconds",
 ];
-
-//const columns = ['key_press_count', 'delete_press_count'];
 
 const bigSpinnerStyle = {
     width: "300px",
@@ -71,9 +69,11 @@ function useClusteringToolbar(_transformation) {
         label: "Transformation",
     });
 
+    const [selectedColumns, setColumnFilter] = useFilter("", {values: columns, label: "Data filter:"});
+
     //const params = `/clustring/input_distributation/${transformation}`;
 
-    const sensorToolbar = <>{setTransformation}</>;
+    const sensorToolbar = <>{setColumnFilter}{setTransformation}</>;
 
     const plotUrl = (device) => clusteringUrl(device, transformation);
 
@@ -84,7 +84,7 @@ function useClusteringToolbar(_transformation) {
         };
     }
 
-    return [sensorToolbar, plotUrl, plot_parameters];
+    return [sensorToolbar, plotUrl, plot_parameters, selectedColumns];
 }
 
 const DistributionPlot = (props) => {
@@ -92,7 +92,7 @@ const DistributionPlot = (props) => {
     var plot_parameters = props.plot_parameters;
     plot_parameters.column = props.column;
 
-    const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters, false);
+    const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters);
 
     return (
         <>
@@ -105,7 +105,7 @@ const DistributionPlot = (props) => {
     );
 };
 
-function rowFactory(plotUrl, plot_parameters) {
+function rowFactory(plotUrl, plot_parameters, selectedColumns) {
     const TableRow = (props) => {
         const device = props.device_id;
         const plot_name = "PlotClusteringInputDistribution";
@@ -116,7 +116,7 @@ function rowFactory(plotUrl, plot_parameters) {
                 <td>
                     <Container fluid>
                         <Row>
-                            {columns.map((column) => (
+                            {selectedColumns.map((column) => (
                                 <DistributionPlot
                                     key={column}
                                     plot_parameters={plot_parameters(device)}
@@ -147,15 +147,15 @@ const TableHeader = () => (
 
 const ClusteringInputDistribution = (props) => {
     const { transformation } = useParams();
-    const [tools, plotUrl, plot_parameters] = useClusteringToolbar(transformation);
-    const TableRow = rowFactory(plotUrl, plot_parameters);
+    const [tools, plotUrl, plot_parameters, selectedColumns] = useClusteringToolbar(transformation);
+    const TableRow = rowFactory(plotUrl, plot_parameters, selectedColumns);
 
     return (
         <>
             <p>
                 <b>Warning:</b> Plotting of the distributions can take a very long time.
             </p>
-            <DeviceTable format_header={TableHeader} format_row={TableRow} toolbar={tools} devices={props.devices} />;
+            <DeviceTable format_header={TableHeader} format_row={TableRow} toolbar={tools} devices={props.devices} />
         </>
     );
 };
