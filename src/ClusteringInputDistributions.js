@@ -14,6 +14,11 @@ import { downloadFile } from "./Fetch";
 
 import { useDropdown } from "./Toolbar";
 
+const columns = ['key_press_count', 'delete_press_count', 'enter_press_count', 'shift_press_count',
+                 'space_press_count', 'press_pause_count', 'pause_length', 'keystroke_time', 
+                 'press_to_press_time', 'click_count', 'double_click_count', 'rotation_distance',
+                 'rotation_speed', 'event_count', 'gesture_distance', 'gesture_speed',
+                 'gesture_deviation', 'gesture_duration_seconds'];
 
 function clusteringUrl(device, transformation) {
     const baseUrl = "/backend/plot_cluster_input";
