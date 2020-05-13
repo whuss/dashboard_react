@@ -85,10 +85,19 @@ function rowFactory(plot_parameters) {
         const plot_name = "PlotClusteringScatterPlot";
         const file_name = `clustering_scatter_plot_${props.device_id}.xlsx`;
 
+        const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters(props.device_id), false);
+
         return (
             <>
+            <td>
+                {fields && fields.significant_dimensions}
+            </td>
                 <td>
-                    <DistributionPlot plot_name={plot_name} plot_parameters={plot_parameters(device)} />
+                    <Col>
+                        <LoadingAnimation style={bigSpinnerStyle} isLoading={isLoading} isError={isError} errorMsg={errorMsg}>
+                            {plot}
+                        </LoadingAnimation>
+                    </Col>
                 </td>
                 <td>
                     <Button onClick={() => downloadFile(plot_name, plot_parameters(device), file_name)}>
@@ -104,7 +113,8 @@ function rowFactory(plot_parameters) {
 
 const TableHeader = () => (
     <>
-        <th>Input Data</th>
+        <th>PCA Dimensions</th>
+        <th>Cluster scatter plot</th>
         <th>Download</th>
     </>
 );
