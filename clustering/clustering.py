@@ -1,3 +1,4 @@
+import logging
 from analytics.keyboard import get_keyboard_data
 from analytics.mouse import get_mouse_data_raw
 
@@ -55,8 +56,28 @@ def get_input_data(device: str, start_date: date, end_date: Optional[date] = Non
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+def plot_distribution(mouse_data: pd.DataFrame, column: str):
+    sns.set(style="white")
+
+    # Set up the matplotlib figure
+    fig = Figure(figsize=(3, 3), constrained_layout=True)
+    ax = fig.add_subplot(1, 1, 1)
+    try:
+        sns.distplot(mouse_data[column].dropna(), ax=ax)
+    except KeyError:
+        ax.set_xlabel(column)
+        logging.warning(f"Column: {column} is not in data frame")
+
+    fig.set_constrained_layout_pads(w_pad=2. / 72., h_pad=2. / 72.,
+                                    hspace=0.2, wspace=0.2)
+    return fig
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 def plot_distributions(mouse_data: pd.DataFrame):
-    sns.set(style="dark")
+    # sns.set(style="dark")
 
     # Set up the matplotlib figure
     fig = Figure(figsize=(3 * 3, 6 * 3), constrained_layout=True)
@@ -71,8 +92,9 @@ def plot_distributions(mouse_data: pd.DataFrame):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@db_cached
-def input_data_clustering(device: str, start_date: date, end_date: Optional[date] = None):
+def input_data_clustering(device: str, start_date: date, end_date: Optional[date] = None,
+                          return_only_cluster=True,
+                          return_pca=False):
     def add_column_postfix(df: pd.DataFrame, postfix: str) -> pd.DataFrame:
         columns = df.columns
         mapping = {c: f"{c}_{postfix}" for c in columns}
@@ -91,7 +113,9 @@ def input_data_clustering(device: str, start_date: date, end_date: Optional[date
     data_rolling_.append(add_column_postfix(rolling.var(), "var"))
     data_rolling_.append(add_column_postfix(rolling.kurt(), "kurt"))
     data_rolling_.append(add_column_postfix(rolling.skew(), "skew"))
-    data_rolling = pd.concat(data_rolling_, axis=1).resample("1Min").ffill()
+    data_rolling = pd.concat(data_rolling_, axis=1)
+    data_rolling = data_rolling.loc[~data_rolling.index.duplicated(keep='first')]
+    data_rolling = data_rolling.resample("1Min").ffill()
 
     # normalize rolling data
     st_rolling = QuantileTransformer(output_distribution="normal")
@@ -115,8 +139,16 @@ def input_data_clustering(device: str, start_date: date, end_date: Optional[date
     k_means = KMeans(n_clusters=5)
     clustering = k_means.fit_predict(data_pca)
 
+    if return_pca:
+        cluster_df = pd.DataFrame(clustering, columns=['cluster'])
+        pca_df = pd.DataFrame(data_pca)
+        pca_df.columns = [f"d_{c}" for c in pca_df.columns]
+        return pd.concat([cluster_df, pca_df], axis=1)
+
     data_rolling.loc[:, 'cluster'] = clustering
-    return data_rolling[['cluster']]
+    if return_only_cluster:
+        return data_rolling[['cluster']]
+    return data_rolling
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -131,5 +163,13 @@ def cluster_histogram(cluster_data: pd.DataFrame) -> pd.DataFrame:
     c_histogram = c_histogram.reindex(new_index)
 
     return c_histogram.fillna(0).astype(int)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def cluster_scatter_matrix(pca_data: pd.DataFrame) -> pd.DataFrame:
+    #sns.set(style='white')
+    fig = sns.pairplot(pca_data, hue="cluster", diag_kind="kde", corner=True).fig
+    return fig
 
 # ----------------------------------------------------------------------------------------------------------------------

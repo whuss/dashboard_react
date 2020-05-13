@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 from typing import Optional
 
+import threading
+
 from flask import Flask, render_template, jsonify, request, url_for, json, make_response, Response
 from flask_caching import Cache
 from flask_cors import CORS, cross_origin
@@ -83,16 +85,18 @@ def create_app():
     # app.config['BASIC_AUTH_USERNAME'] = "ReproLight"
     # app.config['BASIC_AUTH_PASSWORD'] = "infinity"
     # app.config['BASIC_AUTH_FORCE'] = True
-    app.config['CACHE_TYPE'] = "redis"
+    app.config['CACHE_TYPE'] = "filesystem"
+    app.config['CACHE_DIR'] = "/home/huss/.cache/dashboard"
     app.config['CACHE_DEFAULT_TIMEOUT'] = 60 * 60 * 24  # 1 day
     app.config['CACHE_REDIS_HOST'] = "127.0.0.1"
     app.config['CACHE_REDIS_PORT'] = 6379
-    #app.config['CACHE_THRESHOLD'] = 200
+    app.config['CACHE_THRESHOLD'] = 5000
     db.init_app(app)
 
     # basic_auth = BasicAuth(app)
     return app
 
+plot_lock = threading.Lock()
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1367,19 +1371,34 @@ def react_render(plot_name: str, plot_parameters):
 
 @app.route('/backend/plot/<plot_name>', methods=['POST'])
 def backend_plot(plot_name: str):
-    plot_parameters = request.get_json()
-    logging.info(f"Plot Cached: plot_name: {plot_name} plot_parameters: {plot_parameters}")
-    return react_render(plot_name, plot_parameters)
+    try:
+        plot_parameters = request.get_json()
+        logging.info(f"Plot Cached: plot_name: {plot_name} plot_parameters: {plot_parameters}")
+        with plot_lock:
+            return react_render(plot_name, plot_parameters)
+    except Exception:
+        import traceback
+        tb = traceback.format_exc()
+        logging.error(f"plot_name={plot_name}, plot_parameters={plot_parameters}\n{tb}")
+        return dict(error=tb, plot_parameters=plot_parameters, plot_name=plot_name)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 @app.route('/backend/plot_uncached/<plot_name>', methods=['POST'])
 def backend_plot_uncached(plot_name: str):
-    plot_parameters = request.get_json()
-    logging.info(f"Plot Uncached: plot_name: {plot_name} plot_parameters: {plot_parameters}")
-    ajax = AjaxFactory._create_plot(plot_name, plot_parameters)
-    return ajax.react_render()
+    try:
+        plot_parameters = request.get_json()
+        logging.info(f"Plot Uncached: plot_name: {plot_name} plot_parameters: {plot_parameters}")
+        with plot_lock:
+            ajax = AjaxFactory._create_plot(plot_name, plot_parameters)
+            return ajax.react_render()
+    except Exception:
+        import traceback
+        tb = traceback.format_exc()
+        logging.error(f"plot_name={plot_name}, plot_parameters={plot_parameters}\n{tb}")
+        return dict(error=tb, plot_parameters=plot_parameters, plot_name=plot_name)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1472,6 +1491,30 @@ def backend_logs(device, duration=5, timestamp=None, log_level="TRACE"):
     return dict(devices=devices,
                 log_text=log_text,
                 device=device)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+def mpl_test_plot(device=None):
+    if not device:
+        device = ""
+    import seaborn as sns
+    from matplotlib.figure import Figure
+    sns.set(style="whitegrid", palette="pastel", color_codes=True)
+
+    fig = Figure(constrained_layout=True)
+    ax = fig.add_subplot(1, 1, 1)
+    ax.set_title(device)
+    # Load the example tips dataset
+    tips = sns.load_dataset("tips")
+
+    # Draw a nested violinplot and split the violins for easier comparison
+    sns.violinplot(x="day", y="total_bill", hue="smoker",
+                   split=True, inner="quart",
+                   palette={"Yes": "y", "No": "b"},
+                   data=tips, ax=ax)
+    sns.despine(left=True)
+
+    return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Main

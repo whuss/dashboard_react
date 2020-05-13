@@ -423,6 +423,17 @@ class AjaxPlotBokeh(Ajax):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+def reactify_mpl(plot):
+    output = io.BytesIO()
+    plot.savefig(output, format="png")
+    # FigureCanvasAgg(plot).print_png(output)
+    json = dict(png=b64encode(output.getbuffer()).decode('ascii'))
+    plot.clf()
+    return json
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class AjaxPlotMpl(Ajax):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
@@ -470,6 +481,21 @@ class AjaxPlotMpl(Ajax):
     @abstractmethod
     def _plot(self):
         pass
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def react_render(self, data=None):
+        if data is None:
+            data = self.fetch_data()
+        if data is None or data.empty:
+            return dict()
+
+        plot = self._plot(data)
+        json_plot = reactify_mpl(plot)
+        json_fields = dict()
+        for name, field in self.field.items():
+            json_fields[name] = field.json()
+        return dict(plot=json_plot, fields=json_fields)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1017,17 +1043,44 @@ class PlotMplTest(AjaxPlotMpl):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+def mpl_test_plot(device=None):
+    if not device:
+        device = ""
+    import seaborn as sns
+    from matplotlib.figure import Figure
+    sns.set(style="whitegrid", palette="pastel", color_codes=True)
+
+    fig = Figure(constrained_layout=True)
+    ax = fig.add_subplot(1, 1, 1)
+    ax.set_title(device)
+    # Load the example tips dataset
+    tips = sns.load_dataset("tips")
+
+    # Draw a nested violinplot and split the violins for easier comparison
+    sns.violinplot(x="day", y="total_bill", hue="smoker",
+                   split=True, inner="quart",
+                   palette={"Yes": "y", "No": "b"},
+                   data=tips, ax=ax)
+    sns.despine(left=True)
+
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 class PlotClusteringInputDistribution(AjaxPlotMpl):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self._start_date = date(2020, 2, 1)
         self.device = self.parameters.get('device')
-        self.normalize = self.parameters.get('normalize')
+        self.transformation = self.parameters.get('transformation')
+        self.normalize = self.transformation == "power transform"
+        self.column = self.parameters.get('column', None)
 
     # ------------------------------------------------------------------------------------------------------------------
 
     def _fetch(self):
+        print(f"Normalize: {self.normalize}")
         mouse_data = clustering.get_input_data(self.device, self._start_date, normalized=self.normalize)
         if mouse_data.empty:
             return None
@@ -1037,7 +1090,49 @@ class PlotClusteringInputDistribution(AjaxPlotMpl):
     # ------------------------------------------------------------------------------------------------------------------
 
     def _plot(self, mouse_data):
+        #return mpl_test_plot(self.device)
+        if self.column:
+            logging.info(f"Plot distribution for column = {self.column}")
+            return clustering.plot_distribution(mouse_data, self.column)
         return clustering.plot_distributions(mouse_data)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotClusteringScatterPlot(AjaxPlotMpl):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = date(2020, 2, 1)
+        self.device = self.parameters.get('device')
+        self.sample_size = int(self.parameters.get('sample_size'))
+        self.dimensions = int(self.parameters.get('dimensions'))
+
+        self.add_field(AjaxField(name='significant_dimensions'))
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        data = clustering.input_data_clustering(self.device, self._start_date, return_pca=True)
+        if data.empty:
+            return None
+
+        significant_dimensions = len(data.columns) - 1
+        self.field['significant_dimensions'].set_value(significant_dimensions)
+
+        significant_dimensions = data.iloc[:, :(self.dimensions + 1)]
+
+        length = len(data)
+
+        #from sklearn.model_selection import train_test_split
+        #_, clustering_data = train_test_split(significant_dimensions, test_size=min(self.sample_size, length))
+        clustering_data = significant_dimensions
+
+        return clustering_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, clustering_data):
+        return clustering.cluster_scatter_matrix(clustering_data)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
