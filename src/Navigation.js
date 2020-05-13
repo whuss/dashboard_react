@@ -38,6 +38,7 @@ function Navigation() {
                     </NavDropdown>
                     <NavDropdown title="Clustering" id="basic-nav-dropdown">
                         <NavDropLink to="/clustering/input_distributions" name="Input Distributions"/>
+                        <NavDropLink to="/clustering/scatter_plot" name="Cluster Scatter Plot"/>
                     </NavDropdown>
                     <NavDropdown title="System" id="basic-nav-dropdown">
                         <NavDropLink to="/system/stability" name="Stability"/>

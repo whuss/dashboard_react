@@ -20,27 +20,7 @@ import { useDropdown } from "./Toolbar";
 import Spinner from "react-bootstrap/Spinner";
 
 const columns = [
-    "key_press_count",
-    "delete_press_count",
-    "enter_press_count",
-    "shift_press_count",
-    "space_press_count",
-    "press_pause_count",
-    "pause_length",
-    "keystroke_time",
-    "press_to_press_time",
-    "click_count",
-    "double_click_count",
-    "rotation_distance",
-    "rotation_speed",
-    "event_count",
-    "gesture_distance",
-    "gesture_speed",
-    "gesture_deviation",
-    "gesture_duration_seconds",
 ];
-
-//const columns = ['key_press_count', 'delete_press_count'];
 
 const bigSpinnerStyle = {
     width: "300px",
@@ -56,11 +36,6 @@ const BigSpinner = (props) => (
     </div>
 );
 
-function clusteringUrl(device, transformation) {
-    const baseUrl = "/backend/plot_cluster_input";
-    return `${baseUrl}/${device}/${transformation}`;
-}
-
 function useClusteringToolbar(_transformation) {
     if (!_transformation) {
         _transformation = "none";
@@ -75,20 +50,19 @@ function useClusteringToolbar(_transformation) {
 
     const sensorToolbar = <>{setTransformation}</>;
 
-    const plotUrl = (device) => clusteringUrl(device, transformation);
-
     function plot_parameters(device) {
         return {
             device: device,
-            transformation: transformation,
+            sample_size: 5000,
+            dimensions: 4
         };
     }
 
-    return [sensorToolbar, plotUrl, plot_parameters];
+    return [sensorToolbar, plot_parameters];
 }
 
 const DistributionPlot = (props) => {
-    const plot_name = "PlotClusteringInputDistribution";
+    const plot_name = props.plot_name;
     var plot_parameters = props.plot_parameters;
     plot_parameters.column = props.column;
 
@@ -105,26 +79,16 @@ const DistributionPlot = (props) => {
     );
 };
 
-function rowFactory(plotUrl, plot_parameters) {
+function rowFactory(plot_parameters) {
     const TableRow = (props) => {
         const device = props.device_id;
-        const plot_name = "PlotClusteringInputDistribution";
-        const file_name = `clustering_input_distribution_${props.device_id}.xlsx`;
+        const plot_name = "PlotClusteringScatterPlot";
+        const file_name = `clustering_scatter_plot_${props.device_id}.xlsx`;
 
         return (
             <>
                 <td>
-                    <Container fluid>
-                        <Row>
-                            {columns.map((column) => (
-                                <DistributionPlot
-                                    key={column}
-                                    plot_parameters={plot_parameters(device)}
-                                    column={column}
-                                />
-                            ))}
-                        </Row>
-                    </Container>
+                    <DistributionPlot plot_name={plot_name} plot_parameters={plot_parameters(device)} />
                 </td>
                 <td>
                     <Button onClick={() => downloadFile(plot_name, plot_parameters(device), file_name)}>
@@ -145,10 +109,10 @@ const TableHeader = () => (
     </>
 );
 
-const ClusteringInputDistribution = (props) => {
+const ClusteringScatterPlot = (props) => {
     const { transformation } = useParams();
-    const [tools, plotUrl, plot_parameters] = useClusteringToolbar(transformation);
-    const TableRow = rowFactory(plotUrl, plot_parameters);
+    const [tools, plot_parameters] = useClusteringToolbar(transformation);
+    const TableRow = rowFactory(plot_parameters);
 
     return (
         <>
@@ -160,4 +124,4 @@ const ClusteringInputDistribution = (props) => {
     );
 };
 
-export default ClusteringInputDistribution;
+export default ClusteringScatterPlot;
