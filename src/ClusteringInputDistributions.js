@@ -17,6 +17,8 @@ import { downloadFile } from "./Fetch";
 
 import { useDropdown } from "./Toolbar";
 
+import Spinner from "react-bootstrap/Spinner";
+
 const columns = [
     "key_press_count",
     "delete_press_count",
@@ -39,6 +41,20 @@ const columns = [
 ];
 
 //const columns = ['key_press_count', 'delete_press_count'];
+
+const bigSpinnerStyle = {
+    width: "300px",
+    height: "300px",
+    verticalAlign: "middle",
+    display: "table-cell",
+    textAlign: "center",
+};
+
+const BigSpinner = (props) => (
+    <div style={bigSpinnerStyle}>
+        <Spinner animation="border" size="sm" variant="secondary" />
+    </div>
+);
 
 function clusteringUrl(device, transformation) {
     const baseUrl = "/backend/plot_cluster_input";
@@ -81,9 +97,9 @@ const DistributionPlot = (props) => {
     return (
         <>
             <Col>
-            <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>
-                {plot}
-            </LoadingAnimation>
+                <LoadingAnimation style={bigSpinnerStyle} isLoading={isLoading} isError={isError} errorMsg={errorMsg}>
+                    {plot}
+                </LoadingAnimation>
             </Col>
         </>
     );
@@ -98,12 +114,16 @@ function rowFactory(plotUrl, plot_parameters) {
         return (
             <>
                 <td>
-                    <Container>
+                    <Container fluid>
                         <Row>
-                    {columns.map((column) => (
-                        <DistributionPlot key={column} plot_parameters={plot_parameters(device)} column={column} />
-                    ))}
-                    </Row>
+                            {columns.map((column) => (
+                                <DistributionPlot
+                                    key={column}
+                                    plot_parameters={plot_parameters(device)}
+                                    column={column}
+                                />
+                            ))}
+                        </Row>
                     </Container>
                 </td>
                 <td>
