@@ -26,6 +26,7 @@ import SystemStability from "./SystemStability";
 import SystemRestarts from "./SystemRestarts";
 import SystemErrors from "./SystemErrors";
 import SystemLogs from "./SystemLogs";
+import ClusteringInputDistributions from "./ClusteringInputDistributions";
 import Plot from "./BokehPlot";
 
 import { useDevice, LoadingAnimation } from "./Toolbar";
@@ -79,6 +80,9 @@ const MainView = (props) => {
                 </NavRoute>
                 <NavRoute path="/analytics/mouse" title="Analytics Mouse">
                     <AnalyticsMouse devices={devices}/>
+                </NavRoute>
+                <NavRoute path="/clustering/input_distributions" title="Input Distributions">
+                    <ClusteringInputDistributions devices={devices} />
                 </NavRoute>
                 <NavRoute path="/statistics/switch_cycles" title="Statistics On/Off Cycles">
                     <SwitchCycles devices={devices}/>

@@ -36,6 +36,9 @@ function Navigation() {
                     <NavDropdown title="Statistics" id="basic-nav-dropdown">
                         <NavDropLink to="/statistics/switch_cycles" name="On/Off Cycles"/>
                     </NavDropdown>
+                    <NavDropdown title="Clustering" id="basic-nav-dropdown">
+                        <NavDropLink to="/clustering/input_distributions" name="Input Distributions"/>
+                    </NavDropdown>
                     <NavDropdown title="System" id="basic-nav-dropdown">
                         <NavDropLink to="/system/stability" name="Stability"/>
                         <NavDropLink to="/system/restarts" name="Restarts"/>

@@ -107,13 +107,29 @@ function PlotData(props) {
     );
 }
 
+function PlotPng(props) {
+    const png = props.png;
+    return <img src={`data:image/png;charset=US-ASCII;base64,${png}`} alt=""/>;
+};
+
+function plotDispatch(plot)
+{
+    const { png } = plot;
+    if (png)
+    {
+        return <PlotPng png={png} />;
+    }
+    return <PlotData data={plot} />;
+}
+
 function usePlot(plot_name, plot_parameters, cached)
 {
     const url = plotUrl(plot_name, cached);
     const [{ data, isLoading, isError, errorMsg }, doFetch] = usePostApi(url, plot_parameters);
 
     const { plot, fields } = data;
-    const plotElement = plot && <PlotData data={plot} />;
+
+    const plotElement = plot && plotDispatch(plot);
     return [{fields, isLoading, isError, errorMsg}, plotElement];
 }
 

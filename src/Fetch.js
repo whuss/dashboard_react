@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useReducer } from "react";
 import axios from "axios";
 
-const baseURL = "http://10.0.101.27:8003"
+//const baseURL = "http://10.0.101.27:8003"
+const baseURL = "/"
 
 const dataFetchReducer = (state, action) => {
     switch (action.type) {
