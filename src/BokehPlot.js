@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 
+import OverlayTrigger from "react-bootstrap/OverlayTrigger";
+import Popover from "react-bootstrap/Popover";
+import Button from "react-bootstrap/Button";
+
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
+
 import { LoadingAnimation } from "./Toolbar";
 
 import useDataApi, { usePostApi } from "./Fetch";
@@ -129,17 +136,43 @@ function plotDispatch(plot) {
 function formatFetchError(errorMsg) {
     return (
         <>
-            <span>Fetch error: </span><pre>{errorMsg}</pre>
+            <span>Fetch error: </span>
+            <pre>{errorMsg}</pre>
         </>
     );
 }
 
 function formatTracebackError(data) {
     const { error, plot_name, plot_parameters } = data;
-    return (
-            <div className="errorMsg">Error in {plot_name}<pre>{error}</pre></div>
 
+    const popover = (
+        <Popover id="popover-basic">
+            <Popover.Title as="h3">Error in {plot_name}</Popover.Title>
+            <Popover.Content>
+                <div className="errorMsg">
+                    <span>Device: {plot_parameters.device}</span>
+                    <ul>
+                        {Object.keys(plot_parameters).forEach((key) => (
+                            <li key={key}>
+                                `${key} = ${plot_parameters[key]}`
+                            </li>
+                        ))}
+                    </ul>
+                    <pre>{error}</pre>
+                </div>
+            </Popover.Content>
+        </Popover>
     );
+
+    const ErrorMsg = (
+        <OverlayTrigger rootClose trigger="click" placement="bottom" overlay={popover}>
+            <Button variant="danger" size="sm">
+                <FontAwesomeIcon icon={faExclamationTriangle} />
+            </Button>
+        </OverlayTrigger>
+    );
+
+    return ErrorMsg;
 }
 
 function element(isError, errorMsg, data) {

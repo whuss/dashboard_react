@@ -19,8 +19,7 @@ import { useDropdown } from "./Toolbar";
 
 import Spinner from "react-bootstrap/Spinner";
 
-const columns = [
-];
+const columns = [];
 
 const bigSpinnerStyle = {
     width: "300px",
@@ -54,17 +53,20 @@ function useClusteringToolbar(_dimension) {
         return {
             device: device,
             sample_size: 5000,
-            dimensions: plotDimensions
+            dimensions: plotDimensions,
         };
     }
 
     return [sensorToolbar, plot_parameters];
 }
 
-const DistributionPlot = (props) => {
+const ScatterPlot = (props) => {
     const plot_name = props.plot_name;
+    const x_axis = props.x_axis;
+    const y_axis = props.y_axis;
     var plot_parameters = props.plot_parameters;
-    plot_parameters.column = props.column;
+    plot_parameters.x_axis = x_axis;
+    plot_parameters.y_axis = y_axis;
 
     const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters, false);
 
@@ -85,19 +87,29 @@ function rowFactory(plot_parameters) {
         const plot_name = "PlotClusteringScatterPlot";
         const file_name = `clustering_scatter_plot_${props.device_id}.xlsx`;
 
-        const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters(props.device_id), false);
+        const rows = ["d_0", "d_1"];
+
+        const fields = undefined;
+        //const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters(props.device_id), false);
+
+        function drawRow(y_axis) {
+            const rowElement = rows.map((x_axis) => (
+                
+                    <ScatterPlot
+                        plot_name={plot_name}
+                        plot_parameters={plot_parameters(device)}
+                        x_axis={x_axis}
+                        y_axis={y_axis}
+                    />
+            ));
+            return (<Row>{rowElement}</Row>)
+        }
 
         return (
             <>
-            <td>
-                {fields && fields.significant_dimensions}
-            </td>
+                <td>{fields && fields.significant_dimensions}</td>
                 <td>
-                    <Col>
-                        <LoadingAnimation style={bigSpinnerStyle} isLoading={isLoading} isError={isError} errorMsg={errorMsg}>
-                            {plot}
-                        </LoadingAnimation>
-                    </Col>
+                    <Container>{rows.map((y_axis) => drawRow(y_axis))}</Container>
                 </td>
                 <td>
                     <Button onClick={() => downloadFile(plot_name, plot_parameters(device), file_name)}>

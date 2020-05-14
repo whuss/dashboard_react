@@ -201,4 +201,5 @@ table .deviceMode {
 
 .errorMsg {
     text-align: left;
+    width: 1000px;
 }
