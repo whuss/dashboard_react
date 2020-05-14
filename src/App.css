@@ -198,3 +198,7 @@ table .deviceMode {
     margin-right: 12px;
     align-items: center;
 }
+
+.errorMsg {
+    text-align: left;
+}

@@ -5,10 +5,8 @@ import { LoadingAnimation } from "./Toolbar";
 import useDataApi, { usePostApi } from "./Fetch";
 
 function plotUrl(plotname, cached) {
-    if (cached === false)
-    {
+    if (cached === false) {
         return `/backend/plot_uncached/${plotname}`;
-        
     }
     return `/backend/plot/${plotname}`;
 }
@@ -45,7 +43,11 @@ function PlotNew(props) {
         </div>
     );
 
-    return <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>{addPlot(data)}</LoadingAnimation>;
+    return (
+        <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>
+            {addPlot(data)}
+        </LoadingAnimation>
+    );
 }
 
 function Plot(props) {
@@ -77,7 +79,11 @@ function Plot(props) {
         </div>
     );
 
-    return <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>{addPlot(data)}</LoadingAnimation>;
+    return (
+        <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>
+            {addPlot(data)}
+        </LoadingAnimation>
+    );
 }
 
 function PlotData(props) {
@@ -100,37 +106,63 @@ function PlotData(props) {
 
     return (
         <>
-        <div align="center" ref={instance}>
-            <div className={data.class} id={data.id} data-root-id={data.data_root_id}></div>
-        </div>
+            <div align="center" ref={instance}>
+                <div className={data.class} id={data.id} data-root-id={data.data_root_id}></div>
+            </div>
         </>
     );
 }
 
 function PlotPng(props) {
     const png = props.png;
-    return <img src={`data:image/png;charset=US-ASCII;base64,${png}`} alt=""/>;
-};
+    return <img src={`data:image/png;charset=US-ASCII;base64,${png}`} alt="" />;
+}
 
-function plotDispatch(plot)
-{
+function plotDispatch(plot) {
     const { png } = plot;
-    if (png)
-    {
+    if (png) {
         return <PlotPng png={png} />;
     }
     return <PlotData data={plot} />;
 }
 
-function usePlot(plot_name, plot_parameters, cached)
-{
+function formatFetchError(errorMsg) {
+    return (
+        <>
+            <span>Fetch error: </span><pre>{errorMsg}</pre>
+        </>
+    );
+}
+
+function formatTracebackError(data) {
+    const { error, plot_name, plot_parameters } = data;
+    return (
+            <div className="errorMsg">Error in {plot_name}<pre>{error}</pre></div>
+
+    );
+}
+
+function element(isError, errorMsg, data) {
+    if (isError) {
+        return formatFetchError(errorMsg);
+    }
+
+    // Check if plot contains an error message
+    if (data && data.error) {
+        return formatTracebackError(data);
+    }
+
+    return data && data.plot && plotDispatch(data.plot);
+}
+
+function usePlot(plot_name, plot_parameters, cached) {
     const url = plotUrl(plot_name, cached);
     const [{ data, isLoading, isError, errorMsg }, doFetch] = usePostApi(url, plot_parameters);
 
     const { plot, fields } = data;
 
-    const plotElement = plot && plotDispatch(plot);
-    return [{fields, isLoading, isError, errorMsg}, plotElement];
+    const plotElement = element(isError, errorMsg, data);
+    return [{ fields, isLoading, isError, errorMsg }, plotElement];
 }
 
 export default Plot;
