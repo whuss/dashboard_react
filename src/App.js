@@ -28,6 +28,7 @@ import SystemErrors from "./SystemErrors";
 import SystemLogs from "./SystemLogs";
 import ClusteringInputDistributions from "./ClusteringInputDistributions";
 import ClusteringScatterPlot from "./ClusteringScatterPlot";
+import ClusteringFrequency from "./ClusteringFrequency";
 import Plot from "./BokehPlot";
 
 import { useDevice, LoadingAnimation } from "./Toolbar";
@@ -87,6 +88,9 @@ const MainView = (props) => {
                 </NavRoute>
                 <NavRoute path="/clustering/scatter_plot" title="Clustering Scatter Plot">
                     <ClusteringScatterPlot devices={devices} />
+                </NavRoute>
+                <NavRoute path="/clustering/frequency" title="Daily Cluster Frequency">
+                    <ClusteringFrequency devices={devices} />
                 </NavRoute>
                 <NavRoute path="/statistics/switch_cycles" title="Statistics On/Off Cycles">
                     <SwitchCycles devices={devices}/>
