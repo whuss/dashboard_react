@@ -90,11 +90,12 @@ def create_app():
     app.config['CACHE_DEFAULT_TIMEOUT'] = 60 * 60 * 24  # 1 day
     app.config['CACHE_REDIS_HOST'] = "127.0.0.1"
     app.config['CACHE_REDIS_PORT'] = 6379
-    app.config['CACHE_THRESHOLD'] = 5000
+    app.config['CACHE_THRESHOLD'] = 10000
     db.init_app(app)
 
     # basic_auth = BasicAuth(app)
     return app
+
 
 plot_lock = threading.Lock()
 

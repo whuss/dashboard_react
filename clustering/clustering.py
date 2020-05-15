@@ -182,10 +182,16 @@ def cluster_scatter_matrix(pca_data: pd.DataFrame):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def cluster_scatter(pca_data: pd.DataFrame, x_axis: str, y_axis: str):
+def cluster_palette(num_clusters):
     cp = sns.color_palette('bright')
+    return cp[0:num_clusters]
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def cluster_scatter(pca_data: pd.DataFrame, x_axis: str, y_axis: str):
     num_clusters = len(pca_data.cluster.unique())
-    palette = cp[0:num_clusters]
+    palette = cluster_palette(num_clusters)
     fig = Figure(figsize=(3, 3))
     ax = fig.add_subplot(1, 1, 1)
     if x_axis != y_axis:
@@ -200,6 +206,71 @@ def cluster_scatter(pca_data: pd.DataFrame, x_axis: str, y_axis: str):
     # Hide axis ticks since the units are meaningless in our case
     ax.xaxis.set_visible(False)
     ax.yaxis.set_visible(False)
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_daily_histogram(data, **kwargs):
+    import itertools
+    from datetime import timedelta, datetime, date
+    from bokeh.core.enums import Dimensions, StepMode
+    from bokeh.transform import dodge, cumsum
+    from bokeh.plotting import figure
+    from bokeh.models import ColumnDataSource, OpenURL, TapTool
+    from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
+    from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Circle
+    from bokeh.models.ranges import Range1d
+    from bokeh import palettes, layouts
+    from datetime import date
+    x_range = kwargs.get('x_range', None)
+    if not x_range:
+        x_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    data_t = data.transpose()
+    data_t = data_t.rename(columns={date: str(date) for date in data_t.columns})
+    data_t = data_t.fillna(0.0)
+
+    num_clusters = len(data_t)
+
+    def color_to_hex(c):
+        r, g, b = c
+        r = int(r * 255)
+        g = int(g * 255)
+        b = int(b * 255)
+        return f"#{r:02x}{g:02x}{b:02x}"
+
+    palette = cluster_palette(num_clusters)
+
+    data_t['colors'] = [color_to_hex(c) for c in palette]
+
+    data_source = ColumnDataSource(data_t)
+
+    fig = figure(plot_height=200, plot_width=1000,
+                 title=f"Daily cluster percentage",
+                 x_axis_type='datetime',
+                 x_range=x_range,
+                 y_range=(0, 1),
+                 tools="")
+    fig.yaxis.formatter = NumeralTickFormatter(format='0 %')
+
+    for date in data.index:
+        fig.vbar(bottom=cumsum(str(date), include_zero=True),
+                 top=cumsum(str(date)),
+                 x=date,
+                 width=timedelta(days=1) / 2,
+                 source=data_source,
+                 fill_color='colors',
+                 line_color='black',
+                 line_width=0)
+
+    fig.output_backend = "webgl"
+    fig.toolbar.logo = None
+
+    fig.add_tools(SaveTool())
+    fig.add_tools(WheelZoomTool(dimensions=Dimensions.width))
+    fig.add_tools(PanTool(dimensions=Dimensions.width))
+    fig.add_tools(ResetTool())
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------

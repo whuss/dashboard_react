@@ -1139,6 +1139,47 @@ class PlotClusteringScatterPlot(AjaxPlotMpl):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class PlotClusteringFrequency(AjaxPlotBokeh):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = date(2020, 2, 1)
+        self._end_date = date.today() - timedelta(days=1)
+        self.device = self.parameters.get('device')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        cluster_data = clustering.input_data_clustering(self.device, self._start_date)
+        if cluster_data.empty:
+            return None
+
+        cluster_data['date'] = cluster_data.index.date
+        clusters = sorted(cluster_data.cluster.unique())
+
+        def cluster_name(cluster):
+            return f"c_{cluster}"
+
+        for c in clusters:
+            cluster_data.loc[:, cluster_name(c)] = (cluster_data.cluster == c).astype(int)
+
+        daily_histogram = cluster_data.drop(columns=['cluster']).groupby('date').sum()
+        daily_histogram.loc[:, 'total'] = daily_histogram.sum(axis=1)
+
+        for c in clusters:
+            daily_histogram[cluster_name(c)] /= daily_histogram['total']
+
+        daily_histogram = daily_histogram.drop(columns='total')
+        return daily_histogram.dropna()
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, daily_histogram):
+        fig = clustering.plot_daily_histogram(daily_histogram)
+        return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class CrashCol(Col):
     def td_format(self, content):
         c = 'SICK' if content else 'HEALTHY'
