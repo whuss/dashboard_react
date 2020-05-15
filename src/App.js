@@ -22,6 +22,7 @@ import AnalyticsConnection from "./AnalyticsConnection";
 import AnalyticsKeyboard from "./AnalyticsKeyboard";
 import AnalyticsKeypress from "./AnalyticsKeypress";
 import AnalyticsMouse from "./AnalyticsMouse";
+import AnalyticsPowerTimeline from "./AnalyticsPowerTimeline";
 import SystemStability from "./SystemStability";
 import SystemRestarts from "./SystemRestarts";
 import SystemErrors from "./SystemErrors";
@@ -29,6 +30,7 @@ import SystemLogs from "./SystemLogs";
 import ClusteringInputDistributions from "./ClusteringInputDistributions";
 import ClusteringScatterPlot from "./ClusteringScatterPlot";
 import ClusteringFrequency from "./ClusteringFrequency";
+import ClusteringTimeline from "./ClusteringTimeline";
 import Plot from "./BokehPlot";
 
 import { useDevice, LoadingAnimation } from "./Toolbar";
@@ -71,6 +73,9 @@ const MainView = (props) => {
                 <NavRoute path="/analytics/scenes" title="Analytics Scenes">
                     <AnalyticsScenes devices={devices}/>
                 </NavRoute>
+                <NavRoute path="/analytics/power" title="Analytics Power timeline">
+                    <AnalyticsPowerTimeline devices={devices}/>
+                </NavRoute>
                 <NavRoute path="/analytics/connection" title="Analytics Connection">
                     <AnalyticsConnection devices={devices}/>
                 </NavRoute>
@@ -91,6 +96,9 @@ const MainView = (props) => {
                 </NavRoute>
                 <NavRoute path="/clustering/frequency" title="Daily Cluster Frequency">
                     <ClusteringFrequency devices={devices} />
+                </NavRoute>
+                <NavRoute path="/clustering/timeline" title="Daily Cluster Timeline">
+                    <ClusteringTimeline devices={devices} />
                 </NavRoute>
                 <NavRoute path="/statistics/switch_cycles" title="Statistics On/Off Cycles">
                     <SwitchCycles devices={devices}/>

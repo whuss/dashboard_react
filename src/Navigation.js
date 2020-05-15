@@ -34,6 +34,7 @@ function Navigation() {
                     <NavDropdown title="Analytics" id="basic-nav-dropdown">
                         <NavDropLink to="/analytics/sensor" name="Sensor" />
                         <NavDropdown.Divider />
+                        <NavDropLink to="/analytics/power" name="Power timeline" />
                         <NavDropLink to="/analytics/scenes" name="Scenes" />
                         <NavDropLink to="/analytics/connection" name="Connection" />
                         <NavDropdown.Divider />
@@ -48,6 +49,7 @@ function Navigation() {
                         <NavDropLink to="/clustering/input_distributions" name="Input Distributions" />
                         <NavDropLink to="/clustering/scatter_plot" name="Cluster Scatter Plot" />
                         <NavDropLink to="/clustering/frequency" name="Daily Cluster Frequency" />
+                        <NavDropLink to="/clustering/timeline" name="Daily Cluster Timeline" />
                     </NavDropdown>
                     <NavDropdown title="System" id="basic-nav-dropdown">
                         <NavDropLink to="/system/stability" name="Stability" />
