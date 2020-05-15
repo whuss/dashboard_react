@@ -2,6 +2,7 @@ import React from "react";
 
 import { useParams } from "react-router-dom";
 
+import Table from "react-bootstrap/Table";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
@@ -35,9 +36,13 @@ const BigSpinner = (props) => (
     </div>
 );
 
-function useClusteringToolbar(_dimension) {
+function useClusteringToolbar(_dimension, _sampleSize) {
     if (!_dimension) {
         _dimension = 4;
+    }
+
+    if (!_sampleSize) {
+        _sampleSize = 5000;
     }
 
     const [plotDimensions, setPlotDimensions] = useDropdown(_dimension, {
@@ -45,14 +50,19 @@ function useClusteringToolbar(_dimension) {
         label: "Dimensions",
     });
 
+    const [sampleSize, setSampleSize] = useDropdown(_sampleSize, {
+        values: [5000, 2500, 1000, 500, 100, "ALL"],
+        label: "Sample size",
+    });
+
     //const params = `/clustring/input_distributation/${transformation}`;
 
-    const sensorToolbar = <>{setPlotDimensions}</>;
+    const sensorToolbar = <>{setPlotDimensions}{setSampleSize}</>;
 
     function plot_parameters(device) {
         return {
             device: device,
-            sample_size: 5000,
+            sample_size: sampleSize,
             dimensions: plotDimensions,
         };
     }
@@ -65,18 +75,19 @@ const ScatterPlot = (props) => {
     const x_axis = props.x_axis;
     const y_axis = props.y_axis;
     var plot_parameters = props.plot_parameters;
-    plot_parameters.x_axis = x_axis;
-    plot_parameters.y_axis = y_axis;
+    plot_parameters.x_axis = `d_${x_axis}`;
+    plot_parameters.y_axis = `d_${y_axis}`;
+    delete plot_parameters.dimensions;
 
-    const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters, false);
+    const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters);
 
     return (
         <>
-            <Col>
-                <LoadingAnimation style={bigSpinnerStyle} isLoading={isLoading} isError={isError} errorMsg={errorMsg}>
+            <td>
+                {(y_axis >= x_axis) ? <LoadingAnimation style={bigSpinnerStyle} isLoading={isLoading} isError={isError} errorMsg={errorMsg}>
                     {plot}
-                </LoadingAnimation>
-            </Col>
+                </LoadingAnimation> : <></>}
+            </td>
         </>
     );
 };
@@ -87,10 +98,17 @@ function rowFactory(plot_parameters) {
         const plot_name = "PlotClusteringScatterPlot";
         const file_name = `clustering_scatter_plot_${props.device_id}.xlsx`;
 
-        const rows = ["d_0", "d_1"];
+        const local_plot_parameters = plot_parameters(device);
+        local_plot_parameters.x_axis = "d_0";
+        local_plot_parameters.y_axis = "d_0";
+        
+        const dimensions = local_plot_parameters.dimensions;
+        delete local_plot_parameters.dimensions;
 
-        const fields = undefined;
-        //const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters(props.device_id), false);
+        //const rows = [...Array(dimensions).keys()].map((x) => `d_${x}`);
+        const rows = [...Array(dimensions).keys()];
+
+        const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, local_plot_parameters);
 
         function drawRow(y_axis) {
             const rowElement = rows.map((x_axis) => (
@@ -102,14 +120,21 @@ function rowFactory(plot_parameters) {
                         y_axis={y_axis}
                     />
             ));
-            return (<Row>{rowElement}</Row>)
+            return (<tr>{rowElement}</tr>)
         }
+
+        const tableStyle = {
+            tableLayout: "fixed",
+            width: `${300 * dimensions}px`,
+            border: "none",
+            padding: 0,
+        };
 
         return (
             <>
                 <td>{fields && fields.significant_dimensions}</td>
                 <td>
-                    <Container>{rows.map((y_axis) => drawRow(y_axis))}</Container>
+                    <Table className="mpl-table" style={tableStyle}><tbody>{rows.map((y_axis) => drawRow(y_axis))}</tbody></Table>
                 </td>
                 <td>
                     <Button onClick={() => downloadFile(plot_name, plot_parameters(device), file_name)}>
@@ -132,8 +157,8 @@ const TableHeader = () => (
 );
 
 const ClusteringScatterPlot = (props) => {
-    const { dimension } = useParams();
-    const [tools, plot_parameters] = useClusteringToolbar(dimension);
+    const { dimension, sampleSize } = useParams();
+    const [tools, plot_parameters] = useClusteringToolbar(dimension, sampleSize);
     const TableRow = rowFactory(plot_parameters);
 
     return (

@@ -203,3 +203,13 @@ table .deviceMode {
     text-align: left;
     width: 1000px;
 }
+
+.mpl-table tbody tr {
+    border: none;
+    padding: 0;
+}
+
+.mpl-table tbody tr td {
+    border: none;
+    padding: 0;
+}
