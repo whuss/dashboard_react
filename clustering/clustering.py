@@ -93,8 +93,9 @@ def plot_distributions(mouse_data: pd.DataFrame):
 
 
 def input_data_clustering(device: str, start_date: date, end_date: Optional[date] = None,
+                          n_clusters=5,
                           return_only_cluster=True,
-                          return_pca=False):
+                          return_pca=False) -> pd.DataFrame:
     def add_column_postfix(df: pd.DataFrame, postfix: str) -> pd.DataFrame:
         columns = df.columns
         mapping = {c: f"{c}_{postfix}" for c in columns}
@@ -102,6 +103,8 @@ def input_data_clustering(device: str, start_date: date, end_date: Optional[date
 
     # get normalized input data
     data = get_input_data(device, start_date, end_date=end_date, normalized=True)
+    if data.empty:
+        return data
 
     # compute statistics over rolling window
     rolling = data.rolling('15Min', min_periods=1, win_type=None)
@@ -124,8 +127,12 @@ def input_data_clustering(device: str, start_date: date, end_date: Optional[date
                                            columns=data_rolling.columns,
                                            index=data_rolling.index).fillna(0)
 
+    # We do not have enough data for a clustering
+    if len(data_rolling_normalized) < n_clusters:
+        return pd.DataFrame()
+
     # perform PCA
-    pca = PCA()
+    pca = PCA(random_state=31415)
     pca.fit(data_rolling_normalized)
 
     variance = np.cumsum(pca.explained_variance_ratio_)
@@ -136,7 +143,7 @@ def input_data_clustering(device: str, start_date: date, end_date: Optional[date
     data_pca = pca.transform(data_rolling_normalized)[:, :n_dims]
 
     # Cluster the data into 5 clusters
-    k_means = KMeans(n_clusters=5)
+    k_means = KMeans(n_clusters=n_clusters, random_state=31415)
     clustering = k_means.fit_predict(data_pca)
 
     if return_pca:
@@ -153,7 +160,7 @@ def input_data_clustering(device: str, start_date: date, end_date: Optional[date
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def cluster_histogram(cluster_data: pd.DataFrame) -> pd.DataFrame:
+def cluster_histogram(cluster_data: pd.DataFrame):
     c = cluster_data.reset_index()
     c.loc[:, 'date'] = c.timestamp.dt.date
     c_histogram = pd.DataFrame(c.groupby(['date', 'cluster']).cluster.count())
@@ -167,9 +174,32 @@ def cluster_histogram(cluster_data: pd.DataFrame) -> pd.DataFrame:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def cluster_scatter_matrix(pca_data: pd.DataFrame) -> pd.DataFrame:
+def cluster_scatter_matrix(pca_data: pd.DataFrame):
     #sns.set(style='white')
     fig = sns.pairplot(pca_data, hue="cluster", diag_kind="kde", corner=True).fig
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def cluster_scatter(pca_data: pd.DataFrame, x_axis: str, y_axis: str):
+    cp = sns.color_palette('bright')
+    num_clusters = len(pca_data.cluster.unique())
+    palette = cp[0:num_clusters]
+    fig = Figure(figsize=(3, 3))
+    ax = fig.add_subplot(1, 1, 1)
+    if x_axis != y_axis:
+        sns.scatterplot(x=x_axis, y=y_axis, data=pca_data, hue='cluster', palette=palette, legend=False, ax=ax)
+        ax.set_ylabel('')
+        ax.set_xlabel('')
+    else:
+        for cluster in sorted(pca_data.cluster.unique()):
+            sns.kdeplot(pca_data[x_axis][pca_data.cluster == cluster],
+                        shade=True, color=palette[cluster], legend=False, ax=ax)
+
+    # Hide axis ticks since the units are meaningless in our case
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -1105,7 +1105,8 @@ class PlotClusteringScatterPlot(AjaxPlotMpl):
         self._start_date = date(2020, 2, 1)
         self.device = self.parameters.get('device')
         self.sample_size = int(self.parameters.get('sample_size'))
-        self.dimensions = int(self.parameters.get('dimensions'))
+        self.x_axis = self.parameters.get('x_axis')
+        self.y_axis = self.parameters.get('y_axis')
 
         self.add_field(AjaxField(name='significant_dimensions'))
 
@@ -1119,20 +1120,21 @@ class PlotClusteringScatterPlot(AjaxPlotMpl):
         significant_dimensions = len(data.columns) - 1
         self.field['significant_dimensions'].set_value(significant_dimensions)
 
-        significant_dimensions = data.iloc[:, :(self.dimensions + 1)]
-
         length = len(data)
 
-        #from sklearn.model_selection import train_test_split
-        #_, clustering_data = train_test_split(significant_dimensions, test_size=min(self.sample_size, length))
-        clustering_data = significant_dimensions
+        if self.sample_size == "ALL" or length <= self.sample_size:
+            clustering_data = data
+        else:
+            from sklearn.model_selection import train_test_split
+            _, clustering_data = train_test_split(data, test_size=min(self.sample_size, length), random_state=31415)
 
         return clustering_data
 
     # ------------------------------------------------------------------------------------------------------------------
 
     def _plot(self, clustering_data):
-        return clustering.cluster_scatter_matrix(clustering_data)
+        return clustering.cluster_scatter(clustering_data, self.x_axis, self.y_axis)
+        # return clustering.cluster_scatter_matrix(clustering_data)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
