@@ -289,34 +289,36 @@ def plot_daily_timeline(data, **kwargs):
     from bokeh import palettes, layouts
 
     from datetime import date
-    y_range = kwargs.get('y_range', None)
-    if not y_range:
-        y_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+    x_range = kwargs.get('x_range', None)
+    if not x_range:
+        x_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
 
-    x_range = 0, 60 * 24 - 1  # Minutes of a day
+    y_range = 0, 60 * 24  # Minutes of a day
 
     data_source = ColumnDataSource(data)
 
     fig = figure(plot_height=500, plot_width=1000,
                  title=f"Cluster timeline",
-                 x_axis_type='linear',
-                 y_axis_type='datetime',
+                 x_axis_type='datetime',
+                 y_axis_type='linear',
                  x_range=x_range,
                  y_range=y_range,
                  tools="")
 
-    fig.rect(x='minutes', y='date', width=1, height=timedelta(days=1), color='color', source=data_source)
+    fig.rect(y='minutes', x='date', width=timedelta(days=1), height=1, color='color', source=data_source)
 
     from datetime import time
 
     def index_to_time(index: int):
         hours = index // 60
         minutes = index % 60
+        if index == 60 * 24:
+            return time(0, 0)
         return time(hours, minutes)
 
-    minutes = list(range(0, 60 * 24, 3 * 60))
-    fig.xaxis.ticker = minutes
-    fig.xaxis.major_label_overrides = {m: str(index_to_time(m)) for m in minutes}
+    minutes = list(range(0, 60 * 24 + 1, 3 * 60))
+    fig.yaxis.ticker = minutes
+    fig.yaxis.major_label_overrides = {m: str(index_to_time(m)) for m in minutes}
 
     fig.output_backend = "webgl"
     fig.toolbar.logo = None
