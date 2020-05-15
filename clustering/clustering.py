@@ -274,3 +274,63 @@ def plot_daily_histogram(data, **kwargs):
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_daily_timeline(data, **kwargs):
+    import itertools
+    from datetime import timedelta, datetime, date
+    from bokeh.core.enums import Dimensions, StepMode
+    from bokeh.transform import dodge, cumsum
+    from bokeh.plotting import figure
+    from bokeh.models import ColumnDataSource, OpenURL, TapTool
+    from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
+    from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Circle
+    from bokeh.models.ranges import Range1d
+    from bokeh import palettes, layouts
+
+    from datetime import date
+    y_range = kwargs.get('y_range', None)
+    if not y_range:
+        y_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    x_range = 0, 60 * 24 - 1  # Minutes of a day
+
+    data_source = ColumnDataSource(data)
+
+    fig = figure(plot_height=500, plot_width=1000,
+                 title=f"Cluster timeline",
+                 x_axis_type='linear',
+                 y_axis_type='datetime',
+                 x_range=x_range,
+                 y_range=y_range,
+                 tools="")
+
+    fig.rect(x='minutes', y='date', width=1, height=timedelta(days=1), color='color', source=data_source)
+
+    from datetime import time
+
+    def index_to_time(index: int):
+        hours = index // 60
+        minutes = index % 60
+        return time(hours, minutes)
+
+    minutes = list(range(0, 60 * 24, 3 * 60))
+    fig.xaxis.ticker = minutes
+    fig.xaxis.major_label_overrides = {m: str(index_to_time(m)) for m in minutes}
+
+    fig.output_backend = "webgl"
+    fig.toolbar.logo = None
+
+    #hover_tool = HoverTool(tooltips=[('Date', '@date{%F}'),
+    #                                 ('Excluded', '@excluded')],
+    #                       formatters={'date': 'datetime'},
+    #                       mode='vline')
+
+    #fig.add_tools(hover_tool)
+    #fig.add_tools(SaveTool())
+    #fig.add_tools(WheelZoomTool(dimensions=Dimensions.width))
+    #fig.add_tools(PanTool(dimensions=Dimensions.width))
+    #fig.add_tools(ResetTool())
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------

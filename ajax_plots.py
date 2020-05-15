@@ -1180,6 +1180,50 @@ class PlotClusteringFrequency(AjaxPlotBokeh):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class PlotClusteringTimeline(AjaxPlotBokeh):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = date(2020, 2, 1)
+        self._end_date = date.today() - timedelta(days=1)
+        self.device = self.parameters.get('device')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        cluster_data = clustering.input_data_clustering(self.device, self._start_date)
+        if cluster_data.empty:
+            return None
+
+        def total_minutes(t) -> int:
+            return t.hour * 60 + t.minute
+
+        cluster_data['date'] = cluster_data.index.date
+        cluster_data['time'] = cluster_data.index.time
+        cluster_data.loc[:, 'minutes'] = cluster_data.time.apply(total_minutes)
+
+        def color_to_hex(c):
+            r, g, b = c
+            r = int(r * 255)
+            g = int(g * 255)
+            b = int(b * 255)
+            return f"#{r:02x}{g:02x}{b:02x}"
+
+        num_clusters = len(cluster_data.cluster.unique())
+        palette = [color_to_hex(c) for c in clustering.cluster_palette(num_clusters)]
+
+        cluster_data.loc[:, 'color'] = cluster_data.cluster.apply(lambda c: palette[c])
+
+        return cluster_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, daily_timeline):
+        fig = clustering.plot_daily_timeline(daily_timeline)
+        return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class CrashCol(Col):
     def td_format(self, content):
         c = 'SICK' if content else 'HEALTHY'
