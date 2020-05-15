@@ -1224,6 +1224,50 @@ class PlotClusteringTimeline(AjaxPlotBokeh):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+class PlotPowerTimeline(AjaxPlotBokeh):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = date(2020, 2, 1)
+        self._end_date = date.today() - timedelta(days=1)
+        self.device = self.parameters.get('device')
+        self.threshold = 0.9
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        print(f"Fetch data for {self.device}")
+        from analytics.instruction import get_power
+        power_data = get_power(self.device, self._start_date, resample_rule="1Min")
+        if power_data.empty:
+            return None
+
+        def total_minutes(t) -> int:
+            return t.hour * 60 + t.minute
+
+        connection_data = connection_data_per_day(self.device, self._start_date, self._end_date)
+        included_dates = connection_data[connection_data.excluded == 0].index
+
+        power_data = power_data[power_data.power >= self.threshold]
+        power_data['date'] = power_data.index.date
+
+        power_data = power_data[power_data.date.isin(included_dates)]
+
+        power_data['time'] = power_data.index.time
+        power_data.loc[:, 'minutes'] = power_data.time.apply(total_minutes)
+
+        return power_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, power_timeline):
+        from analytics.instruction import plot_power_timeline
+        print(f"Plot for {self.device} plot_power_timeline")
+        fig = plot_power_timeline(power_timeline)
+        return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class CrashCol(Col):
     def td_format(self, content):
         c = 'SICK' if content else 'HEALTHY'

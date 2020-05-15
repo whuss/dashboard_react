@@ -6,7 +6,8 @@ from dataclasses import dataclass
 
 from db import db, InstructionPackage, VersionPackage
 from utils.interval import TimeInterval, Interval, parse_interval
-
+from utils.date import start_of_day, end_of_day
+from datetime import date
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -300,5 +301,91 @@ def get_state_data(device: str, interval, resample_rule: Optional[str] = None) -
 
         data.index.name = "timestamp"
     return data
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def get_power(device: str, start_date: date, end_date: Optional[date] = None, resample_rule='1S') -> pd.DataFrame:
+    if end_date is None:
+        end_date = date.today()
+    interval = (start_of_day(start_date), end_of_day(end_date))
+    state_data = get_state_data(device, interval, resample_rule='1S')
+
+    state_data.loc[:, 'power'] = (state_data.power == "ON").astype(int)
+
+    power = state_data.drop(columns=["scene", "settings"])
+
+    if power.empty:
+        return power
+
+    if resample_rule != "1S":
+        power = power.resample(resample_rule).mean()
+    return power
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_power_timeline(data, **kwargs):
+    import itertools
+    from datetime import timedelta, datetime, date
+    from bokeh.core.enums import Dimensions, StepMode
+    from bokeh.transform import dodge, cumsum
+    from bokeh.plotting import figure
+    from bokeh.models import ColumnDataSource, OpenURL, TapTool
+    from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
+    from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Circle
+    from bokeh.models.ranges import Range1d
+    from bokeh import palettes, layouts
+    from bokeh.palettes import Magma256
+
+    from datetime import date
+    x_range = kwargs.get('x_range', None)
+    if not x_range:
+        x_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    y_range = 0, 60 * 24  # Minutes of a day
+
+    data['color'] = (data.power * 255).astype(int)
+    data['color'] = data.color.apply(lambda c: Magma256[c])
+
+    data_source = ColumnDataSource(data)
+
+    fig = figure(plot_height=500, plot_width=1000,
+                 title=f"Power timeline",
+                 x_axis_type='datetime',
+                 y_axis_type='linear',
+                 x_range=x_range,
+                 y_range=y_range,
+                 tools="")
+
+    fig.rect(y='minutes', x='date', width=timedelta(days=1)/2, height=1, color='orange', source=data_source)
+
+    from datetime import time
+
+    def index_to_time(index: int):
+        hours = index // 60
+        minutes = index % 60
+        if index == 60 * 24:
+            return time(0, 0)
+        return time(hours, minutes)
+
+    minutes = list(range(0, 60 * 24+1, 3 * 60))
+    fig.yaxis.ticker = minutes
+    fig.yaxis.major_label_overrides = {m: str(index_to_time(m)) for m in minutes}
+
+    fig.output_backend = "webgl"
+    fig.toolbar.logo = None
+
+    hover_tool = HoverTool(tooltips=[('Date', '@date{%F}'),
+                                     ('power', '@power')],
+                           formatters={'date': 'datetime'},
+                           mode='vline')
+
+    fig.add_tools(hover_tool)
+    fig.add_tools(SaveTool())
+    fig.add_tools(WheelZoomTool(dimensions=Dimensions.height))
+    fig.add_tools(PanTool(dimensions=Dimensions.height))
+    fig.add_tools(ResetTool())
+    return fig
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -101,8 +101,10 @@ def connection(device: str, start_date: date, end_date: date,
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def connection_timeseries(device: str, start_date: date, end_date: date,
+def connection_timeseries(device: str, start_date: date, end_date: Optional[date] = None,
                           max_delay: timedelta = timedelta(minutes=2)) -> pd.DataFrame:
+    if end_date is None:
+        end_date = date.today() - timedelta(days=1)
     data_interval = connection(device, start_date, end_date, max_delay, cut_intervals=True)
     if data_interval.empty:
         return pd.DataFrame()
