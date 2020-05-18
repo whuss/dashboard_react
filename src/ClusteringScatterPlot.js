@@ -132,6 +132,7 @@ function rowFactory(plot_parameters) {
 
         return (
             <>
+                <td>{fields && fields.data_points}</td>
                 <td>{fields && fields.significant_dimensions}</td>
                 <td>
                     <Table className="mpl-table" style={tableStyle}><tbody>{rows.map((y_axis) => drawRow(y_axis))}</tbody></Table>
@@ -150,6 +151,7 @@ function rowFactory(plot_parameters) {
 
 const TableHeader = () => (
     <>
+        <th>Data points</th>
         <th>PCA Dimensions</th>
         <th>Cluster scatter plot</th>
         <th>Download</th>

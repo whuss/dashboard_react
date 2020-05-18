@@ -72,3 +72,4 @@ function Navigation() {
 }
 
 export default Navigation;
+export { NavLink };

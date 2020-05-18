@@ -1,9 +1,26 @@
-import React from 'react';
-import { render } from '@testing-library/react';
-import App from './App';
+import React from "react";
+import { createPortal } from "react-dom";
+import { render } from "@testing-library/react";
+import App, { MainView } from "./App";
+import { MemoryRouter } from "react-router-dom";
+import { useDevice, LoadingAnimation } from "./Toolbar";
 
-test('renders learn react link', () => {
-  const { getByText } = render(<App />);
-  const linkElement = getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+jest.mock("react-dom");
+
+const RouteTest = () => {
+    const [devices, isLoading, isError] = useDevice();
+
+    return (
+        <LoadingAnimation isLoading={isLoading} isError={isError}>
+            <MainView devices={devices} />
+        </LoadingAnimation>
+    );
+};
+
+test("analytics/connection", () => {
+    render(
+        <MemoryRouter initialEntries={["/analytics/connection"]}>
+            <RouteTest />
+        </MemoryRouter>
+    );
 });

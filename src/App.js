@@ -32,6 +32,7 @@ import ClusteringScatterPlot from "./ClusteringScatterPlot";
 import ClusteringFrequency from "./ClusteringFrequency";
 import ClusteringTimeline from "./ClusteringTimeline";
 import Plot from "./BokehPlot";
+import DeviceDetails from "./DeviceDetails";
 
 import { useDevice, LoadingAnimation } from "./Toolbar";
 
@@ -57,7 +58,7 @@ function NavRoute(props) {
 const MainView = (props) => {
     const devices = props.devices;
     return (
-        <Container fluid className="p-3">
+        <Container fluid>
             {/* A <Switch> looks through its children <Route>s and
               renders the first one that matches the current URL. */}
             <Switch>
@@ -125,7 +126,10 @@ const MainView = (props) => {
                     ]}
                     title="Logs"
                 >
-                    <SystemLogs devices={devices}/>
+                    <SystemLogs devices={devices} />
+                </NavRoute>
+                <NavRoute path="/device_details" title="Device Details">
+                    <DeviceDetails devices={devices} />
                 </NavRoute>
                 <NavRoute path="/" title="Dashboard">
                     <Dashboard devices={devices}/>
@@ -191,3 +195,4 @@ function About() {
 const App = () => <AppRouter />;
 
 export default App;
+export { MainView };
