@@ -378,8 +378,7 @@ def plot_power_timeline(data, **kwargs):
 
     hover_tool = HoverTool(tooltips=[('Date', '@date{%F}'),
                                      ('power', '@power')],
-                           formatters={'date': 'datetime'},
-                           mode='vline')
+                           formatters={'date': 'datetime'})
 
     fig.add_tools(hover_tool)
     fig.add_tools(SaveTool())

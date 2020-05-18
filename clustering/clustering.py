@@ -33,7 +33,7 @@ def _get_input_data(device: str, start_date: date, end_date: date) -> pd.DataFra
 
 
 def _get_normalized_input_data(device: str, start_date: date, end_date: date) -> pd.DataFrame:
-    data = get_input_data(device, start_date, end_date)
+    data = _get_input_data(device, start_date, end_date)
     if data.empty:
         return data
     pt = PowerTransformer()
@@ -118,7 +118,15 @@ def input_data_clustering(device: str, start_date: date, end_date: Optional[date
     data_rolling_.append(add_column_postfix(rolling.skew(), "skew"))
     data_rolling = pd.concat(data_rolling_, axis=1)
     data_rolling = data_rolling.loc[~data_rolling.index.duplicated(keep='first')]
-    data_rolling = data_rolling.resample("1Min").ffill()
+    data_rolling = data_rolling.resample("1Min").nearest(limit=1).dropna(how='all')
+
+    from analytics.instruction import get_power
+    power_data = get_power(device, start_date)
+    power_data_rolling = power_data.rolling('15Min', min_periods=1, win_type=None).mean()
+    data_rolling = data_rolling.merge(power_data_rolling, how='left', left_index=True, right_index=True)
+    data_rolling = data_rolling[data_rolling.power >= 0.95]
+    data_rolling = data_rolling.drop(columns='power')
+
 
     # normalize rolling data
     st_rolling = QuantileTransformer(output_distribution="normal")
@@ -305,7 +313,7 @@ def plot_daily_timeline(data, **kwargs):
                  y_range=y_range,
                  tools="")
 
-    fig.rect(y='minutes', x='date', width=timedelta(days=1), height=1, color='color', source=data_source)
+    fig.rect(y='minutes', x='date', width=timedelta(days=1)/2, height=1, color='color', source=data_source)
 
     from datetime import time
 

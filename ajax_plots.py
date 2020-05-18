@@ -1109,6 +1109,7 @@ class PlotClusteringScatterPlot(AjaxPlotMpl):
         self.y_axis = self.parameters.get('y_axis')
 
         self.add_field(AjaxField(name='significant_dimensions'))
+        self.add_field(AjaxField(name='data_points'))
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -1121,6 +1122,8 @@ class PlotClusteringScatterPlot(AjaxPlotMpl):
         self.field['significant_dimensions'].set_value(significant_dimensions)
 
         length = len(data)
+
+        self.field['data_points'].set_value(length)
 
         if self.sample_size == "ALL" or length <= self.sample_size:
             clustering_data = data
