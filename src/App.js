@@ -30,12 +30,12 @@ import { LoadingAnimation, useDevice } from "./Toolbar";
 const Title = (props) => {
     const titleBar = document.getElementById("titlebar-root");
     return ReactDOM.createPortal(<h2>{props.title}</h2>, titleBar);
-}
+};
 
 const NavPortal = (props) => {
     const titleBar = document.getElementById("navbar-root");
     return ReactDOM.createPortal(<Navigation />, titleBar);
-}
+};
 
 const NavRoute = (props) => (
     <Route path={props.path}>
@@ -138,7 +138,7 @@ const AppRouter = (props) => {
             </LoadingAnimation>
         </Router>
     );
-}
+};
 
 const About = (props) => (
     <Jumbotron>
@@ -150,4 +150,3 @@ const App = () => <AppRouter />;
 
 export default App;
 export { MainView };
-
