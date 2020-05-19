@@ -17,14 +17,17 @@ const queries = [
     { name: "Analytics|Connection", selected: false, view: "PlotConnection" },
     { name: "Analytics|Keyboard", selected: false, view: "PlotKeyboard" },
     { name: "Analytics|Mouse", selected: false, view: "PlotMouse" },
+    { name: "Statistics|On/Off Cycles", selected: false, view: "PlotOnOffCycles" },
     { name: "Clustering|Daily Frequency", selected: false, view: "PlotClusteringFrequency" },
     { name: "Clustering|Daily Timeline", selected: false, view: "PlotClusteringTimeline" },
+    { name: "System|Stability", selected: false, view: "PlotCrashes" },
+    { name: "System|Errors", selected: false, view: "PlotErrors" },
 ];
 
-const keys = [...Array(7).keys()];
+const keys = [...Array(queries.length).keys()];
 
 function useSidebar() {
-    const [state, setState] = useState([false, false, false, false, false, false, false]);
+    const [state, setState] = useState(keys.map((key) => false));
 
     const selected = (key) => {
         if (state[key]) {
@@ -72,7 +75,7 @@ function useToolbar(_device, devices) {
 const NamedPlot = (props) => {
     const plot_name = props.plot_name;
     const plot_parameters = { device: props.device };
-    const [{ isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters, false);
+    const [{ isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters);
 
     return (
         <>
