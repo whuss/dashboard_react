@@ -1,54 +1,48 @@
-import "./App.css";
-
 import React from "react";
-import ReactDOM from "react-dom";
-
-import Jumbotron from "react-bootstrap/Jumbotron";
 import Container from "react-bootstrap/Container";
+import Jumbotron from "react-bootstrap/Jumbotron";
+import ReactDOM from "react-dom";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-
-import Navigation from "./Navigation";
-import Dashboard from "./Dashboard";
-import SwitchCycles from "./SwitchCycles";
-import AnalyticsSensor from "./AnalyticsSensor";
-import AnalyticsScenes from "./AnalyticsScenes";
 import AnalyticsConnection from "./AnalyticsConnection";
 import AnalyticsKeyboard from "./AnalyticsKeyboard";
 import AnalyticsKeypress from "./AnalyticsKeypress";
 import AnalyticsMouse from "./AnalyticsMouse";
 import AnalyticsPowerTimeline from "./AnalyticsPowerTimeline";
-import SystemStability from "./SystemStability";
-import SystemRestarts from "./SystemRestarts";
-import SystemErrors from "./SystemErrors";
-import SystemLogs from "./SystemLogs";
+import AnalyticsScenes from "./AnalyticsScenes";
+import AnalyticsSensor from "./AnalyticsSensor";
+import "./App.css";
+import Plot from "./BokehPlot";
+import ClusteringFrequency from "./ClusteringFrequency";
 import ClusteringInputDistributions from "./ClusteringInputDistributions";
 import ClusteringScatterPlot from "./ClusteringScatterPlot";
-import ClusteringFrequency from "./ClusteringFrequency";
 import ClusteringTimeline from "./ClusteringTimeline";
-import Plot from "./BokehPlot";
+import Dashboard from "./Dashboard";
 import DeviceDetails from "./DeviceDetails";
+import Navigation from "./Navigation";
+import SwitchCycles from "./SwitchCycles";
+import SystemErrors from "./SystemErrors";
+import SystemLogs from "./SystemLogs";
+import SystemRestarts from "./SystemRestarts";
+import SystemStability from "./SystemStability";
+import { LoadingAnimation, useDevice } from "./Toolbar";
 
-import { useDevice, LoadingAnimation } from "./Toolbar";
-
-function Title(props) {
+const Title = (props) => {
     const titleBar = document.getElementById("titlebar-root");
     return ReactDOM.createPortal(<h2>{props.title}</h2>, titleBar);
 }
 
-function NavPortal() {
+const NavPortal = (props) => {
     const titleBar = document.getElementById("navbar-root");
     return ReactDOM.createPortal(<Navigation />, titleBar);
 }
 
-function NavRoute(props) {
-    return (
-        <Route path={props.path}>
-            <Title title={props.title} />
-            {props.children}
-        </Route>
-    );
-}
+const NavRoute = (props) => (
+    <Route path={props.path}>
+        <Title title={props.title} />
+        {props.children}
+    </Route>
+);
 
 const MainView = (props) => {
     const devices = props.devices;
@@ -134,7 +128,7 @@ const MainView = (props) => {
     );
 };
 
-function AppRouter() {
+const AppRouter = (props) => {
     const [devices, isLoading, isError] = useDevice();
     return (
         <Router>
@@ -146,15 +140,14 @@ function AppRouter() {
     );
 }
 
-function About() {
-    return (
-        <Jumbotron>
-            <h1 className="header">Todo ...</h1>
-        </Jumbotron>
-    );
-}
+const About = (props) => (
+    <Jumbotron>
+        <h1 className="header">Todo ...</h1>
+    </Jumbotron>
+);
 
 const App = () => <AppRouter />;
 
 export default App;
 export { MainView };
+
