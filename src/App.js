@@ -117,7 +117,7 @@ const MainView = (props) => {
                 >
                     <SystemLogs devices={devices} />
                 </NavRoute>
-                <NavRoute path="/device_details" title="Device Details">
+                <NavRoute path={["/device_details/:device", "/device_details"]} title="Device Details">
                     <DeviceDetails devices={devices} />
                 </NavRoute>
                 <NavRoute path="/" title="Dashboard">

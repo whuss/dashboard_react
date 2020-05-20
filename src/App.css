@@ -199,6 +199,14 @@ table .deviceMode {
     align-items: center;
 }
 
+#toolbar .pagination {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    margin-right: 12px;
+    align-items: center;
+}
+
+
 .errorMsg {
     text-align: left;
     width: 1000px;
@@ -244,4 +252,13 @@ table .deviceMode {
 #page-content-wrapper {
     min-width: 0;
     width: 100%;
+}
+
+.device_link {
+    color: black;
+}
+
+.device_link:hover {
+    color: #777;
+    text-decoration: none;
 }

@@ -195,6 +195,11 @@ function usePlot(plot_name, plot_parameters, cached) {
     const { plot, fields } = data;
 
     const plotElement = element(isError, errorMsg, data);
+
+    //useEffect(() => {
+    //    doFetch(url, plot_parameters);
+    //}, [url, plot_parameters, doFetch]);
+
     return [{ fields, isLoading, isError, errorMsg }, plotElement];
 }
 

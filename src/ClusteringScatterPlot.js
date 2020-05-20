@@ -135,7 +135,7 @@ function rowFactory(plot_parameters) {
                 <td>{fields && fields.data_points}</td>
                 <td>{fields && fields.significant_dimensions}</td>
                 <td>
-                    <Table className="mpl-table" style={tableStyle}><tbody>{rows.map((y_axis) => drawRow(y_axis))}</tbody></Table>
+                    {/* <Table className="mpl-table" style={tableStyle}><tbody>{rows.map((y_axis) => drawRow(y_axis))}</tbody></Table> */}
                 </td>
                 <td>
                     <Button onClick={() => downloadFile(plot_name, plot_parameters(device), file_name)}>

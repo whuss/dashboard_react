@@ -5,7 +5,7 @@ import Col from 'react-bootstrap/Col';
 
 import Toolbar, { useDeviceFilter } from "./Toolbar";
 
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSortDown, faSortUp } from "@fortawesome/free-solid-svg-icons";
@@ -47,7 +47,7 @@ const DrawTable = (props) => {
             <tbody>
                 {sort(devices).map((device) => (
                     <tr key={device}>
-                        <th>{device}</th>
+                        <th><Link className="device_link" to={`/device_details/${device}`}>{device}</Link></th>
                         <props.format_row device_id={device} />
                     </tr>
                 ))}
