@@ -185,21 +185,26 @@ table .deviceMode {
 }
 
 
-#toolbar {
+.toolbar {
     padding-top:4px;
     padding-bottom:4px;
     margin:0px;
     background-color:white;
 }
 
-#toolbar .btn-group {
+.toolbar .input-group {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.toolbar .btn-group {
     margin-top: 8px;
     margin-bottom: 8px;
     margin-right: 12px;
     align-items: center;
 }
 
-#toolbar .pagination {
+.toolbar .pagination {
     margin-top: 8px;
     margin-bottom: 8px;
     margin-right: 12px;

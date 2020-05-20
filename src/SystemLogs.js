@@ -5,8 +5,9 @@ import moment from "moment";
 import { useParams } from "react-router-dom";
 
 import useDataApi from "./Fetch";
-import Toolbar, { useDropdown, useDeviceDropdown, useTimestamp, LoadingAnimation } from "./Toolbar";
+import Toolbar, { ToolbarBottom, useDropdown, useDeviceDropdown, useTimestamp, LoadingAnimation } from "./Toolbar";
 
+import Container from "react-bootstrap/Container";
 import Pagination from "react-bootstrap/Pagination";
 import PageItem from "react-bootstrap/PageItem";
 
@@ -15,13 +16,13 @@ function PaginationBar(props) {
     const setPage = props.setPage;
 
     if (!pagination) {
-        return <><span>Pagination undefined</span></>;
+        return <></>;
     }
 
     const { current_page, num_pages, has_next, has_prev, next_num, prev_num, pages } = pagination;
 
     if (num_pages === 1) {
-        return <>Num pages 1</>;
+        return <></>;
     }
 
     function clickPage(page) {
@@ -155,7 +156,9 @@ function useLogToolbar(_device, _duration, _log_level, _timestamp, devices) {
             {setLogLevel}
             {setTimestamp}
             {setDuration}
+            <Container fluid>
             {pagination}
+            </Container>
         </>
     );
 
@@ -179,7 +182,7 @@ function SystemLogs(props) {
 
     const [paginationData, logText] = useLog(url);
 
-    const paginationElement = <PaginationBar setPage={setPage} pagination={paginationData}/>;
+    const paginationElement = <Container fluid className="d-flex justify-content-end"><PaginationBar setPage={setPage} pagination={paginationData}/></Container>;
 
     useEffect(() => {
         const newUrl = logUrl(device, duration, log_level, timestamp, page);
@@ -190,8 +193,8 @@ function SystemLogs(props) {
     return (
         <>
             <Toolbar>{logToolbar(paginationElement)}</Toolbar>
-            <div>Current page: {page}</div>
             {logText}
+            {paginationData && paginationData.num_pages > 1 && <ToolbarBottom><Container fluid className="d-flex justify-content-end">{paginationElement}</Container></ToolbarBottom>}
         </>
     );
 }

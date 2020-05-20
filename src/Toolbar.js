@@ -151,10 +151,19 @@ function useTimestamp(_timestamp) {
 function Toolbar(props) {
     const toolBarRoot = document.getElementById("toolbar-root");
 
-    const toolBar = <Container fluid id="toolbar"><Row lg={12}>{props.children}</Row></Container>;
+    const toolBar = <Container fluid className="toolbar"><Row lg={12}>{props.children}</Row></Container>;
+
+    return ReactDOM.createPortal(toolBar, toolBarRoot);
+}
+
+function ToolbarBottom(props) {
+    const toolBarRoot = document.getElementById("toolbar-bottom-root");
+    
+    const toolBar = <Container fluid className="toolbar border-top"><Row lg={12}>{props.children}</Row></Container>;
+    //const toolBar = <>{props.children}</>
 
     return ReactDOM.createPortal(toolBar, toolBarRoot);
 }
 
 export default Toolbar;
-export { useInput, useDeviceFilter, useDropdown, useDeviceDropdown, useTimestamp, LoadingAnimation, useDevice, useFilter };
+export { useInput, useDeviceFilter, useDropdown, useDeviceDropdown, useTimestamp, LoadingAnimation, useDevice, useFilter, ToolbarBottom };
