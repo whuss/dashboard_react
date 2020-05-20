@@ -1491,9 +1491,18 @@ def backend_logs(device, duration=5, timestamp=None, log_level="TRACE"):
     devices = Dashboard().devices()
     return dict(devices=devices,
                 log_text=log_text,
-                device=device)
+                device=device,
+                pagination=dict(has_prev=pagination.has_prev,
+                                prev_num=pagination.prev_num,
+                                current_page=page,
+                                num_pages=pagination.pages,
+                                pages=list(pagination.iter_pages()),
+                                has_next=pagination.has_next,
+                                next_num=pagination.next_num
+                                ))
 
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 def mpl_test_plot(device=None):
     if not device:

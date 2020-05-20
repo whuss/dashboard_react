@@ -712,7 +712,7 @@ class PlotErrors(AjaxPlotBokeh):
 
         error_histogram = error_heatmap.groupby(['date']).error_count.sum().reset_index()
 
-        self.field['total_number_of_errors'].set_value(error_histogram.error_count.sum())
+        self.field['total_number_of_errors'].set_value(int(error_histogram.error_count.sum()))
 
         error_histogram['end_of_day'] = error_histogram.date.apply(PlotErrors._format_next_day)
 

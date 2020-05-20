@@ -291,7 +291,7 @@ def plot_daily_timeline(data, **kwargs):
     from bokeh.transform import dodge, cumsum
     from bokeh.plotting import figure
     from bokeh.models import ColumnDataSource, OpenURL, TapTool
-    from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
+    from bokeh.models import ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
     from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Circle
     from bokeh.models.ranges import Range1d
     from bokeh import palettes, layouts
@@ -331,16 +331,15 @@ def plot_daily_timeline(data, **kwargs):
     fig.output_backend = "webgl"
     fig.toolbar.logo = None
 
-    #hover_tool = HoverTool(tooltips=[('Date', '@date{%F}'),
-    #                                 ('Excluded', '@excluded')],
-    #                       formatters={'date': 'datetime'},
-    #                       mode='vline')
+    hover_tool = HoverTool(tooltips=[('Date', '@date{%F}')],
+                           formatters={'date': 'datetime'},
+                           mode='vline')
 
-    #fig.add_tools(hover_tool)
-    #fig.add_tools(SaveTool())
-    #fig.add_tools(WheelZoomTool(dimensions=Dimensions.width))
-    #fig.add_tools(PanTool(dimensions=Dimensions.width))
-    #fig.add_tools(ResetTool())
+    fig.add_tools(hover_tool)
+    fig.add_tools(SaveTool())
+    fig.add_tools(BoxZoomTool())
+    fig.add_tools(PanTool())
+    fig.add_tools(ResetTool())
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -382,8 +382,8 @@ def plot_power_timeline(data, **kwargs):
 
     fig.add_tools(hover_tool)
     fig.add_tools(SaveTool())
-    fig.add_tools(WheelZoomTool(dimensions=Dimensions.height))
-    fig.add_tools(PanTool(dimensions=Dimensions.height))
+    fig.add_tools(BoxZoomTool())
+    fig.add_tools(PanTool())
     fig.add_tools(ResetTool())
     return fig
 
