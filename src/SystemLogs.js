@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 
 import moment from "moment";
 
-import { useParams } from "react-router-dom";
+import queryString from 'query-string';
+
+import { useParams, useLocation, useHistory } from "react-router-dom";
 
 import useDataApi from "./Fetch";
 import Toolbar, { ToolbarBottom, useDropdown, useDeviceDropdown, useTimestamp, LoadingAnimation } from "./Toolbar";
@@ -21,7 +23,7 @@ function PaginationBar(props) {
 
     const { current_page, num_pages, has_next, has_prev, next_num, prev_num, pages } = pagination;
 
-    if (num_pages === 1) {
+    if (num_pages <= 1) {
         return <></>;
     }
 
@@ -85,17 +87,10 @@ function useLog(url) {
     ];
 }
 
-function logUrl(device, duration, log_level, timestamp, page) {
-    const baseUrl = "/backend/logs";
+function logUrl(device, duration, log_level, timestamp, query_params) {
+    const baseUrl = "/logs";
 
-    if (page === undefined)
-    {
-        page = 1;
-    }
-
-    const params = new URLSearchParams({
-        page: page,
-    });
+    const params = new URLSearchParams(query_params);
 
     if (timestamp) {
         return `${baseUrl}/${device}/${duration}/${log_level}/${timestamp}?${params.toString()}`;
@@ -156,9 +151,7 @@ function useLogToolbar(_device, _duration, _log_level, _timestamp, devices) {
             {setLogLevel}
             {setTimestamp}
             {setDuration}
-            <Container fluid>
             {pagination}
-            </Container>
         </>
     );
 
@@ -166,9 +159,13 @@ function useLogToolbar(_device, _duration, _log_level, _timestamp, devices) {
 }
 
 function SystemLogs(props) {
+    let history = useHistory();
     let params = useParams();
+    let search = queryString.parse(useLocation().search);
 
     const [page, setPage ] = useState(1);
+
+    const query_params = {...search, page: page};
 
     const [{ device, log_level, timestamp, duration }, logToolbar] = useLogToolbar(
         params.device,
@@ -178,17 +175,26 @@ function SystemLogs(props) {
         props.devices
     );
 
-    const [url, setUrl] = useState(logUrl(device, duration, log_level, timestamp, page));
+    const thisPageUrl = logUrl(device, duration, log_level, timestamp, query_params);
+
+    const [url, setUrl] = useState(thisPageUrl);
 
     const [paginationData, logText] = useLog(url);
 
     const paginationElement = <Container fluid className="d-flex justify-content-end"><PaginationBar setPage={setPage} pagination={paginationData}/></Container>;
 
     useEffect(() => {
-        const newUrl = logUrl(device, duration, log_level, timestamp, page);
+        setPage(1);
+    }, [device, log_level, timestamp, duration]);
+
+    useEffect(() => {
+        const newUrl = '/backend' + thisPageUrl;
         setUrl(newUrl);
-        //props.history.push(newUrl);
-    }, [device, log_level, timestamp, duration, page]);
+    }, [device, log_level, timestamp, duration, search]);
+
+    useEffect(() => {
+        history.replace(thisPageUrl);
+    }, [thisPageUrl]);
 
     return (
         <>
