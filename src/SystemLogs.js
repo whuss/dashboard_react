@@ -60,7 +60,7 @@ function PaginationBar(props) {
     }
 
     return (
-        <Pagination>
+        <Pagination size="sm">
             <Pagination.Prev  onClick={() => prevPage()} disabled={!has_prev} />
             {pages.map((page) => item(page))}
             <Pagination.Next onClick={() => nextPage()} disabled={!has_next} />
