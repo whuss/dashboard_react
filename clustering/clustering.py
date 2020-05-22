@@ -92,6 +92,7 @@ def plot_distributions(mouse_data: pd.DataFrame):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+@db_cached
 def input_data_clustering(device: str, start_date: date, end_date: Optional[date] = None,
                           n_clusters=5,
                           return_only_cluster=True,

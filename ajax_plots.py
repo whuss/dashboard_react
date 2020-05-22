@@ -31,6 +31,12 @@ from config import Config
 from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
 from utils.date import start_of_day, end_of_day, format_time_span, date_range, parse_date
 from utils.interval import find_intervals
+import threading
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+plot_lock = threading.Lock()
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -490,8 +496,9 @@ class AjaxPlotMpl(Ajax):
         if data is None or data.empty:
             return dict()
 
-        plot = self._plot(data)
-        json_plot = reactify_mpl(plot)
+        with plot_lock:
+            plot = self._plot(data)
+            json_plot = reactify_mpl(plot)
         json_fields = dict()
         for name, field in self.field.items():
             json_fields[name] = field.json()
@@ -1096,9 +1103,9 @@ class PlotClusteringInputDistribution(AjaxPlotMpl):
     # ------------------------------------------------------------------------------------------------------------------
 
     def _plot(self, mouse_data):
-        #return mpl_test_plot(self.device)
         if self.column:
             logging.info(f"Plot distribution for column = {self.column}")
+
             return clustering.plot_distribution(mouse_data, self.column)
         return clustering.plot_distributions(mouse_data)
 
@@ -1110,7 +1117,7 @@ class PlotClusteringScatterPlot(AjaxPlotMpl):
         super().__init__(plot_parameters)
         self._start_date = date(2020, 2, 1)
         self.device = self.parameters.get('device')
-        self.sample_size = int(self.parameters.get('sample_size'))
+        self.sample_size = int(self.parameters.get('sample_size', 5000))
         self.x_axis = self.parameters.get('x_axis')
         self.y_axis = self.parameters.get('y_axis')
 

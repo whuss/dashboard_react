@@ -4,8 +4,6 @@ import pandas as pd
 import numpy as np
 from typing import Optional
 
-import threading
-
 from flask import Flask, render_template, jsonify, request, url_for, json, make_response, Response
 from flask_caching import Cache
 from flask_cors import CORS, cross_origin
@@ -95,9 +93,6 @@ def create_app():
 
     # basic_auth = BasicAuth(app)
     return app
-
-
-plot_lock = threading.Lock()
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1375,8 +1370,7 @@ def backend_plot(plot_name: str):
     try:
         plot_parameters = request.get_json()
         logging.info(f"Plot Cached: plot_name: {plot_name} plot_parameters: {plot_parameters}")
-        with plot_lock:
-            return react_render(plot_name, plot_parameters)
+        return react_render(plot_name, plot_parameters)
     except Exception:
         import traceback
         tb = traceback.format_exc()
@@ -1392,9 +1386,8 @@ def backend_plot_uncached(plot_name: str):
     try:
         plot_parameters = request.get_json()
         logging.info(f"Plot Uncached: plot_name: {plot_name} plot_parameters: {plot_parameters}")
-        with plot_lock:
-            ajax = AjaxFactory._create_plot(plot_name, plot_parameters)
-            return ajax.react_render()
+        ajax = AjaxFactory._create_plot(plot_name, plot_parameters)
+        return ajax.react_render()
     except Exception:
         import traceback
         tb = traceback.format_exc()
