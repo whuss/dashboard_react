@@ -140,8 +140,6 @@ def update_cache():
     r = requests.get(base_url + "/devices")
     devices = r.json()
 
-    print(devices)
-
     number_of_queries = len(devices) * len(plot_list)
     progress = 1
 
@@ -151,8 +149,12 @@ def update_cache():
             print(f"Fetch {device:<13} {plot}...", end=" ", flush=True)
             try:
                 r = requests.post(base_url + "/plot/" + plot, json = {'device': device})
-                print(r.json())
-                print(colors.green | "done")
+                result = r.json()
+                if 'error' in result:
+                    print(result['error'])
+                    print(colors.red | "failed")
+                else:
+                    print(colors.green | "done")
             except:
                 print(colors.red | "failed")
                 hline()

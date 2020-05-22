@@ -673,7 +673,13 @@ class PlotErrors(AjaxPlotBokeh):
 
     def _fetch(self):
         device = self.parameters.get('device')
-        error_heatmap = Errors().error_heatmap_device(device, self._start_date)
+        error_heatmap = Errors().error_heatmap_device(self._start_date)
+
+        if device not in error_heatmap.index:
+            error_heatmap = pd.DataFrame(columns=['filename', 'line_number', 'date', 'error_count', 'end_of_day'])
+        else:
+            error_heatmap = error_heatmap.loc[device]
+
         if error_heatmap.empty:
             return error_heatmap
 
