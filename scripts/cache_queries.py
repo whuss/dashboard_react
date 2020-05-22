@@ -2,12 +2,14 @@
 import signal
 import traceback
 import os
+import json
 from typing import Optional
 from datetime import datetime, date, timedelta, time
 import click
 from plumbum import colors
 from plumbum.cli.terminal import get_terminal_size
 import pandas as pd
+import requests
 
 from app import db
 from db import Dashboard, CachePackage, CacheDeviceDatePackage, Errors, PresenceDetectorStatistics
@@ -114,10 +116,55 @@ def clear_cache():
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+plot_list = ["PlotCrashes",
+             "PlotSceneDurations",
+             "PlotOnOffCycles",
+             "PlotErrors",
+             "PlotConnection",
+             "PlotKeyboard",
+             "PlotKeypress",
+             "PlotMouse",
+             "PlotClusteringInputDistribution",
+             #"PlotClusteringScatterPlot",
+             "PlotClusteringFrequency",
+             "PlotClusteringTimeline",
+             "PlotPowerTimeline"]
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 @click.command(name="update", help="update query cache")
+def update_cache():
+    base_url = "http://127.0.0.1:5000/backend"
+
+    r = requests.get(base_url + "/devices")
+    devices = r.json()
+
+    print(devices)
+
+    number_of_queries = len(devices) * len(plot_list)
+    progress = 1
+
+    for plot in plot_list:
+        for device in devices:
+            print(colors.bold | f"[{progress:>4}/{number_of_queries}]", end=" ")
+            print(f"Fetch {device:<13} {plot}...", end=" ", flush=True)
+            try:
+                r = requests.post(base_url + "/plot/" + plot, json = {'device': device})
+                print(r.json())
+                print(colors.green | "done")
+            except:
+                print(colors.red | "failed")
+                hline()
+                print(traceback.format_exc())
+                hline()
+            progress += 1
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+@click.command(name="update_old", help="update query cache")
 @click.argument("start_date", type=str)
-def update_cache(start_date: date):
+def update_cache_old(start_date: date):
     query_keys = ["scene_durations", "error_restart_histogram", "connection_data",
                   "on_off_cycle_count", "error_heatmap_device"]
     devices = get_devices()
