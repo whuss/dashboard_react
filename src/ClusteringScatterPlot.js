@@ -103,8 +103,7 @@ function rowFactory(plot_parameters) {
         local_plot_parameters.y_axis = "d_0";
         
         const dimensions = local_plot_parameters.dimensions;
-        delete local_plot_parameters.dimensions;
-
+        
         //const rows = [...Array(dimensions).keys()].map((x) => `d_${x}`);
         const rows = [...Array(dimensions).keys()];
 
@@ -135,7 +134,7 @@ function rowFactory(plot_parameters) {
                 <td>{fields && fields.data_points}</td>
                 <td>{fields && fields.significant_dimensions}</td>
                 <td>
-                    {/* <Table className="mpl-table" style={tableStyle}><tbody>{rows.map((y_axis) => drawRow(y_axis))}</tbody></Table> */}
+                    <Table className="mpl-table" style={tableStyle}><tbody>{rows.map((y_axis) => drawRow(y_axis))}</tbody></Table>
                 </td>
                 <td>
                     <Button onClick={() => downloadFile(plot_name, plot_parameters(device), file_name)}>
