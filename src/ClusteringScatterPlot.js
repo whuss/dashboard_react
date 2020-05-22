@@ -104,8 +104,8 @@ function rowFactory(plot_parameters) {
         
         const dimensions = local_plot_parameters.dimensions;
         
-        //const rows = [...Array(dimensions).keys()].map((x) => `d_${x}`);
         const rows = [...Array(dimensions).keys()];
+        delete local_plot_parameters.dimensions;
 
         const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, local_plot_parameters);
 
