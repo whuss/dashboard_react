@@ -5,18 +5,14 @@ from pathlib import Path
 from typing import Optional
 from typing import Tuple
 
-import babel
 import coloredlogs
 import dateutil.parser
-import humanfriendly
-import pandas as pd
-from flask import Flask, render_template, jsonify, request, url_for, json, Response
+from flask import Flask, jsonify, request, json, Response
 from flask_caching import Cache
 from flask_cors import CORS, cross_origin
 # from flask_basicauth import BasicAuth
 from flask_table import Col
 
-import utils.date
 from ajax_plots import AjaxFactory, PlotDatabaseSize
 from ajax_plots import PlotSensors
 from ajax_plots import TableRestarts
