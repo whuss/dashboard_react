@@ -1094,7 +1094,7 @@ class PlotClusteringInputDistribution(AjaxPlotMpl):
 
     def _fetch(self):
         print(f"Normalize: {self.normalize}")
-        mouse_data = clustering.get_input_data(self.device, self._start_date, normalized=self.normalize)
+        mouse_data = clustering.get_input_data_sample(self.device, self._start_date, normalized=self.normalize)
         if mouse_data.empty:
             return None
 

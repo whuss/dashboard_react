@@ -56,6 +56,21 @@ def get_input_data(device: str, start_date: date, end_date: Optional[date] = Non
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+@db_cached
+def get_input_data_sample(device: str, start_date: date, end_date: Optional[date] = None,
+                          normalized=False, sample_size: int = 5000) -> pd.DataFrame:
+    data = get_input_data(device, start_date, end_date=end_date, normalized=normalized)
+    data_size = len(data)
+    if data_size <= sample_size:
+        return data
+    else:
+        from sklearn.model_selection import train_test_split
+        _, data = train_test_split(data, test_size=min(sample_size, data_size), random_state=31415)
+        return data
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 def plot_distribution(mouse_data: pd.DataFrame, column: str):
     sns.set(style="white")
 
