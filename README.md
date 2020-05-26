@@ -38,3 +38,28 @@ supervised systemd
 
 $ docker build -t flask/dashboard .
 $ docker run -p 8003:8003 --network="host" flask/dashboard
+
+
+# Basic deployment:
+
+Note: This is not a production ready deployment.
+
+## Backend
+
+$ tmux new-session -d -s gunicorn ./gunicorn_starter.sh
+
+
+## Frontend
+
+In the directory of the react frontend:
+
+$ ./serve_dashboard.sh
+
+This creates a tmux session named dashboard.
+
+To attach to it use: tmux a -t dashboard
+
+The frontend is reachable at port 8003
+
+Note: this runs the create_react_app development server, and should not
+be used for a production deployment.
