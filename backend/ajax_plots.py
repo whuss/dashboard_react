@@ -1,9 +1,10 @@
-import logging
 import hashlib
 import hmac
-import os
 import io
+import logging
+import os
 import pickle
+import threading
 import traceback
 from abc import abstractmethod
 from base64 import b64encode, b64decode
@@ -13,25 +14,22 @@ from typing import Dict
 import pandas as pd
 from bokeh.embed import components
 from bokeh.layouts import column
-from flask import render_template, jsonify
-
+from flask import jsonify
+from flask_table import Col, LinkCol, Table
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_svg import FigureCanvasSVG
 from matplotlib.figure import Figure
-from flask_table import Col, LinkCol, Table
 
+import clustering.clustering as clustering
 import plots
 from analytics.connection import connection, connection_timeseries, connection_data_per_day
+from analytics.keyboard import get_keyboard_data
+from analytics.mouse import get_mouse_data_aggregated
 from analytics.scenes import get_scene_durations
 from analytics.sensors import get_sensor_data
-from analytics.keyboard import get_keyboard_data
-from analytics.mouse import get_mouse_data_raw, get_mouse_data_aggregated
-import clustering.clustering as clustering
 from config import Config
 from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
-from utils.date import start_of_day, end_of_day, format_time_span, date_range, parse_date
-from utils.interval import find_intervals
-import threading
+from utils.date import start_of_day, end_of_day, format_time_span, parse_date
 
 # ----------------------------------------------------------------------------------------------------------------------
 
