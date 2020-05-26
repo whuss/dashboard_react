@@ -224,7 +224,7 @@ class AjaxFieldPlotBokeh(AjaxField):
             self._final_html = f"no data"
         else:
             script, div = components(self._value)
-            self._final_html = render_template('bokeh_plot.html', div_plot=div, script_plot=script)
+            self._final_html = f"{div}\n{script}"
 
     # ------------------------------------------------------------------------------------------------------------------
 
