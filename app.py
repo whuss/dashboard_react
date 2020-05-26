@@ -3,6 +3,7 @@ import re
 import pandas as pd
 import numpy as np
 from typing import Optional
+from pathlib import Path
 
 from flask import Flask, render_template, jsonify, request, url_for, json, make_response, Response
 from flask_caching import Cache
@@ -84,7 +85,7 @@ def create_app():
     # app.config['BASIC_AUTH_PASSWORD'] = "infinity"
     # app.config['BASIC_AUTH_FORCE'] = True
     app.config['CACHE_TYPE'] = "filesystem"
-    app.config['CACHE_DIR'] = "/home/huss/.cache/dashboard"
+    app.config['CACHE_DIR'] = str(Path.home() / ".cache/dashboard")
     app.config['CACHE_DEFAULT_TIMEOUT'] = 60 * 60 * 24  # 1 day
     app.config['CACHE_REDIS_HOST'] = "127.0.0.1"
     app.config['CACHE_REDIS_PORT'] = 6379
