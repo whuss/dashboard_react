@@ -84,159 +84,6 @@ cors = CORS(app, resources={r"/backend/*": {"origins": "*"}})
 app.app_context().push()
 db.Model.metadata.reflect(bind=db.engine)
 
-
-# ----------------------------------------------------------------------------------------------------------------------
-# Jinja customization
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.template_filter('ajax_plots_to_json')
-def ajax_plots_to_json(ajax_plots):
-    return json.dumps([plot.encode_json_data() for plot in ajax_plots])
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.template_filter('datetime')
-def format_datetime(value, format='medium'):
-    if not value:
-        return ""
-    if isinstance(value, str):
-        value = utils.date.parse_date(value)
-
-    if format == 'full':
-        format = "EEEE, d. MMMM y 'at' HH:mm"
-    elif format == 'medium':
-        format = "y-MM-dd HH:mm"
-    return babel.dates.format_datetime(value, format)
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.template_filter('str')
-def _str(_input):
-    return str(_input) if _input else ""
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.template_filter('or_else')
-def _or_else(_input, else_input):
-    return str(_input) if _input else str(else_input)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.template_filter('capitalize')
-def capitalize(_input):
-    return str(_input).capitalize() if _input else ""
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.template_filter('timespan')
-def _time_span(_input):
-    if _input:
-        utils.date.format_time_span(_input)
-    return ""
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.template_filter('none')
-def _number(_input):
-    if pd.isna(_input):
-        return ""
-    return _input if _input else ""
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.template_filter('unit')
-def _unit(_input, unit='°C'):
-    if not _input:
-        return ""
-    return f"{_input:.2f} {unit}"
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.template_filter('format_duration')
-def _format_duration(_input):
-    try:
-        minutes = int(_input)
-        if minutes < 60:
-            return f"{minutes} minutes"
-        elif minutes % 60 == 0 and minutes // 60 < 24:
-            return f"{minutes // 60} hours"
-        elif minutes == 60 * 24:
-            return f"1 day"
-        else:
-            return humanfriendly.format_timespan(timedelta(minutes=minutes), max_units=2)
-    except ValueError:
-        # input is not an integer
-        return str(minutes)
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.context_processor
-def utility_processor():
-    def _str(_input):
-        return str(_input) if _input else ""
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def _time_span(_input):
-        if _input:
-            seconds = _input.seconds
-            minutes = seconds // 60
-            seconds = seconds % 60
-            hours = minutes // 60
-            minutes = minutes % 60
-            return f"{hours:02}:{minutes:02}:{seconds:02}"
-            # return humanfriendly.format_timespan(input, max_units=2)
-        return ""
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def _number(_input):
-        return _input if _input else ""
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def _unit(_input, unit):
-        if not _input:
-            return ""
-        return f"{_input:.2f} {unit}"
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    return dict(_str=_str,
-                _time_span=_time_span,
-                _number=_number,
-                _unit=_unit)
-
-
-# ----------------------------------------------------------------------------------------------------------------------<
-
-
-def url_for_self(**args):
-    return url_for(request.endpoint, **dict(request.view_args, **args))
-
-
-# ----------------------------------------------------------------------------------------------------------------------<
-
-
-app.jinja_env.globals['url_for_self'] = url_for_self
-
-
 # ----------------------------------------------------------------------------------------------------------------------<
 # Routes
 # ----------------------------------------------------------------------------------------------------------------------
@@ -258,11 +105,6 @@ class CrashCol(Col):
     def td_format(self, content):
         c = 'SICK' if content else 'HEALTHY'
         return f'''<i class="fa fa-heartbeat {c}"></i>'''
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -433,7 +275,7 @@ def backend_download_excel(plot_name: str):
     return Response(convert_to_excel(data),
                     mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers={"Content-disposition":
-                                 "attachment; filename=data.xlsx"})
+                             "attachment; filename=data.xlsx"})
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -489,6 +331,17 @@ def backend_plot_sensor(device: Optional[str] = None,
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+@app.route('/logs/<device>', methods=['GET'])
+@app.route('/logs/<device>/<int:duration>', methods=['GET'])
+@app.route('/logs/<device>/<int:duration>/<log_level>', methods=['GET'])
+@app.route('/logs/<device>/<int:duration>/<log_level>/<timestamp>/', methods=['GET'])
+def show_logs(device, duration=5, timestamp=None, log_level="TRACE"):
+    """Dummy route, only used to build links, that are handled by the frontend."""
+    return ""
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 @app.route('/backend/logs/<device>', methods=['GET'])
 @app.route('/backend/logs/<device>/<int:duration>', methods=['GET'])
 @app.route('/backend/logs/<device>/<int:duration>/<log_level>', methods=['GET'])
@@ -520,31 +373,6 @@ def backend_logs(device, duration=5, timestamp=None, log_level="TRACE"):
                                 has_next=pagination.has_next,
                                 next_num=pagination.next_num
                                 ))
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-def mpl_test_plot(device=None):
-    if not device:
-        device = ""
-    import seaborn as sns
-    from matplotlib.figure import Figure
-    sns.set(style="whitegrid", palette="pastel", color_codes=True)
-
-    fig = Figure(constrained_layout=True)
-    ax = fig.add_subplot(1, 1, 1)
-    ax.set_title(device)
-    # Load the example tips dataset
-    tips = sns.load_dataset("tips")
-
-    # Draw a nested violinplot and split the violins for easier comparison
-    sns.violinplot(x="day", y="total_bill", hue="smoker",
-                   split=True, inner="quart",
-                   palette={"Yes": "y", "No": "b"},
-                   data=tips, ax=ax)
-    sns.despine(left=True)
-
-    return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Main
