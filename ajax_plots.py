@@ -31,6 +31,12 @@ from config import Config
 from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
 from utils.date import start_of_day, end_of_day, format_time_span, date_range, parse_date
 from utils.interval import find_intervals
+import threading
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+plot_lock = threading.Lock()
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -423,6 +429,17 @@ class AjaxPlotBokeh(Ajax):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+def reactify_mpl(plot):
+    output = io.BytesIO()
+    plot.savefig(output, format="png")
+    # FigureCanvasAgg(plot).print_png(output)
+    json = dict(png=b64encode(output.getbuffer()).decode('ascii'))
+    plot.clf()
+    return json
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class AjaxPlotMpl(Ajax):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
@@ -470,6 +487,22 @@ class AjaxPlotMpl(Ajax):
     @abstractmethod
     def _plot(self):
         pass
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def react_render(self, data=None):
+        if data is None:
+            data = self.fetch_data()
+        if data is None or data.empty:
+            return dict()
+
+        with plot_lock:
+            plot = self._plot(data)
+            json_plot = reactify_mpl(plot)
+        json_fields = dict()
+        for name, field in self.field.items():
+            json_fields[name] = field.json()
+        return dict(plot=json_plot, fields=json_fields)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -647,7 +680,13 @@ class PlotErrors(AjaxPlotBokeh):
 
     def _fetch(self):
         device = self.parameters.get('device')
-        error_heatmap = Errors().error_heatmap_device(device, self._start_date)
+        error_heatmap = Errors().error_heatmap_device(self._start_date)
+
+        if device not in error_heatmap.index:
+            error_heatmap = pd.DataFrame(columns=['filename', 'line_number', 'date', 'error_count', 'end_of_day'])
+        else:
+            error_heatmap = error_heatmap.loc[device]
+
         if error_heatmap.empty:
             return error_heatmap
 
@@ -686,7 +725,7 @@ class PlotErrors(AjaxPlotBokeh):
 
         error_histogram = error_heatmap.groupby(['date']).error_count.sum().reset_index()
 
-        self.field['total_number_of_errors'].set_value(error_histogram.error_count.sum())
+        self.field['total_number_of_errors'].set_value(int(error_histogram.error_count.sum()))
 
         error_histogram['end_of_day'] = error_histogram.date.apply(PlotErrors._format_next_day)
 
@@ -1017,18 +1056,45 @@ class PlotMplTest(AjaxPlotMpl):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+def mpl_test_plot(device=None):
+    if not device:
+        device = ""
+    import seaborn as sns
+    from matplotlib.figure import Figure
+    sns.set(style="whitegrid", palette="pastel", color_codes=True)
+
+    fig = Figure(constrained_layout=True)
+    ax = fig.add_subplot(1, 1, 1)
+    ax.set_title(device)
+    # Load the example tips dataset
+    tips = sns.load_dataset("tips")
+
+    # Draw a nested violinplot and split the violins for easier comparison
+    sns.violinplot(x="day", y="total_bill", hue="smoker",
+                   split=True, inner="quart",
+                   palette={"Yes": "y", "No": "b"},
+                   data=tips, ax=ax)
+    sns.despine(left=True)
+
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 class PlotClusteringInputDistribution(AjaxPlotMpl):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self._start_date = date(2020, 2, 1)
         self.device = self.parameters.get('device')
-        self.normalize = self.parameters.get('normalize')
+        self.transformation = self.parameters.get('transformation')
+        self.normalize = self.transformation == "power transform"
+        self.column = self.parameters.get('column', None)
 
     # ------------------------------------------------------------------------------------------------------------------
 
     def _fetch(self):
-        mouse_data = clustering.get_input_data(self.device, self._start_date, normalized=self.normalize)
+        print(f"Normalize: {self.normalize}")
+        mouse_data = clustering.get_input_data_sample(self.device, self._start_date, normalized=self.normalize)
         if mouse_data.empty:
             return None
 
@@ -1037,7 +1103,183 @@ class PlotClusteringInputDistribution(AjaxPlotMpl):
     # ------------------------------------------------------------------------------------------------------------------
 
     def _plot(self, mouse_data):
+        if self.column:
+            logging.info(f"Plot distribution for column = {self.column}")
+
+            return clustering.plot_distribution(mouse_data, self.column)
         return clustering.plot_distributions(mouse_data)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotClusteringScatterPlot(AjaxPlotMpl):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = date(2020, 2, 1)
+        self.device = self.parameters.get('device')
+        self.sample_size = int(self.parameters.get('sample_size', 5000))
+        self.x_axis = self.parameters.get('x_axis')
+        self.y_axis = self.parameters.get('y_axis')
+
+        self.add_field(AjaxField(name='significant_dimensions'))
+        self.add_field(AjaxField(name='data_points'))
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        data = clustering.input_data_clustering(self.device, self._start_date, return_pca=True)
+        if data.empty:
+            return None
+
+        significant_dimensions = len(data.columns) - 1
+        self.field['significant_dimensions'].set_value(significant_dimensions)
+
+        length = len(data)
+
+        self.field['data_points'].set_value(length)
+
+        if self.sample_size == "ALL" or length <= self.sample_size:
+            clustering_data = data
+        else:
+            from sklearn.model_selection import train_test_split
+            _, clustering_data = train_test_split(data, test_size=min(self.sample_size, length), random_state=31415)
+
+        return clustering_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, clustering_data):
+        return clustering.cluster_scatter(clustering_data, self.x_axis, self.y_axis)
+        # return clustering.cluster_scatter_matrix(clustering_data)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotClusteringFrequency(AjaxPlotBokeh):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = date(2020, 2, 1)
+        self._end_date = date.today() - timedelta(days=1)
+        self.device = self.parameters.get('device')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        cluster_data = clustering.input_data_clustering(self.device, self._start_date)
+        if cluster_data.empty:
+            return None
+
+        cluster_data['date'] = cluster_data.index.date
+        clusters = sorted(cluster_data.cluster.unique())
+
+        def cluster_name(cluster):
+            return f"c_{cluster}"
+
+        for c in clusters:
+            cluster_data.loc[:, cluster_name(c)] = (cluster_data.cluster == c).astype(int)
+
+        daily_histogram = cluster_data.drop(columns=['cluster']).groupby('date').sum()
+        daily_histogram.loc[:, 'total'] = daily_histogram.sum(axis=1)
+
+        for c in clusters:
+            daily_histogram[cluster_name(c)] /= daily_histogram['total']
+
+        daily_histogram = daily_histogram.drop(columns='total')
+        return daily_histogram.dropna()
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, daily_histogram):
+        fig = clustering.plot_daily_histogram(daily_histogram)
+        return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotClusteringTimeline(AjaxPlotBokeh):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = date(2020, 2, 1)
+        self._end_date = date.today() - timedelta(days=1)
+        self.device = self.parameters.get('device')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        cluster_data = clustering.input_data_clustering(self.device, self._start_date)
+        if cluster_data.empty:
+            return None
+
+        def total_minutes(t) -> int:
+            return t.hour * 60 + t.minute
+
+        cluster_data['date'] = cluster_data.index.date
+        cluster_data['time'] = cluster_data.index.time
+        cluster_data.loc[:, 'minutes'] = cluster_data.time.apply(total_minutes)
+
+        def color_to_hex(c):
+            r, g, b = c
+            r = int(r * 255)
+            g = int(g * 255)
+            b = int(b * 255)
+            return f"#{r:02x}{g:02x}{b:02x}"
+
+        num_clusters = len(cluster_data.cluster.unique())
+        palette = [color_to_hex(c) for c in clustering.cluster_palette(num_clusters)]
+
+        cluster_data.loc[:, 'color'] = cluster_data.cluster.apply(lambda c: palette[c])
+
+        return cluster_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, daily_timeline):
+        fig = clustering.plot_daily_timeline(daily_timeline)
+        return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotPowerTimeline(AjaxPlotBokeh):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = date(2020, 2, 1)
+        self._end_date = date.today() - timedelta(days=1)
+        self.device = self.parameters.get('device')
+        self.threshold = 0.9
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        print(f"Fetch data for {self.device}")
+        from analytics.instruction import get_power
+        power_data = get_power(self.device, self._start_date, resample_rule="1Min")
+        if power_data.empty:
+            return None
+
+        def total_minutes(t) -> int:
+            return t.hour * 60 + t.minute
+
+        connection_data = connection_data_per_day(self.device, self._start_date, self._end_date)
+        included_dates = connection_data[connection_data.excluded == 0].index
+
+        power_data = power_data[power_data.power >= self.threshold]
+        power_data['date'] = power_data.index.date
+
+        power_data = power_data[power_data.date.isin(included_dates)]
+
+        power_data['time'] = power_data.index.time
+        power_data.loc[:, 'minutes'] = power_data.time.apply(total_minutes)
+
+        return power_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, power_timeline):
+        from analytics.instruction import plot_power_timeline
+        print(f"Plot for {self.device} plot_power_timeline")
+        fig = plot_power_timeline(power_timeline)
+        return fig
 
 # ----------------------------------------------------------------------------------------------------------------------
 

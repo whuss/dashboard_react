@@ -2,12 +2,17 @@
 import signal
 import traceback
 import os
+import json
+from functools import reduce
+import itertools
 from typing import Optional
 from datetime import datetime, date, timedelta, time
 import click
 from plumbum import colors
 from plumbum.cli.terminal import get_terminal_size
 import pandas as pd
+import requests
+from joblib import Parallel, delayed
 
 from app import db
 from db import Dashboard, CachePackage, CacheDeviceDatePackage, Errors, PresenceDetectorStatistics
@@ -115,43 +120,135 @@ def clear_cache():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@click.command(name="update", help="update query cache")
-@click.argument("start_date", type=str)
-def update_cache(start_date: date):
-    query_keys = ["scene_durations", "error_restart_histogram", "connection_data",
-                  "on_off_cycle_count", "error_heatmap_device"]
+plot_list = {"PlotCrashes": {},
+             "PlotSceneDurations": {},
+             "PlotOnOffCycles": {},
+             "PlotErrors": {},
+             "PlotConnection": {},
+             "PlotKeyboard": {},
+             "PlotKeypress": {},
+             "PlotMouse": {},
+             # "PlotClusteringInputDistribution":
+             #     {"columns":
+             #         ["key_press_count",
+             #          "delete_press_count",
+             #          "enter_press_count",
+             #          "shift_press_count",
+             #          "space_press_count",
+             #          "press_pause_count",
+             #          "pause_length",
+             #          "keystroke_time",
+             #          "press_to_press_time",
+             #          "click_count",
+             #          "double_click_count",
+             #          "rotation_distance",
+             #          "rotation_speed",
+             #          "event_count",
+             #          "gesture_distance",
+             #          "gesture_speed",
+             #          "gesture_deviation",
+             #          "gesture_duration_seconds"],
+             #      "transformation":
+             #          ["none",
+             #           "power transform"]
+             #      },
+             "PlotClusteringScatterPlot":
+                 {"x_axis":
+                      ["d_0", "d_1", "d_2", "d_3", "d_4", "d_5"],
+                  "y_axis":
+                      ["d_0", "d_1", "d_2", "d_3", "d_4", "d_5"]
+                  },
+             "PlotClusteringFrequency": {},
+             "PlotClusteringTimeline": {},
+             "PlotPowerTimeline": {}
+             }
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def get_devices():
+    base_url = "http://127.0.0.1:5000/backend"
+
+    r = requests.get(base_url + "/devices")
+    return r.json()
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+@dataclass
+class CacheQueries:
+    number_of_queries: int
+    progress: int
+    plot_name: str
+    plot_parameters: dict
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def cache_functions():
     devices = get_devices()
 
-    start_date = parse_date(start_date)
-    end_date: date = date.today()
+    parameter_list = [[len(l) for l in parameters.values()] for parameters in plot_list.values()]
+    parameter_list = [reduce(lambda x, y: x*y, pl, 1) for pl in parameter_list]
 
-    number_of_queries = len(query_keys) * len(devices)
+    number_of_queries = len(devices) * sum(parameter_list)
     progress = 1
 
-    print(f"Cache queries for dates: {start_date} - {end_date}.")
-    print(f"Number of queries: {number_of_queries}")
-    queries = list()
-    for device in devices:
-        for key in query_keys:
-            queries.append(Query(None, device, key))
+    for plot in plot_list.keys():
+        parameter_dict = plot_list[plot]
+        parameter_names = list(parameter_dict.keys())
+        if parameter_dict == {}:
+            for device in devices:
+                plot_parameters = {'device': device}
+                yield CacheQueries(number_of_queries, progress, plot, plot_parameters)
+                progress += 1
+        else:
+            cartesian_product = list(itertools.product(*parameter_dict.values()))
+            for parameter_values in cartesian_product:
+                for device in devices:
+                    plot_parameters = {k: v for k, v in zip(parameter_names, parameter_values)}
+                    plot_parameters['device'] = device
+                    yield CacheQueries(number_of_queries, progress, plot, plot_parameters)
+                    progress += 1
 
-    hline()
+# ----------------------------------------------------------------------------------------------------------------------
 
-    for query in query_keys:
-        clear_device_query(query)
 
-    for query in queries:
-        print(colors.bold | f"[{progress:>4}/{len(queries)}]", end=" ")
-        print(f"Fetch {query.device:<13} {query.name}...", end=" ", flush=True)
-        try:
-            update_scene_data(query.name, query.device, start_date, end_date)
-            print(colors.green | "done")
-        except:
-            print(colors.red | "failed")
-            hline()
-            print(traceback.format_exc())
-            hline()
-        progress += 1
+def backend_request(query: CacheQueries):
+    base_url = "http://127.0.0.1:5000/backend"
+
+    plot_parameters = query.plot_parameters
+    plot_name = query.plot_name
+    progress = query.progress
+    number_of_queries = query.number_of_queries
+
+    #print(colors.bold | f"[{progress:>4}/{number_of_queries}]", end=" ")
+    print(f"[{progress:>4}/{number_of_queries}]", end = " ")
+    print(f"Fetch {plot_parameters['device']:<13} {plot_name} {plot_parameters} ...", end=" ", flush=True)
+    try:
+        r = requests.post(base_url + "/plot/" + plot_name, json=plot_parameters)
+        result = r.json()
+        if 'error' in result:
+            print(result['error'])
+            #print(colors.red | "failed")
+            print("failed")
+        else:
+            #print(colors.green | "done")
+            print("done")
+    except:
+        #print(colors.red | "failed")
+        print("failed")
+        hline()
+        print(traceback.format_exc())
+        hline()
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@click.command(name="update", help="update query cache")
+def update_cache():
+    #Parallel(n_jobs=4)(delayed(backend_request)(query) for query in cache_functions())
+    for query in cache_functions():
+        backend_request(query)
 
 # ----------------------------------------------------------------------------------------------------------------------
 

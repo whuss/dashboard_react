@@ -840,7 +840,8 @@ class Errors(object):
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def crash_histogram(device: str, since: datetime):
+    @db_cached
+    def crash_histogram(since: datetime):
         from sqlalchemy import Date
         lp = LoggerPackage
         query = db.session \
@@ -855,11 +856,7 @@ class Errors(object):
         data = pd.DataFrame(query.all())
         data = data.set_index(['device'])
 
-        if device not in data.index:
-            return pd.DataFrame(columns=['date', 'crash_count'])
-
-        data = data.loc[device]
-        return data[data.date >= since.date()].reset_index(drop=True)
+        return data[data.date >= since.date()]
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -882,7 +879,11 @@ class Errors(object):
     @staticmethod
     @db_cached
     def crash_restart_histogram(device: str, since: datetime):
-        crash_histogram = Errors.crash_histogram(device, since)
+        crash_histogram = Errors.crash_histogram(since)
+        if device not in crash_histogram.index:
+            crash_histogram = pd.DataFrame(columns=['date', 'crash_count'])
+        else:
+            crash_histogram = crash_histogram.loc[device].reset_index(drop=True)
         restart_histogram = Errors.restart_histogram(device, since)
 
         if crash_histogram.empty and restart_histogram.empty:
@@ -974,7 +975,7 @@ class Errors(object):
 
     @staticmethod
     @db_cached
-    def error_heatmap_device(device: str, since: datetime) -> pd.DataFrame:
+    def error_heatmap_device(since: datetime) -> pd.DataFrame:
         from sqlalchemy import Date
         lp = LoggerPackage
         query = db.session \
@@ -984,7 +985,6 @@ class Errors(object):
                    lp.timestamp.cast(Date).label('date'),
                    db.func.count(lp.timestamp).label('error_count')) \
             .filter(lp.log_level.in_(["ERROR", "CRITICAL"])) \
-            .filter(lp.device != "PTL_DEFAULT") \
             .group_by('date') \
             .group_by(lp.filename) \
             .group_by(lp.line_number) \
@@ -994,10 +994,6 @@ class Errors(object):
         data['end_of_day'] = data.date.apply(lambda x: x + timedelta(days=1))
         data = data.set_index(['device'])
 
-        if device not in data.index:
-            return pd.DataFrame(columns=['filename', 'line_number', 'date', 'error_count', 'end_of_day'])
-
-        data = data.loc[device]
         return data[data.date >= since.date()]
 
     # ------------------------------------------------------------------------------------------------------------------
