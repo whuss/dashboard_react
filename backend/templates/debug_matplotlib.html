@@ -1,0 +1,20 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+{% endblock %}
+
+{% block page_title %}
+<h1>Matplotlib test</h1>
+{% endblock %}
+
+{% block body %}
+<div id="content">
+<img src="data:image/svg+xml;charset=US-ASCII;base64,{{plot_url}}">
+</div>
+
+{% endblock %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+{% include 'includes/_ajax_plot.html' %}
+{% endblock script %}

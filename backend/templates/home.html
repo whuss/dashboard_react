@@ -1,0 +1,36 @@
+{% extends 'layout.html' %}
+
+{% block page_title %}
+<h1>Dashboard</h1>
+{% endblock %}
+
+{% block body %}
+<div id="content">
+<table id="data-table" class="table">
+    <thead class="thead-dark">
+    <tr>
+        <th>Device ID</th>
+        <th>Device Mode</th>
+        <th>Last Connection</th>
+        <th colspan="2">Health Status</th>
+    </tr>
+    </thead>
+    <tbody>
+        {% for ptl in ajax_plot_list %}
+        <tr>
+            <th scope="row"> {{ptl.parameters.device}}</th>
+            <td>{{ ptl.field.study_mode|safe}}</td>
+            <td>{{ ptl.field.offline_duration|safe}}</td>
+            <td>{{ ptl.field.health_status|safe}}</td>
+            <td>{{ ptl.field.sick_reason|safe}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock body %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+{% include 'includes/_ajax_plot.html' %}
+{% endblock script %}

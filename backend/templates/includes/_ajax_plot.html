@@ -1,0 +1,81 @@
+<script>
+function drawPlot(data)
+{
+    console.log('drawPlot: ', data);
+    for (const field of data.fields)
+    {
+        $(`div[data-ajaxid="${data.id}"][data-fieldname="${field.fieldname}"]`).html(field.html);
+    }
+}
+
+function finishedDownload(data)
+{
+    console.log('finishedDownload: ', data.filename);
+    var bytes = atob(data.bytes);
+    var byte_array = new Uint8Array(bytes.length)
+    for (var i = 0; i < bytes.length; i++)
+    {
+        byte_array[i] = bytes.charCodeAt(i)
+    }
+    var blob=new Blob([byte_array.buffer], {type: data.mimetype});
+    const link=document.createElement('a');
+    document.body.appendChild(link)
+    link.href=window.URL.createObjectURL(blob);
+    link.download=data.filename;
+    link.mimetype=data.mimetype;
+    link.click();
+    setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+        console.log("Remove link");
+    }, 100);
+}
+
+function requestPlots(plot_url, plot_data)
+{
+    for (const plot of plot_data)
+    {
+        console.log('requestPlots: ', plot);
+        $.ajax(plot_url,
+        {
+            data: JSON.stringify(plot),
+            contentType: 'application/json',
+            type: 'POST'
+        }
+        ).done(drawPlot);
+    }
+}
+
+function requestDownload(download_url, plot_data)
+{
+    for (const plot of plot_data)
+    {
+        console.log('requestDownload: ', plot);
+        $(`[data-ajaxid="${plot.id}"][data-fieldname="download"]`).click(function()
+        {
+            console.log("button clicked: ", plot.id);
+            $(this).find('button').attr('class', 'btn btn-success');
+
+            //function clear_button()
+            //{
+            //    $(this).find('button').attr('class', 'btn btn-secondary');
+            //}
+            //setTimeout(clear_button(), 500);
+
+            $.ajax(download_url,
+            {
+                data: JSON.stringify(plot),
+                contentType: 'application/json',
+                type: 'POST'
+            }).done(finishedDownload);
+        });
+    }
+}
+
+$(document).ready( function() {
+    var plot_data = {{ajax_plot_list|ajax_plots_to_json|safe}};
+    console.log(plot_data);
+    requestPlots({{ url_for('_get_plot')|tojson }}, plot_data);
+    requestDownload({{ url_for('_download_data')|tojson }}, plot_data);
+});
+</script>

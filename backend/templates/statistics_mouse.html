@@ -1,0 +1,47 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+{{ js_resources|indent(4)|safe }}
+{{ css_resources|indent(4)|safe }}
+{% for script in scripts %}
+{{ script|safe }}
+{% endfor %}
+{% endblock %}
+
+{% block page_title %}
+<h1>Mouse gesture statistics</h1>
+{% endblock %}
+
+{% block page_navigation %}
+{% include 'includes/_date_range.html' %}
+{% endblock %}
+
+{% block body %}
+<div id="content">
+  <table id="data-table" class="table">
+    <thead class="thead-dark">
+    <tr>
+        <th>Device ID</th>
+        <th>Statistics</th>
+        <th>Distance</th>
+        <th>Speed</th>
+        <th>Gesture deviation</th>
+    </tr>
+    </thead>
+  {% for device, statistics_data in data.items() %}
+  <tr>
+    <th scope="row"> {{device}}</th>
+    <td><div class="pandas_describe" align="center">{{statistics_data.stats|safe}}</div></td>
+    <td>{{statistics_data.plot_distance|safe}}</td>
+    <td>{{statistics_data.plot_speed|safe}}</td>
+    <td>{{statistics_data.plot_deviation|safe}}</td>
+  </tr>
+  {% endfor %}
+  </table>
+</div>
+{% endblock %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+<script src={{ url_for('static', filename = 'js/date_range.js') }}></script>
+{% endblock script %}

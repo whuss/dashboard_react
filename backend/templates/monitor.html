@@ -1,0 +1,107 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+{% endblock %}
+
+{% block page_title %}
+<h1>Live Monitor</h1>
+{% endblock %}
+
+{% block page_navigation %}
+<div class="dropdown show">
+  <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownDevice" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Select device
+  </a>
+  <div id="dropdownMenu" class="dropdown-menu" aria-labelledby="dropdownDevice">
+    {% for device in devices %}
+    <a class="dropdown-item" href="#{{device}}">{{device}}</a>
+    {% endfor %}
+  </div>
+  <button id="logsButton" type="button" class="btn btn-secondary" data-toggle="button" aria-pressed="false" autocomplete="off">Show logs</button>
+  <button id="monitorButton" type="button" class="btn btn-secondary" data-toggle="button" aria-pressed="false" autocomplete="off">Monitor device</button>
+
+  <span>Logging level:</span>
+  <select id="log-level">
+    <option value="TRACE">TRACE</option>
+    <option value="DEBUG">DEBUG</option>
+    <option value="INFO">INFO</option>
+    <option value="WARNING">WARNING</option>
+    <option value="ERROR">ERROR</option>
+    <option value="CRITICAL">CRITICAL</option>
+  </select>
+</div>
+{% endblock %}
+
+{% block body %}
+<div id="content">
+  <h3 id="terminal-title"></h3>
+  <div id="terminal">
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+<script type="text/javascript">
+    $(function() {
+        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
+        var timer_callback = null;
+
+        $('#dropdownMenu a').click(function() {
+            var device = $(this).attr('href').substr(1);
+            $('#dropdownDevice').html(device);
+            $('#logsButton').attr('class', 'btn btn-success');
+            $('#monitorButton').attr('class', 'btn btn-success');
+        });
+
+        $('#logsButton').click(function() {
+            clearInterval(timer_callback);
+            var device = $('#dropdownDevice').html();
+            var log_level = $('#log-level').val();
+            $(this).attr('class', 'btn btn-danger');
+            $('#monitorButton').attr('class', 'btn btn-success');
+            $('#terminal-title').text("Load logs for device " + device + " ..." );
+            $('#terminal').html("loading...")
+            console.log("monitor device " + device);
+            $.ajax({
+                method: 'POST',
+                url: {{ url_for('_monitor_device')|tojson }},
+                data: {
+                   device: device,
+                   limit: false,
+                   log_level: log_level
+                }
+            }).done(addData);
+        });
+
+        $('#monitorButton').click(function() {
+            clearInterval(timer_callback);
+            var device = $('#dropdownDevice').html();
+            $(this).attr('class', 'btn btn-danger');
+            $('#logsButton').attr('class', 'btn btn-success');
+            $('#terminal-title').text("Start monitoring device " + device + " ..." );
+            $('#terminal').html("loading...")
+            console.log("monitor device " + device);
+            timer_callback = setInterval(function monitor_device()
+                                    {
+                                      $.ajax({
+                                            method: 'POST',
+                                            url: {{ url_for('_monitor_device')|tojson }},
+                                            data: {
+                                              device: device,
+                                              limit: true,
+                                              log_level: $('#log-level').val()
+                                            }
+                                        }).done(addData);
+                                    }, 5000);
+            });
+
+        function addData(data) {
+            $('#terminal').html(data.result);
+        }
+
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
+{% endblock script %}

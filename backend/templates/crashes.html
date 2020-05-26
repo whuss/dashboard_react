@@ -1,0 +1,43 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+{{ js_resources|indent(4)|safe }}
+{{ css_resources|indent(4)|safe }}
+{% for plot_script in scripts %}
+{{ plot_script|indent(4)|safe }}
+{% endfor %}
+{% endblock %}
+
+{% block page_title %}
+<h1>System stability</h1>
+{% endblock %}
+
+{% block body %}
+<div id="content">
+  <table id="data-table" class="table">
+    <thead class="thead-dark">
+    <tr>
+        <th>Device ID</th>
+        <th>Total crashes</th>
+        <th>Total restarts</th>
+        <th>Stability</th>
+        <th>Download</th>
+    </tr>
+    </thead>
+  {% for plot in ajax_plot_list %}
+  <tr>
+    <th scope="row"> <a href="{{url_for('crash_for_device', device=plot.parameters.device)}}">{{plot.parameters.device}}</a></th>
+    <td>{{plot.field.total_number_of_crashes|safe}}</td>
+    <td>{{plot.field.total_number_of_restarts|safe}}</td>
+    <td><div align="center">{{plot.field.plot|safe}}</div></td>
+    <td>{{plot.field.download|safe}}</td>
+  </tr>
+  {% endfor %}
+  </table>
+</div>
+{% endblock %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+{% include 'includes/_ajax_plot.html' %}
+{% endblock script %}

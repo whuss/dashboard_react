@@ -1,0 +1,71 @@
+
+
+    <div class="container">
+        <a href="https://www.repro-light.eu">
+            <div class="navbar-brand" id="logo">
+                <img src={{ url_for('static', filename = 'img/ReproLight_trans.png') }} height="50px"/>
+            </div>
+        </a>
+
+        <div id="navbar" class="navbar">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('index') }}">Dashboard</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Analytics</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{{ url_for('analytics_scenes') }}">Scenes</a>
+                        <a class="dropdown-item" href="{{ url_for('analytics_sensor') }}">Sensor</a>
+                        <a class="dropdown-item" href="{{ url_for('analytics_connection') }}">Connection</a>
+                        <a class="dropdown-item" href="{{ url_for('analytics_keyboard') }}">Keyboard</a>
+                        <a class="dropdown-item" href="{{ url_for('analytics_keypress') }}">Keypress</a>
+                        <a class="dropdown-item" href="{{ url_for('analytics_mouse') }}">Mouse</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Clustering</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{{ url_for('clustering_input_distribution') }}">Input Distribution</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Time series</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{{ url_for('sensors_presence') }}">Presence</a>
+                        <a class="dropdown-item" href="{{ url_for('sensors_temperature') }}">Temperature</a>
+                        <a class="dropdown-item" href="{{ url_for('sensors_humidity') }}">Humidity</a>
+                        <a class="dropdown-item" href="{{ url_for('sensors_pressure') }}">Pressure</a>
+                        <a class="dropdown-item" href="{{ url_for('sensors_gas') }}">Gas</a>
+                        <a class="dropdown-item" href="{{ url_for('sensors_brightness') }}">Brightness</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Statistics</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{{ url_for('statistics_mode') }}">Mode</a>
+                        <a class="dropdown-item" href="{{ url_for('statistics_mouse') }}">Mouse gestures</a>
+                        <a class="dropdown-item" href="{{ url_for('statistics_switch_cycles') }}">On/Off Cycles</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">System</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{{ url_for('crashes') }}">Stability</a>
+                        <a class="dropdown-item" href="{{ url_for('system_restarts') }}">Restarts</a>
+                        <a class="dropdown-item" href="{{ url_for('error_statistics') }}">Errors</a>
+                        <a class="dropdown-item" href="{{ url_for('error_heatmap') }}">Error locations</a>
+                        <a class="dropdown-item" href="{{ url_for('monitor') }}">Logs</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Database</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{{ url_for('statistics_database_delay') }}">Delay</a>
+                        <a class="dropdown-item" href="{{ url_for('database_size') }}">Size</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <a href="https://www.bartenbach.com/"><div id="company-logo"><img src={{ url_for('static', filename = 'img/dot_bartenbach.png') }} height="50px"/></div></a>
+    </div>

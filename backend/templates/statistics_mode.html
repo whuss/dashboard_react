@@ -1,0 +1,88 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+<script src={{ url_for('static', filename = 'Chart.min.js') }}></script>
+{% endblock %}
+
+{% block page_title %}
+<h1>Relative frequence of Operation modes</h1>
+{% endblock %}
+
+{% block body %}
+<div id="content">
+  <table id="data-table" class="table">
+    <thead class="thead-dark">
+    <tr>
+        <th>Device ID</th>
+        <th>Auto</th>
+        <th>Off</th>
+        <th>Manual</th>
+        <th>Light Shower</th>
+        <th>Chart</th>
+    </tr>
+    </thead>
+  {% for ptl in data %}
+  <tr>
+    <th scope="row"> {{ptl.device}}</th>
+    <td>{{_str(ptl.auto)}}</td>
+    <td>{{_str(ptl.off)}}</td>
+    <td>{{_str(ptl.manual)}}</td>
+    <td>{{_str(ptl.light_shower)}}</td>
+    <td class="chart"><div align="center"><canvas id="chart_{{ptl.device}}" width="50" height="50"></canvas></div></td>
+  </tr>
+  {% endfor %}
+  </table>
+</div>
+
+<script>
+chart_colors = {
+	red: 'rgb(255, 99, 132)',
+	orange: 'rgb(255, 159, 64)',
+	yellow: 'rgb(255, 205, 86)',
+	green: 'rgb(75, 192, 192)',
+	blue: 'rgb(54, 162, 235)',
+	purple: 'rgb(153, 102, 255)',
+	grey: 'rgb(201, 203, 207)'}
+
+// Global parameters:
+// do not resize the chart canvas when its container does (keep at 600x400px)
+Chart.defaults.global.responsive = false;
+
+{% for ptl in data %}
+// define the chart data
+var chartData = {
+datasets : [{
+    label: '{{ptl.device}}',
+    data : {{_str(ptl.data())}},
+    backgroundColor: [
+						chart_colors.green,
+						chart_colors.gray,
+						chart_colors.red,
+						chart_colors.yellow,
+    ],
+}],
+labels: ["Auto", "Off", "Manual", "Light Shower"]
+}
+
+var opts = {
+  legend: {
+    display : false
+  }
+}
+
+// get chart canvas
+var ctx = document.getElementById("chart_{{ptl.device}}").getContext("2d");
+
+// create the chart using the chart canvas
+var myChart = new Chart(ctx, {
+type: 'pie',
+data: chartData,
+options: opts,
+});
+{% endfor %}
+</script>
+{% endblock body %}
+
+{% block script %}
+{% include 'includes/_data_table.html' %}
+{% endblock script %}
