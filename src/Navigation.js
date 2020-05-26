@@ -25,7 +25,7 @@ function Navigation() {
     return (
         <Navbar className="site-header" bg="dark" expand="lg" variant="dark">
             <Navbar.Brand>
-                <img src="/ReproLight_trans.png" height="50px" alt="REPRO-LIGHT" />
+                <a href="https://www.repro-light.eu"><img src="/ReproLight_trans.png" height="50px" alt="REPRO-LIGHT" /></a>
             </Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
@@ -65,7 +65,7 @@ function Navigation() {
                 </Nav>
             </Navbar.Collapse>
             <Navbar.Brand>
-                <img src="/dot_bartenbach.png" height="50px" alt="Bartenbach" />
+                <a href="https://www.bartenbach.com"><img src="/dot_bartenbach.png" height="50px" alt="Bartenbach" /></a>
             </Navbar.Brand>
         </Navbar>
     );
