@@ -10,12 +10,14 @@ Flask==1.1.1
 Flask-Caching==1.8.0
 Flask-Babel==1.0.0
 Flask-BasicAuth==0.2.0
-Flask-SQLAlchemy==2.4.1
+Flask-SQLAlchemy==2.4.3
 Flask-Table==0.5.0
 flask-cors==3.0.8
+requests==2.22.0
 humanfriendly
 Jinja2==2.11.1
 numpy==1.18.1
 pandas==0.25.3
 seaborn==0.10.1
 XlsxWriter
+dataclasses
