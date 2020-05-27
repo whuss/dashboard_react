@@ -1,26 +1,27 @@
 #! /usr/bin/env python
+import itertools
+import os
 import signal
 import traceback
-import os
-import json
+from datetime import date
 from functools import reduce
-import itertools
 from typing import Optional
-from datetime import datetime, date, timedelta, time
+
 import click
+import requests
+from dataclasses import dataclass
 from plumbum import colors
 from plumbum.cli.terminal import get_terminal_size
-import pandas as pd
-import requests
-from joblib import Parallel, delayed
 
+from analytics.connection import connection_data_per_day
+from analytics.scenes import get_scene_durations
+from analytics.sensors import get_sensor_data_for_day
 from app import db
 from db import Dashboard, CachePackage, CacheDeviceDatePackage, Errors, PresenceDetectorStatistics
-from analytics.sensors import get_sensor_data_for_day
-from analytics.scenes import get_scene_durations
-from analytics.connection import connection_data_per_day
 from utils.date import parse_date, date_range, start_of_day
-from dataclasses import dataclass
+
+
+# from joblib import Parallel, delayed
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -99,8 +100,10 @@ def main():
 
 
 @click.command(name="init", help="Create database tables")
-def initialize_cache():
-    click.confirm("Create database tables for query cache?", abort=True)
+@click.option('-y', '--yes', is_flag=True)
+def initialize_cache(yes):
+    if not yes:
+        click.confirm("Create database tables for query cache?", abort=True)
     db.create_all(bind='cache')
 
 # ----------------------------------------------------------------------------------------------------------------------
