@@ -16,7 +16,9 @@ const TableRow = (props) => {
             </td>
             <td>{data.offline_duration}</td>
             <td>
-                <LoadingAnimation isLoading={isLoading} isError={isError}><i className={"fa fa-heartbeat " + data.health_status}></i></LoadingAnimation>
+                <LoadingAnimation isLoading={isLoading} isError={isError}>
+                    <i className={"fa fa-heartbeat " + data.health_status}></i>
+                </LoadingAnimation>
             </td>
             <td>{data.sick_reason}</td>
         </>
@@ -31,6 +33,13 @@ const TableHeader = () => (
     </>
 );
 
-const Dashboard = (props) => <DeviceTable format_header={TableHeader} format_row={TableRow} devices={props.devices}/>;
+const Dashboard = (props) => (
+    <>
+        <p>
+            <b>Warning:</b> Obtaining the current status of the PTLs can take a long time.
+        </p>
+        <DeviceTable format_header={TableHeader} format_row={TableRow} devices={props.devices} />
+    </>
+);
 
 export default Dashboard;
