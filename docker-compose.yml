@@ -2,43 +2,60 @@ version: '3'
 
 services:
 
-  mysqlcache:
-    build: mysql_cache
-    environment:
-      MYSQL_DATABASE: bbf_inf_cache
-      MYSQL_ROOT_PASSWORD: iGe9kH9j
-      TZ: "Europe/Vienna"
-    #ports:
-    #  - "3308:3306"
-    expose:
-        - 3306
-    volumes:
-      - "/docker_volume/mysql:/var/lib/mysql:rw"
+    mysqlcache:
+        build: mysql_cache
+        environment:
+            MYSQL_DATABASE: bbf_inf_cache
+            MYSQL_ROOT_PASSWORD: iGe9kH9j
+            TZ: "Europe/Vienna"
+        #ports:
+        #   - "3308:3306"
+        expose:
+            - 3306
+        volumes:
+            - "/docker_volume/mysql:/var/lib/mysql:rw"
+  
+    backend:
+        build: ./backend
+        #ports:
+        #  - "5001:5000"
+        expose:
+            - 5000
+        depends_on:
+            - mysqlcache
+        command: sh -c "/wait && python scripts/cache_queries.py init --yes && ./gunicorn_starter.sh"
+        environment:
+            WAIT_HOSTS: "mysqlcache:3306"
+            WAIT_HOSTS_TIMEOUT: 300
+            WAIT_SLEEP_INTERVAL: 2
+            WAIT_HOST_CONNECT_TIMEOUT: 2
+            TZ: "Europe/Vienna"
+            CACHE_DIR: "/cache"
+        volumes:
+            - "/docker_volume/backend_cache:/cache:rw"
+  
+    frontend:
+        build: .
+        ports: 
+            - 8004:80
+        expose:
+            - 8004
+        depends_on:
+            - backend
+  
+    cache:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile.cache
+        depends_on:
+            - backend
 
-  backend:
-    build: ./backend
-    #ports:
-    #  - "5001:5000"
-    expose:
-        - 5000
-    depends_on:
-      - mysqlcache
-    command: sh -c "/wait && python scripts/cache_queries.py init --yes && ./gunicorn_starter.sh"
-    environment:
-        WAIT_HOSTS: "mysqlcache:3306"
-        WAIT_HOSTS_TIMEOUT: 300
-        WAIT_SLEEP_INTERVAL: 2
-        WAIT_HOST_CONNECT_TIMEOUT: 2
-        TZ: "Europe/Vienna"
-
-  frontend:
-    build: .
-    ports: 
-        - 8004:80
-    expose:
-        - 8004
-    depends_on:
-        - backend
+#    jobber:
+#        build:
+#            context: ./backend
+#            dockerfile: Dockerfile.jobber
+#        depends_on:
+#            - backend
 
 #  admin:
 #    image: adminer
