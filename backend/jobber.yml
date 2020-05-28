@@ -1,0 +1,7 @@
+version: 1.4
+
+jobs:
+    Echo:
+        cmd: python scripts/cache_queries.py update
+        onError: Continue
+        time: "*/5 * * * * *"

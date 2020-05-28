@@ -1,15 +1,6 @@
 # Dockerfile
 FROM golang:1.14.3-buster
 
-# install pip
-#RUN apt-get update && apt-get install -y python3-pip mariadb-client libmariadb-dev make rsync grep ca-certificates openssl wget
-
-#WORKDIR /app
-
-# install requirements
-#COPY requirements.txt ./
-#RUN pip3 install --trusted-host=pypi.org --trusted-host=pypi.python.org --trusted-host=files.pythonhosted.org --no-cache-dir -r requirements.txt
-
 COPY . ./
 
 ENV CACHE_DB mysqlcache
@@ -35,26 +26,25 @@ COPY --from=0 /jobber-dist/usr/local/libexec/jobberrunner /jobber/jobberrunner
 COPY --from=0 /jobber-dist/usr/local/bin/jobber /jobber/jobber
 ENV PATH /jobber:${PATH}
 
-#ENV USERID 100
-#RUN addgroup jobberuser && \
-#    adduser -S -u "${USERID}" -G jobberuser jobberuser && \
-#    mkdir -p "/var/jobber/${USERID}" && \
-#    chown -R jobberuser:jobberuser "/var/jobber/${USERID}"
-
-#COPY jobber.yml /home/jobberuser/.jobber
-#RUN chown jobberuser:jobberuser /home/jobberuser/.jobber && \
-#    chmod 0600 /home/jobberuser/.jobber
-#USER jobberuser
-
 RUN touch /etc/jobber.conf
 
 RUN mkdir -p "/var/jobber/0"
 COPY jobber.yml /var/lib/jobber/.jobber
 RUN chmod g-w /var/lib/jobber/.jobber
+
+# Install python dependencies
+
+WORKDIR /app
+
+COPY requirements.txt ./
+RUN pip3 install --trusted-host=pypi.org --trusted-host=pypi.python.org --trusted-host=files.pythonhosted.org --no-cache-dir -r requirements.txt
+
+COPY . ./
+
+ENV CACHE_DB mysqlcache
+ENV PYTHONPATH .
+
 ENTRYPOINT ["jobberrunner"]
-#CMD ["/home/jobberuser/.jobber"]
 CMD ["/var/lib/jobber/.jobber"]
 
-#COPY --chown=jobberuser:jobberuser jobber.yml /home/jobberuser/.jobber
-#RUN chmod g-w /home/jobberuser/.jobber
 
