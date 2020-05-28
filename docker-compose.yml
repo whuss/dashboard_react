@@ -7,6 +7,7 @@ services:
     environment:
       MYSQL_DATABASE: bbf_inf_cache
       MYSQL_ROOT_PASSWORD: iGe9kH9j
+      TZ: "Europe/Vienna"
     #ports:
     #  - "3308:3306"
     expose:
@@ -24,10 +25,11 @@ services:
       - mysqlcache
     command: sh -c "/wait && python scripts/cache_queries.py init --yes && ./gunicorn_starter.sh"
     environment:
-        - WAIT_HOSTS=mysqlcache:3306
-        - WAIT_HOSTS_TIMEOUT=300
-        - WAIT_SLEEP_INTERVAL=2
-        - WAIT_HOST_CONNECT_TIMEOUT=2
+        WAIT_HOSTS: "mysqlcache:3306"
+        WAIT_HOSTS_TIMEOUT: 300
+        WAIT_SLEEP_INTERVAL: 2
+        WAIT_HOST_CONNECT_TIMEOUT: 2
+        TZ: "Europe/Vienna"
 
   frontend:
     build: .
