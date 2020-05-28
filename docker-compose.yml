@@ -7,17 +7,19 @@ services:
     environment:
       MYSQL_DATABASE: bbf_inf_cache
       MYSQL_ROOT_PASSWORD: iGe9kH9j
-    ports:
-      - "3308:3306"
+    #ports:
+    #  - "3308:3306"
     expose:
-        - 3308
+        - 3306
     volumes:
       - "/docker_volume/mysql:/var/lib/mysql:rw"
 
   backend:
     build: ./backend
-    ports:
-      - "5001:5000"
+    #ports:
+    #  - "5001:5000"
+    expose:
+        - 5000
     depends_on:
       - mysqlcache
     command: sh -c "/wait && python scripts/cache_queries.py init --yes && ./gunicorn_starter.sh"
