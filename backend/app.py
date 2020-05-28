@@ -59,7 +59,7 @@ def create_app():
     # app.config['BASIC_AUTH_PASSWORD'] = "infinity"
     # app.config['BASIC_AUTH_FORCE'] = True
     app.config['CACHE_TYPE'] = "filesystem"
-    app.config['CACHE_DIR'] = str(Path.home() / ".cache/dashboard")
+    app.config['CACHE_DIR'] = Config.cache_dir
     app.config['CACHE_DEFAULT_TIMEOUT'] = 60 * 60 * 23 + 60 * 30  # 23 hours and 30 minutes
     app.config['CACHE_REDIS_HOST'] = "127.0.0.1"
     app.config['CACHE_REDIS_PORT'] = 6379

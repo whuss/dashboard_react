@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Configuration
@@ -21,5 +22,6 @@ class Config:
     debug: bool = True
     update_cache: str = "expired"  # always, never, expired
     secret: bytes = b'mdmekrifglvkcmalqwoeircbnfkhgpolc'
+    cache_dir: str = os.getenv('CACHE_DIR', str(Path.home() / ".cache/dashboard"))
 
 # ----------------------------------------------------------------------------------------------------------------------
