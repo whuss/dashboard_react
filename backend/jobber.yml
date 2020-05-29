@@ -4,7 +4,7 @@ jobs:
     update:
         cmd: "python /app/scripts/cache_queries.py update"
         onError: Continue
-        time: "* 15 * * * *"
+        time: "* * 1 * * *"
         notifyOnSuccess:
             - type: stdout
               data:
@@ -31,7 +31,7 @@ jobs:
     fill:
         cmd: "python /app/scripts/cache_queries.py fill 2020-05-28"
         onError: Continue
-        time: "* 15 * * * *"
+        time: "* * 1 * * *"
         notifyOnSuccess:
             - type: stdout
               data:
