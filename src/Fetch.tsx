@@ -1,9 +1,16 @@
 import { useState, useEffect, useReducer } from "react";
 import axios from "axios";
 
-const baseURL: string = "/"
+const baseURL: string = "/";
 
-const dataFetchReducer = (state: any, action: any) => {
+interface FetchState {
+    isLoading: boolean;
+    isError: boolean;
+    data: any;
+    errorMsg: object;
+}
+
+const dataFetchReducer = (state: FetchState, action: {type: string, payload?: any}) => {
     switch (action.type) {
         case "FETCH_INIT":
             return {
@@ -17,7 +24,7 @@ const dataFetchReducer = (state: any, action: any) => {
                 isLoading: false,
                 isError: false,
                 data: action.payload,
-             };
+            };
         case "FETCH_FAILURE":
             return {
                 ...state,
@@ -30,13 +37,13 @@ const dataFetchReducer = (state: any, action: any) => {
     }
 };
 
-const useDataApi = (initialUrl: string, initialData: any[] | object) => {
+const useDataApi = (initialUrl: string, initialData: any[] | object): [FetchState, (url: string) => void] => {
     const [url, setUrl] = useState(initialUrl);
     const [state, dispatch] = useReducer(dataFetchReducer, {
         isLoading: false,
         isError: false,
         data: initialData,
-        errorMsg: {}
+        errorMsg: {},
     });
 
     useEffect(() => {
@@ -47,7 +54,7 @@ const useDataApi = (initialUrl: string, initialData: any[] | object) => {
 
             try {
                 console.log("Fetch url: ", url);
-                const result = await axios(url, {baseURL: baseURL});
+                const result = await axios(url, { baseURL: baseURL });
 
                 if (!didCancel) {
                     console.log("Fetch result: ", result.data);
@@ -71,20 +78,23 @@ const useDataApi = (initialUrl: string, initialData: any[] | object) => {
     return [state, setUrl];
 };
 
-const usePostApi = (initialUrl: string, _parameters: object) => {
+const usePostApi = (
+    initialUrl: string,
+    _parameters: object
+): [FetchState, (newUrl: string, newParameters: object) => void] => {
     const [url, setUrl] = useState(initialUrl);
     const [parameters, setParameters] = useState(_parameters);
     const [state, dispatch] = useReducer(dataFetchReducer, {
         isLoading: false,
         isError: false,
         data: {},
-        errorMsg: {}
+        errorMsg: {},
     });
 
     function doFetch(newUrl: string, newParameters: object) {
         setUrl(newUrl);
         setParameters(newParameters);
-    };
+    }
 
     useEffect(() => {
         let didCancel = false;
@@ -96,9 +106,9 @@ const usePostApi = (initialUrl: string, _parameters: object) => {
                 console.log("Fetch url: ", url);
                 const result = await axios({
                     url: url,
-                    method: 'POST',
+                    method: "POST",
                     data: parameters,
-                    responseType: 'json',
+                    responseType: "json",
                     baseURL: baseURL,
                 });
 
@@ -124,26 +134,24 @@ const usePostApi = (initialUrl: string, _parameters: object) => {
     return [state, doFetch];
 };
 
-
 function downloadUrl(plotname: string) {
     return `/backend/download_excel/${plotname}`;
 }
 
-function downloadFile(plotname: string, data: object, filename: string)
-{
+function downloadFile(plotname: string, data: object, filename: string) {
     axios({
         url: downloadUrl(plotname),
-        method: 'POST',
+        method: "POST",
         data: data,
-        responseType: 'blob',
+        responseType: "blob",
     }).then((response) => {
         const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = url;
-        link.setAttribute('download', filename);
+        link.setAttribute("download", filename);
         document.body.appendChild(link);
         link.click();
-    })
+    });
 }
 
 export default useDataApi;
