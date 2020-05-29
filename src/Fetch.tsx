@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useReducer } from "react";
+import { useState, useEffect, useReducer } from "react";
 import axios from "axios";
 
-//const baseURL = "http://10.0.101.27:8003"
-const baseURL = "/"
+const baseURL: string = "/"
 
-const dataFetchReducer = (state, action) => {
+const dataFetchReducer = (state: any, action: any) => {
     switch (action.type) {
         case "FETCH_INIT":
             return {
@@ -31,7 +30,7 @@ const dataFetchReducer = (state, action) => {
     }
 };
 
-const useDataApi = (initialUrl, initialData) => {
+const useDataApi = (initialUrl: string, initialData: any) => {
     const [url, setUrl] = useState(initialUrl);
     const [state, dispatch] = useReducer(dataFetchReducer, {
         isLoading: false,
@@ -72,7 +71,7 @@ const useDataApi = (initialUrl, initialData) => {
     return [state, setUrl];
 };
 
-const usePostApi = (initialUrl, _parameters) => {
+const usePostApi = (initialUrl: string, _parameters: any) => {
     const [url, setUrl] = useState(initialUrl);
     const [parameters, setParameters] = useState(_parameters);
     const [state, dispatch] = useReducer(dataFetchReducer, {
@@ -82,7 +81,7 @@ const usePostApi = (initialUrl, _parameters) => {
         errorMsg: {}
     });
 
-    function doFetch(newUrl, newParameters) {
+    function doFetch(newUrl: string, newParameters: any) {
         setUrl(newUrl);
         setParameters(newParameters);
     };
@@ -126,11 +125,11 @@ const usePostApi = (initialUrl, _parameters) => {
 };
 
 
-function downloadUrl(plotname) {
+function downloadUrl(plotname: string) {
     return `/backend/download_excel/${plotname}`;
 }
 
-function downloadFile(plotname, data, filename)
+function downloadFile(plotname: string, data: any, filename: string)
 {
     axios({
         url: downloadUrl(plotname),
