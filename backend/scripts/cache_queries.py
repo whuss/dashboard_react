@@ -23,6 +23,8 @@ from utils.date import parse_date, date_range, start_of_day
 
 # from joblib import Parallel, delayed
 
+BACKEND_URL = os.getenv("BACKEND", "http://127.0.0.1:5000")
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -170,7 +172,7 @@ plot_list = {"PlotCrashes": {},
 
 
 def get_devices():
-    base_url = "http://127.0.0.1:5000/backend"
+    base_url = f"{BACKEND_URL}/backend"
 
     r = requests.get(base_url + "/devices")
     return r.json()
@@ -217,7 +219,7 @@ def cache_functions():
 
 
 def backend_request(query: CacheQueries):
-    base_url = "http://127.0.0.1:5000/backend"
+    base_url = f"{BACKEND_URL}/backend"
 
     plot_parameters = query.plot_parameters
     plot_name = query.plot_name

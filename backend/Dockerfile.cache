@@ -41,10 +41,16 @@ RUN pip3 install --trusted-host=pypi.org --trusted-host=pypi.python.org --truste
 
 COPY . ./
 
+ENV BACKEND "http://backend:5000"
 ENV CACHE_DB mysqlcache
 ENV PYTHONPATH .
 
-ENTRYPOINT ["jobberrunner"]
-CMD ["/var/lib/jobber/.jobber"]
+RUN mkdir -p /jobber_logs/errors
+RUN mkdir -p /jobber_logs/success
+
+#ENTRYPOINT ["jobberrunner"]
+#CMD ["/var/lib/jobber/.jobber"]
+#CMD "jobber test Echo"
+ENTRYPOINT ["./jobber_starter.sh"]
 
 

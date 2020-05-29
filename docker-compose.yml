@@ -49,6 +49,9 @@ services:
             dockerfile: Dockerfile.cache
         depends_on:
             - backend
+            - mysqlcache
+        volumes:
+            - "/docker_volume/jobber_logs:/jobber_logs"
 
 #    jobber:
 #        build:

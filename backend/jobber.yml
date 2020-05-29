@@ -1,7 +1,56 @@
 version: 1.4
 
 jobs:
-    Echo:
-        cmd: python scripts/cache_queries.py update
+    update:
+        cmd: "python /app/scripts/cache_queries.py update"
         onError: Continue
-        time: "*/5 * * * * *"
+        time: "* 15 * * * *"
+        notifyOnSuccess:
+            - type: stdout
+              data:
+                - stdout
+                - stderr
+            - type: filesystem
+              path: /jobber_logs/success
+              data:
+                - stdout
+                - stderr
+              maxAgeDays: 10
+        notifyOnError:
+            - type: stdout
+              data:
+                - stdout
+                - stderr
+            - type: filesystem
+              path: /jobber_logs/errors
+              data:
+                - stdout
+                - stderr
+              maxAgeDays: 10
+
+    fill:
+        cmd: "python /app/scripts/cache_queries.py fill 2020-05-28"
+        onError: Continue
+        time: "* 15 * * * *"
+        notifyOnSuccess:
+            - type: stdout
+              data:
+                - stdout
+                - stderr
+            - type: filesystem
+              path: /jobber_logs/success
+              data:
+                - stdout
+                - stderr
+              maxAgeDays: 10
+        notifyOnError:
+            - type: stdout
+              data:
+                - stdout
+                - stderr
+            - type: filesystem
+              path: /jobber_logs/errors
+              data:
+                - stdout
+                - stderr
+              maxAgeDays: 10
