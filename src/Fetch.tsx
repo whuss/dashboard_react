@@ -30,7 +30,7 @@ const dataFetchReducer = (state: any, action: any) => {
     }
 };
 
-const useDataApi = (initialUrl: string, initialData: any) => {
+const useDataApi = (initialUrl: string, initialData: any[] | object) => {
     const [url, setUrl] = useState(initialUrl);
     const [state, dispatch] = useReducer(dataFetchReducer, {
         isLoading: false,
@@ -71,7 +71,7 @@ const useDataApi = (initialUrl: string, initialData: any) => {
     return [state, setUrl];
 };
 
-const usePostApi = (initialUrl: string, _parameters: any) => {
+const usePostApi = (initialUrl: string, _parameters: object) => {
     const [url, setUrl] = useState(initialUrl);
     const [parameters, setParameters] = useState(_parameters);
     const [state, dispatch] = useReducer(dataFetchReducer, {
@@ -81,7 +81,7 @@ const usePostApi = (initialUrl: string, _parameters: any) => {
         errorMsg: {}
     });
 
-    function doFetch(newUrl: string, newParameters: any) {
+    function doFetch(newUrl: string, newParameters: object) {
         setUrl(newUrl);
         setParameters(newParameters);
     };
@@ -129,7 +129,7 @@ function downloadUrl(plotname: string) {
     return `/backend/download_excel/${plotname}`;
 }
 
-function downloadFile(plotname: string, data: any, filename: string)
+function downloadFile(plotname: string, data: object, filename: string)
 {
     axios({
         url: downloadUrl(plotname),
