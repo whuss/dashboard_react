@@ -561,7 +561,7 @@ class Dashboard(object):
             offline_duration = None
 
         def _health_status(_offline_duration):
-            if _offline_duration and _offline_duration < timedelta(minutes=2):
+            if _offline_duration and _offline_duration < timedelta(minutes=3):
                 return "HEALTHY"
             else:
                 return "SICK"
