@@ -312,7 +312,7 @@ def plot_crashes(data, device="PTL_DEFAULT", **kwargs):
     vbar_shift = vbar_width.total_seconds() * 1000
 
     fig = figure(x_axis_type="datetime", y_axis_type=y_axis_type,
-                 x_range=x_range, y_range=y_range, plot_height=200, plot_width=800,
+                 x_range=x_range, y_range=y_range, plot_height=200, plot_width=1000,
                  title="Crashes/Restarts per day", tools="tap")
     fig.output_backend = "svg"
     fig.toolbar.logo = None
@@ -385,7 +385,7 @@ def plot_errors(data, device="PTL_DEFAULT", **kwargs):
 
     fig = figure(x_axis_type="datetime", x_range=x_range,
                  y_axis_type=y_axis_type, y_range=y_range,
-                 plot_height=200, plot_width=800,
+                 plot_height=200, plot_width=1000,
                  title="Errors per day", tools="tap")
     fig.output_backend = "svg"
     fig.toolbar.logo = None
@@ -425,7 +425,7 @@ def plot_error_heatmap(data, device="PTL_DEFAULT", **kwargs):
         dates = list(data.date)
         x_range = (min(dates) - timedelta(days=1), max(dates) + timedelta(days=1))
 
-    fig = figure(plot_height=200, plot_width=800,
+    fig = figure(plot_height=200, plot_width=1000,
                  title=f"Error heatmap",
                  x_axis_type='datetime',
                  x_range=x_range,
