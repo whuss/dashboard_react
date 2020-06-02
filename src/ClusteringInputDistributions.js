@@ -9,15 +9,11 @@ import Container from "react-bootstrap/Container";
 
 import DeviceTable from "./DeviceTable";
 
-import Plot from "./BokehPlot";
-
 import { usePlot } from "./BokehPlot";
 import { LoadingAnimation } from "./Toolbar";
 import { downloadFile } from "./Fetch";
 
 import { useDropdown, useFilter } from "./Toolbar";
-
-import Spinner from "react-bootstrap/Spinner";
 
 const columns = [
     "key_press_count",
@@ -48,17 +44,6 @@ const bigSpinnerStyle = {
     textAlign: "center",
 };
 
-const BigSpinner = (props) => (
-    <div style={bigSpinnerStyle}>
-        <Spinner animation="border" size="sm" variant="secondary" />
-    </div>
-);
-
-function clusteringUrl(device, transformation) {
-    const baseUrl = "/backend/plot_cluster_input";
-    return `${baseUrl}/${device}/${transformation}`;
-}
-
 function useClusteringToolbar(_transformation) {
     if (!_transformation) {
         _transformation = "none";
@@ -75,8 +60,6 @@ function useClusteringToolbar(_transformation) {
 
     const sensorToolbar = <>{setColumnFilter}{setTransformation}</>;
 
-    const plotUrl = (device) => clusteringUrl(device, transformation);
-
     function plot_parameters(device) {
         return {
             device: device,
@@ -84,7 +67,7 @@ function useClusteringToolbar(_transformation) {
         };
     }
 
-    return [sensorToolbar, plotUrl, plot_parameters, selectedColumns];
+    return [sensorToolbar, plot_parameters, selectedColumns];
 }
 
 const DistributionPlot = (props) => {
@@ -105,7 +88,7 @@ const DistributionPlot = (props) => {
     );
 };
 
-function rowFactory(plotUrl, plot_parameters, selectedColumns) {
+function rowFactory(plot_parameters, selectedColumns) {
     const TableRow = (props) => {
         const device = props.device_id;
         const plot_name = "PlotClusteringInputDistribution";
@@ -147,8 +130,8 @@ const TableHeader = () => (
 
 const ClusteringInputDistribution = (props) => {
     const { transformation } = useParams();
-    const [tools, plotUrl, plot_parameters, selectedColumns] = useClusteringToolbar(transformation);
-    const TableRow = rowFactory(plotUrl, plot_parameters, selectedColumns);
+    const [tools, plot_parameters, selectedColumns] = useClusteringToolbar(transformation);
+    const TableRow = rowFactory(plot_parameters, selectedColumns);
 
     return (
         <>
