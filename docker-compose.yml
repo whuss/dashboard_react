@@ -3,6 +3,7 @@ version: '3'
 services:
 
     mysqlcache:
+        restart: always
         build: mysql_cache
         environment:
             MYSQL_DATABASE: bbf_inf_cache
@@ -14,8 +15,9 @@ services:
             - 3306
         volumes:
             - "/docker_volume/mysql:/var/lib/mysql:rw"
-  
+
     backend:
+        restart: always
         build: ./backend
         #ports:
         #  - "5001:5000"
@@ -33,17 +35,19 @@ services:
             CACHE_DIR: "/cache"
         volumes:
             - "/docker_volume/backend_cache:/cache:rw"
-  
+
     frontend:
+        restart: always
         build: .
-        ports: 
+        ports:
             - 8003:80
         expose:
             - 8003
         depends_on:
             - backend
-  
+
     cache:
+        restart: always
         build:
             context: ./backend
             dockerfile: Dockerfile.cache
@@ -64,4 +68,4 @@ services:
 #    image: adminer
 #    ports:
 #      - "8080:8080"
-   
+
