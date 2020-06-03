@@ -57,6 +57,6 @@ services:
             - backend
             - mysqlcache
         volumes:
-            - "/docker_volume/jobber_logs:/jobber_logs"
+            - "/docker_volume/jobber_logs:/jobber_logs:rw"
         environment:
             TZ: "Europe/Vienna"
