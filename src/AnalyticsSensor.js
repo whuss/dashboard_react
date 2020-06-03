@@ -10,7 +10,7 @@ import DeviceTable from "./DeviceTable";
 
 import { downloadFile } from "./Fetch";
 
-import useDateRange, { formatDate, parseDate } from "./DatePicker";
+import useDateRange, { formatDate, parseDate, yesterday, dayBeforeYesterday} from "./DatePicker";
 
 import { useDropdown, useTimestamp } from "./Toolbar";
 
@@ -27,11 +27,13 @@ function useSensorToolbar(_sensor, _sample_rate, _start_date, _end_date) {
         _sample_rate = "AUTO";
     }
     if (!_start_date) {
-        _start_date = "2020-04-04"; // TODO: set current date
+        _start_date = formatDate(dayBeforeYesterday());
     }
     if (!_end_date) {
-        _end_date = "2020-04-05"; // TODO: set current date
+        _end_date = formatDate(yesterday());
     }
+
+    console.log(`start_date = ${_start_date}, end_date = ${_end_date}`);
 
     const [sensor, setSensor] = useDropdown(_sensor, {
         values: ["ALL", "temperature", "humidity", "pressure", "brightness", "gas", "presence"],
