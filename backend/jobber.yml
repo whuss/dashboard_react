@@ -4,7 +4,7 @@ jobs:
     update:
         cmd: "python /app/scripts/cache_queries.py update"
         onError: Continue
-        time: "* */10 * * * *"
+        time: "* 35 * * * *"
         notifyOnSuccess:
             - type: stdout
               data:
