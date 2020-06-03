@@ -317,7 +317,7 @@ def backend_plot_sensor(device: Optional[str] = None,
                                         'sample_rate': sample_rate})
 
     data = ajax.fetch_data()
-    if data.empty:
+    if data is None:
         return dict()
 
     plot = ajax._plot(data)
