@@ -422,7 +422,7 @@ def db_cached(fn):
                     # no update needed
                     logging.debug(f"db_cached: no update needed: return cached data.")
                     return cached_data.data
-                logging.debug(f"db_cached: cached value expired.")
+                logging.debug(f"db_cached: cached value expired. now={current_day}, cache={cache_day}")
             else:
                 logging.debug(f"db_cached: no cached value found.")
 
