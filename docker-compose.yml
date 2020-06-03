@@ -19,8 +19,8 @@ services:
     backend:
         restart: always
         build: ./backend
-        #ports:
-        #  - "5001:5000"
+        ports:
+          - "5000:5000"
         expose:
             - 5000
         depends_on:
@@ -45,6 +45,8 @@ services:
             - 8003
         depends_on:
             - backend
+        environment:
+            TZ: "Europe/Vienna"
 
     cache:
         restart: always
@@ -56,16 +58,5 @@ services:
             - mysqlcache
         volumes:
             - "/docker_volume/jobber_logs:/jobber_logs"
-
-#    jobber:
-#        build:
-#            context: ./backend
-#            dockerfile: Dockerfile.jobber
-#        depends_on:
-#            - backend
-
-#  admin:
-#    image: adminer
-#    ports:
-#      - "8080:8080"
-
+        environment:
+            TZ: "Europe/Vienna"
