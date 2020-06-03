@@ -45,8 +45,8 @@ ENV BACKEND "http://backend:5000"
 ENV CACHE_DB mysqlcache
 ENV PYTHONPATH .
 
-RUN mkdir -p /jobber_logs/errors
-RUN mkdir -p /jobber_logs/success
+#RUN mkdir -p /jobber_logs/errors
+#RUN mkdir -p /jobber_logs/success
 
 #ENTRYPOINT ["jobberrunner"]
 #CMD ["/var/lib/jobber/.jobber"]
