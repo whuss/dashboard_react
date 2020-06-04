@@ -371,6 +371,14 @@ def backend_logs(device, duration=5, timestamp=None, log_level="TRACE"):
                                 ))
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+
+@app.route('/backend/settings/<device>')
+def backend_settings(device: str):
+    from analytics.settings import get_settings
+    return jsonify(get_settings(device))
+
+# ----------------------------------------------------------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------------------------------------------------------
 

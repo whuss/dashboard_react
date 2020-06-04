@@ -6,6 +6,12 @@ import dateutil.parser
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+def format_datetime(timestamp: datetime):
+    return datetime.strftime(timestamp, '%Y-%m-%d %H:%M:%S')
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 def parse_date_(timestamp: Union[datetime, str]) -> datetime:
     if isinstance(timestamp, datetime):
         return timestamp

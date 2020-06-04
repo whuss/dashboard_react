@@ -11,6 +11,7 @@ import AnalyticsMouse from "./AnalyticsMouse";
 import AnalyticsPowerTimeline from "./AnalyticsPowerTimeline";
 import AnalyticsScenes from "./AnalyticsScenes";
 import AnalyticsSensor from "./AnalyticsSensor";
+import AnalyticsSettings from "./AnalyticsSettings";
 import "./App.css";
 import Plot from "./BokehPlot";
 import ClusteringFrequency from "./ClusteringFrequency";
@@ -59,6 +60,9 @@ const MainView = (props) => {
                     title="Analytics Sensor"
                 >
                     <AnalyticsSensor devices={devices} />
+                </NavRoute>
+                <NavRoute path="/analytics/settings" title="Analytics Settings">
+                    <AnalyticsSettings devices={devices} />
                 </NavRoute>
                 <NavRoute path="/analytics/scenes" title="Analytics Scenes">
                     <AnalyticsScenes devices={devices} />

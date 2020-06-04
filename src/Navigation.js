@@ -34,6 +34,7 @@ function Navigation() {
                     <NavDropdown title="Analytics" id="basic-nav-dropdown">
                         <NavDropLink to="/analytics/sensor" name="Sensor" />
                         <NavDropdown.Divider />
+                        <NavDropLink to="/analytics/settings" name="Analytics Settings" />
                         <NavDropLink to="/analytics/power" name="Power timeline" />
                         <NavDropLink to="/analytics/scenes" name="Scenes" />
                         <NavDropLink to="/analytics/connection" name="Connection" />
