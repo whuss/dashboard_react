@@ -23,6 +23,14 @@ import "react-day-picker/lib/style.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCalendar } from "@fortawesome/free-solid-svg-icons";
 
+function yesterday() {
+    return moment().startOf('day').subtract(1, 'days');
+}
+
+function dayBeforeYesterday() {
+    return moment().startOf('day').subtract(2, 'days');
+}
+
 function formatDate(date) {
     return moment(date).format("YYYY-MM-DD");
 }
@@ -129,4 +137,4 @@ function useDateRange(_from, _to) {
 };
 
 export default useDateRange;
-export { formatDate, parseDate };
+export { formatDate, parseDate, yesterday, dayBeforeYesterday };
