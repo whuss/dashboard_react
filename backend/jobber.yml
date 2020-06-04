@@ -29,7 +29,7 @@ jobs:
               maxAgeDays: 10
 
     fill:
-        cmd: "python /app/scripts/cache_queries.py fill 2020-05-28"
+        cmd: "python /app/scripts/cache_queries.py fill 2020-05-01"
         onError: Continue
         time: "0 0 2 * * *"
         notifyOnSuccess:
