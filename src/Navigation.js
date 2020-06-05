@@ -42,6 +42,8 @@ function Navigation() {
                         <NavDropLink to="/analytics/keyboard" name="Keyboard" />
                         <NavDropLink to="/analytics/keypress" name="Keypress" />
                         <NavDropLink to="/analytics/mouse" name="Mouse" />
+                        <NavDropdown.Divider />
+                        <NavDropLink to="/analytics/gaze" name="Gaze" />
                     </NavDropdown>
                     <NavDropdown title="Statistics" id="basic-nav-dropdown">
                         <NavDropLink to="/statistics/switch_cycles" name="On/Off Cycles" />

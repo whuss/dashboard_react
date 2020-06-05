@@ -5,6 +5,7 @@ import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 
 import AnalyticsConnection from "./AnalyticsConnection";
+import AnalyticsGaze from "./AnalyticsGaze";
 import AnalyticsKeyboard from "./AnalyticsKeyboard";
 import AnalyticsKeypress from "./AnalyticsKeypress";
 import AnalyticsMouse from "./AnalyticsMouse";
@@ -81,6 +82,9 @@ const MainView = (props) => {
                 </NavRoute>
                 <NavRoute path="/analytics/mouse" title="Analytics Mouse">
                     <AnalyticsMouse devices={devices} />
+                </NavRoute>
+                <NavRoute path="/analytics/gaze" title="Analytics Gaze">
+                    <AnalyticsGaze devices={devices} />
                 </NavRoute>
                 <NavRoute path="/clustering/input_distributions" title="Clustering Input Distributions">
                     <ClusteringInputDistributions devices={devices} />

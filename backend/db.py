@@ -355,6 +355,20 @@ class LoudnessPackage(db.Model):
     unit = db.Column('unit_sn', key='unit')
     create_dtm = db.Column('create_dtm')
 
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class GazeZonePackage(db.Model):
+    __tablename__ = 'GazeZonePackage'
+    __table_args__ = dict(extend_existing=True)
+
+    id = db.Column('pk_gaze_zone_package', db.Integer, key='id', primary_key=True)
+    device = db.Column('ix_device_sn', key='device')
+    timestamp = db.Column('ix_data_dtm', key='timestamp')
+    zone = db.Column('zone_ind', key='zone')
+    create_dtm = db.Column('create_dtm')
+
 # ----------------------------------------------------------------------------------------------------------------------
 # DB Cache
 # ----------------------------------------------------------------------------------------------------------------------

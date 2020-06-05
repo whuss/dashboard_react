@@ -1337,3 +1337,31 @@ class TableRestarts(Ajax):
                 raise
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotGazeData(AjaxPlotBokeh):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self._start_date = date(2020, 2, 1)
+        self._end_date = date.today() - timedelta(days=1)
+        self.device = self.parameters.get('device')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        print(f"Fetch data for {self.device}")
+        from analytics.gaze import get_daily_gaze_data
+        gaze_data = get_daily_gaze_data(self.device, self._start_date, self._end_date)
+        if gaze_data.empty:
+            return None
+
+        return gaze_data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, gaze_data):
+        from analytics.gaze import plot_daily_relative_gaze_detection_durations
+        fig = plot_daily_relative_gaze_detection_durations(gaze_data)
+        return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
