@@ -17,6 +17,7 @@ const queries = [
     { name: "Analytics|Connection", selected: false, view: "PlotConnection" },
     { name: "Analytics|Keyboard", selected: false, view: "PlotKeyboard" },
     { name: "Analytics|Mouse", selected: false, view: "PlotMouse" },
+    { name: "Analytics|Gaze", selected: false, view: "PlotGazeData" },
     { name: "Statistics|On/Off Cycles", selected: false, view: "PlotOnOffCycles" },
     { name: "Clustering|Daily Frequency", selected: false, view: "PlotClusteringFrequency" },
     { name: "Clustering|Daily Timeline", selected: false, view: "PlotClusteringTimeline" },

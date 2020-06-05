@@ -33,6 +33,9 @@ def get_gaze_data(device: str, start_date: date, end_date: Optional[date] = None
 
     data = pd.DataFrame(query.all())
 
+    if data.empty:
+        return data
+
     data.loc[:, 'end'] = data.timestamp.shift(-1)
     data = data.rename(columns=dict(timestamp='begin'))
     data.iloc[-1, 2] = end_of_day(end_date)
@@ -45,6 +48,9 @@ def get_gaze_data(device: str, start_date: date, end_date: Optional[date] = None
 
 def get_daily_gaze_data(device: str, start_date: date, end_date: Optional[date] = None) -> pd.DataFrame:
     data = get_gaze_data(device, start_date, end_date)
+
+    if data.empty:
+        return data
 
     data['date'] = data.begin.dt.date
     daily_data = pd.DataFrame(data.groupby(['date', 'zone']).duration.sum())
