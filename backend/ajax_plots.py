@@ -667,7 +667,7 @@ class PlotErrors(AjaxPlotBokeh):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
         self.add_field(AjaxField(name='total_number_of_errors'))
-        self._start_date = start_of_day(date(2020, 2, 1))
+        self._start_date = date(2020, 2, 1)
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -679,29 +679,22 @@ class PlotErrors(AjaxPlotBokeh):
 
     def _fetch(self):
         device = self.parameters.get('device')
-        error_heatmap = Errors().error_heatmap_device(self._start_date)
-
-        if device not in error_heatmap.index:
-            error_heatmap = pd.DataFrame(columns=['filename', 'line_number', 'date', 'error_count', 'end_of_day'])
-        else:
-            error_heatmap = error_heatmap.loc[device]
+        from analytics.logs import error_heatmap_device
+        error_heatmap = error_heatmap_device(device, self._start_date)
 
         if error_heatmap.empty:
             return error_heatmap
 
-        error_heatmap['location'] = error_heatmap.apply(
-            lambda row: f"{os.path.basename(row['filename'])}:{row['line_number']}", axis=1)
         # all errors locations in the dataset
         locations = pd.DataFrame(error_heatmap.location.unique(), columns=['location'])
         # assign a unique color for each error location
         locations['colors'] = plots.color_palette(len(locations.location))
 
-        #
-        eh = error_heatmap.loc[device].reset_index()
-        errors_by_day = eh.drop(columns=['filename', 'line_number']) \
+        errors_by_day = error_heatmap \
             .groupby(['date']) \
             .sum() \
             .rename(columns=dict(error_count='errors_by_day'))
+        eh = error_heatmap
         eh = eh.join(errors_by_day, on=['date'])
         eh['error_count_normalized'] = eh.error_count / eh.errors_by_day
         eh = eh.merge(locations, on=['location'])
@@ -711,7 +704,6 @@ class PlotErrors(AjaxPlotBokeh):
         error_heatmap = eh
 
         if error_heatmap is None or error_heatmap.empty:
-            self.field['total_number_of_errors'].set_value(0)
             return None
 
         return error_heatmap
