@@ -1,8 +1,6 @@
 import logging
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from logging.config import dictConfig
-from pathlib import Path
-from typing import Optional
 from typing import Tuple
 
 import coloredlogs
@@ -14,7 +12,6 @@ from flask_cors import CORS, cross_origin
 from flask_table import Col
 
 from ajax_plots import AjaxFactory, PlotDatabaseSize
-from ajax_plots import PlotSensors
 from ajax_plots import TableRestarts
 from config import Config
 from db import Errors, Dashboard
@@ -280,49 +277,6 @@ def backend_download_excel(plot_name: str):
 def backend_system_restarts(device: str):
     table = TableRestarts(plot_parameters={'device': device})
     return dict(table=table.fetch().__html__())
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@app.route('/backend/plot_sensor')
-@app.route('/backend/plot_sensor/<device>')
-@app.route('/backend/plot_sensor/<device>/<sensor>/<sample_rate>/<start_date>/<end_date>')
-def backend_plot_sensor(device: Optional[str] = None,
-                        start_date: Optional[str] = None,
-                        end_date: Optional[str] = None,
-                        sensor: str = "temperature",
-                        sample_rate: str = "AUTO"):
-    logging.warning(f"{start_date} - {end_date}")
-    if not end_date or not start_date:
-        start_date = date.today() - timedelta(days=1)
-        end_date = date.today() - timedelta(days=1)
-    else:
-        from utils.date import parse_date
-        start_date = parse_date(start_date)
-        end_date = parse_date(end_date)
-
-    if not device:
-        device = "PTL_RD_AT_001"
-
-    all_sensors = ["temperature", "humidity", "pressure", "brightness", "gas", "presence"]
-    if sensor == "ALL":
-        active_sensors = all_sensors
-    else:
-        active_sensors = [sensor]
-
-    ajax = PlotSensors(plot_parameters={'start_date': start_date,
-                                        'end_date': end_date,
-                                        'device': device,
-                                        'sensors': active_sensors,
-                                        'sample_rate': sample_rate})
-
-    data = ajax.fetch_data()
-    if data is None:
-        return dict()
-
-    plot = ajax._plot(data)
-    from ajax_plots import reactify_bokeh
-    return reactify_bokeh(plot)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
