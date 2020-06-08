@@ -363,6 +363,7 @@ def reactify_bokeh(plot):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 class AjaxPlotBokeh(Ajax):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
@@ -781,11 +782,17 @@ class PlotDatabaseDelay(AjaxPlotBokeh):
 class PlotSensors(AjaxPlotBokeh):
     def __init__(self, plot_parameters: dict):
         super().__init__(plot_parameters)
-        self.start_date = parse_date(self.parameters.get('start_date'))
-        self.end_date = parse_date(self.parameters.get('end_date'))
-        self.sensors = self.parameters.get('sensors')
-        self.device = self.parameters.get('device')
-        self.sample_rate = self.parameters.get('sample_rate')
+        yesterday = date.today() - timedelta(days=1)
+        self.start_date = parse_date(self.parameters.get('start_date', yesterday))
+        self.end_date = parse_date(self.parameters.get('end_date', yesterday))
+        sensors_ = self.parameters.get('sensors', 'temperature')
+        self.device = self.parameters.get('device', 'PTL_RD_AT_001')
+        self.sample_rate = self.parameters.get('sample_rate', 'AUTO')
+
+        if sensors_ == "ALL":
+            self.sensors = ["temperature", "humidity", "pressure", "brightness", "gas", "presence"]
+        else:
+            self.sensors = [sensors_]
 
         self.units = dict(temperature="°C",
                 humidity="%RH",

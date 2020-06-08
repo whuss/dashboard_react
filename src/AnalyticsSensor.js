@@ -3,21 +3,16 @@ import React from "react";
 import { useParams } from "react-router-dom";
 
 import Button from "react-bootstrap/Button";
-import Col from "react-bootstrap/Col";
 
-import Plot from "./BokehPlot";
 import DeviceTable from "./DeviceTable";
 
+import { usePlot } from "./BokehPlot";
+import { LoadingAnimation } from "./Toolbar";
 import { downloadFile } from "./Fetch";
 
-import useDateRange, { formatDate, parseDate, yesterday, dayBeforeYesterday} from "./DatePicker";
+import useDateRange, { formatDate, parseDate, yesterday, dayBeforeYesterday } from "./DatePicker";
 
-import { useDropdown, useTimestamp } from "./Toolbar";
-
-function sensorUrl(device, sensor, sample_rate, start_date, end_date) {
-    const baseUrl = "/backend/plot_sensor";
-    return `${baseUrl}/${device}/${sensor}/${sample_rate}/${start_date}/${end_date}`;
-}
+import { useDropdown } from "./Toolbar";
 
 function useSensorToolbar(_sensor, _sample_rate, _start_date, _end_date) {
     if (!_sensor) {
@@ -48,6 +43,7 @@ function useSensorToolbar(_sensor, _sample_rate, _start_date, _end_date) {
         parseDate(_start_date).toDate(),
         parseDate(_end_date).toDate()
     );
+
     const params = `/analytics/sensor/${sensor}/${sample_rate}/${formatDate(start_date)}/${formatDate(end_date)}`;
 
     const sensorToolbar = (
@@ -57,8 +53,6 @@ function useSensorToolbar(_sensor, _sample_rate, _start_date, _end_date) {
             {setSampleRate}
         </>
     );
-
-    const plotUrl = (device) => sensorUrl(device, sensor, sample_rate, formatDate(start_date), formatDate(end_date));
 
     function plot_parameters(device) {
         return {
@@ -70,28 +64,33 @@ function useSensorToolbar(_sensor, _sample_rate, _start_date, _end_date) {
         };
     }
 
-    const tableRow = (props) => (
-        <>
-            <td>
-                <Plot src={plotUrl(props.device_id)} />
-            </td>
-            <td>
-                <Button
-                    onClick={() =>
-                        downloadFile(
-                            "PlotSensors",
-                            plot_parameters(props.device_id),
-                            `analytics_sensor_${props.device_id}.xlsx`
-                        )
-                    }
-                >
-                    Download
-                </Button>
-            </td>
-        </>
-    );
+    return [sensorToolbar, plot_parameters, params];
+}
 
-    return [tableRow, sensorToolbar, params];
+function rowFactory(plot_parameters) {
+    const TableRow = (props) => {
+        const device = props.device_id;
+        const plot_name = "PlotSensors";
+        const file_name = `analytics_sensor_${device}.xlsx`;
+        const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters(device), false);
+
+        return (
+            <>
+                <td>
+                    <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>
+                        {plot}
+                    </LoadingAnimation>
+                </td>
+                <td>
+                    <Button onClick={() => downloadFile(plot_name, plot_parameters(device), file_name)}>
+                        Download
+                    </Button>
+                </td>
+            </>
+        );
+    };
+
+    return TableRow;
 }
 
 const TableHeader = () => (
@@ -103,7 +102,8 @@ const TableHeader = () => (
 
 const AnalyticsSensor = (props) => {
     const { sensor, sample_rate, start_date, end_date } = useParams();
-    const [tableRow, tools, params] = useSensorToolbar(sensor, sample_rate, start_date, end_date);
+    const [tools, plot_parameters, params] = useSensorToolbar(sensor, sample_rate, start_date, end_date);
+    const TableRow = rowFactory(plot_parameters);
 
     return (
         <>
@@ -111,9 +111,15 @@ const AnalyticsSensor = (props) => {
                 <b>Note:</b> If Sensor data is not cached, downloading of sensor data can take up to 1 minutes per day
                 and device.
             </p>
-            <DeviceTable format_header={TableHeader} format_row={tableRow} toolbar={tools} params={params}  devices={props.devices}/>
+            <DeviceTable
+                format_header={TableHeader}
+                format_row={TableRow}
+                toolbar={tools}
+                params={params}
+                devices={props.devices}
+            />
         </>
     );
-}
+};
 
 export default AnalyticsSensor;
