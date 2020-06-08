@@ -1361,7 +1361,9 @@ class PlotGazeData(AjaxPlotBokeh):
 
     def _plot(self, gaze_data):
         from analytics.gaze import plot_daily_relative_gaze_detection_durations
-        fig = plot_daily_relative_gaze_detection_durations(gaze_data)
-        return fig
+        from analytics.gaze import plot_daily_gaze_detection_durations
+        fig1 = plot_daily_relative_gaze_detection_durations(gaze_data.copy())
+        fig2 = plot_daily_gaze_detection_durations(gaze_data, x_range=fig1.x_range)
+        return column([fig1, fig2])
 
 # ----------------------------------------------------------------------------------------------------------------------
