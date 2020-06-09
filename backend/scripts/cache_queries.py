@@ -254,6 +254,25 @@ def backend_request(query: CacheQueries):
 
 @click.command(name="update", help="update query cache")
 def update_cache():
+    print("Update error_heatmap_device")
+    try:
+        _ = Errors.error_heatmap_device(start_of_day(date(2020, 2, 1)))
+        print("done")
+    except:
+        print("failed")
+        hline()
+        print(traceback.format_exc())
+        hline()
+    print("Update crash_histogram")
+    try:
+        _ = Errors.crash_histogram(start_of_day(date(2020, 2, 1)))
+        print("done")
+    except:
+        print("failed")
+        hline()
+        print(traceback.format_exc())
+        hline()
+
     #Parallel(n_jobs=4)(delayed(backend_request)(query) for query in cache_functions())
     for query in cache_functions():
         backend_request(query)
