@@ -16,7 +16,7 @@ from plumbum.cli.terminal import get_terminal_size
 from analytics.connection import connection_data_per_day
 from analytics.scenes import get_scene_durations
 from analytics.sensors import get_sensor_data_for_day
-from analytics.logs import get_daily_errors
+from analytics.logs import get_daily_errors, get_daily_crashes
 from app import db
 from db import Dashboard, CachePackage, CacheDeviceDatePackage, Errors, PresenceDetectorStatistics
 from utils.date import parse_date, date_range, start_of_day
@@ -92,6 +92,7 @@ def update_scene_data(query: str, device: str, start_date: date, end_date: date)
 def cache_sensor_data(device: str, data_date: date):
     _ = get_sensor_data_for_day(device, data_date, rule="1s")
     _ = get_daily_errors(device, data_date)
+    _ = get_daily_crashes(device, data_date)
 
 # ----------------------------------------------------------------------------------------------------------------------
 

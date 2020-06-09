@@ -518,7 +518,8 @@ class PlotCrashes(AjaxPlotBokeh):
 
     def _fetch(self):
         device = self.parameters.get('device')
-        combined_histogram = Errors().crash_restart_histogram(device, self._start_date)
+        from analytics.logs import crash_restart_histogram
+        combined_histogram = crash_restart_histogram(device, self._start_date)
         if combined_histogram is None or combined_histogram.empty:
             return None
 
