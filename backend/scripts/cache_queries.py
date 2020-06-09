@@ -91,8 +91,8 @@ def update_scene_data(query: str, device: str, start_date: date, end_date: date)
 
 def cache_sensor_data(device: str, data_date: date):
     _ = get_sensor_data_for_day(device, data_date, rule="1s")
-    _ = get_daily_errors(device, data_date)
-    _ = get_daily_crashes(device, data_date)
+    # _ = get_daily_errors(device, data_date)
+    # _ = get_daily_crashes(device, data_date)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
