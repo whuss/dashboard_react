@@ -16,6 +16,7 @@ from bokeh.models import Legend, LegendItem
 from bokeh.models.ranges import Range1d
 from bokeh import palettes, layouts
 from analytics.connection import connection_data_per_day
+from analytics.instruction import get_power
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -161,6 +162,9 @@ def get_gaze_data(device: str, start_date: date, end_date: Optional[date] = None
 
 
 def get_daily_gaze_data(device: str, start_date: date, end_date: Optional[date] = None) -> pd.DataFrame:
+    if end_date is None:
+        end_date = date.today()
+
     data = get_gaze_data(device, start_date, end_date)
 
     if data.empty:
@@ -187,6 +191,30 @@ def get_daily_gaze_data(device: str, start_date: date, end_date: Optional[date] 
     combined_data = combined_data[daily_total.total <= timedelta(hours=30)]
 
     return combined_data
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def get_joined_gaze_power(device: str,
+                          start_date: date,
+                          end_date: Optional[date] = None,
+                          resample_rule: str = '1S') -> pd.DataFrame:
+    if end_date is None:
+        end_date = date.today()
+
+    gaze_data = get_gaze_timeseries(device, start_date, end_date)
+    power_data = get_power(device, start_date, end_date)
+
+    data = pd.merge(power_data, gaze_data, left_index=True, right_on="timestamp").set_index('timestamp')
+
+    # change to one hot encoding for gaze zones
+    for zone in data.zone.unique():
+        data[zone] = (data.zone == zone).astype(int)
+    data = data.drop(columns=['zone'])
+
+    # resample data
+    data = data.resample(resample_rule).mean()
+    return data
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -400,6 +428,71 @@ def plot_daily_gaze_detection_durations(data: pd.DataFrame, **kwargs) -> pd.Data
     fig.add_tools(PanTool(dimensions=Dimensions.width))
     fig.add_tools(ResetTool())
     fig.legend.location = "top_left"
+    return fig
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def plot_gaze_timeline(data, **kwargs):
+    import itertools
+    from datetime import timedelta, datetime, date
+    from bokeh.core.enums import Dimensions, StepMode
+    from bokeh.transform import dodge, cumsum
+    from bokeh.plotting import figure
+    from bokeh.models import ColumnDataSource, OpenURL, TapTool
+    from bokeh.models import WheelZoomTool, ResetTool, BoxZoomTool, HoverTool, PanTool, SaveTool
+    from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Circle
+    from bokeh.models.ranges import Range1d
+    from bokeh import palettes, layouts
+    from bokeh.palettes import Magma256
+
+    from datetime import date
+    x_range = kwargs.get('x_range', None)
+    if not x_range:
+        x_range = (date(2020, 2, 1) - timedelta(days=1), date.today() + timedelta(days=1))
+
+    y_range = 0, 60 * 24  # Minutes of a day
+
+    data['color'] = (data.power * 255).astype(int)
+    data['color'] = data.color.apply(lambda c: Magma256[c])
+
+    data_source = ColumnDataSource(data)
+
+    fig = figure(plot_height=500, plot_width=1000,
+                 title=f"Power timeline",
+                 x_axis_type='datetime',
+                 y_axis_type='linear',
+                 x_range=x_range,
+                 y_range=y_range,
+                 tools="")
+
+    fig.rect(y='minutes', x='date', width=timedelta(days=1)/2, height=1, color='orange', source=data_source)
+
+    from datetime import time
+
+    def index_to_time(index: int):
+        hours = index // 60
+        minutes = index % 60
+        if index == 60 * 24:
+            return time(0, 0)
+        return time(hours, minutes)
+
+    minutes = list(range(0, 60 * 24+1, 3 * 60))
+    fig.yaxis.ticker = minutes
+    fig.yaxis.major_label_overrides = {m: str(index_to_time(m)) for m in minutes}
+
+    fig.output_backend = "webgl"
+    fig.toolbar.logo = None
+
+    hover_tool = HoverTool(tooltips=[('Date', '@date{%F}'),
+                                     ('power', '@power')],
+                           formatters={'date': 'datetime'})
+
+    fig.add_tools(hover_tool)
+    fig.add_tools(SaveTool())
+    fig.add_tools(BoxZoomTool())
+    fig.add_tools(PanTool())
+    fig.add_tools(ResetTool())
     return fig
 
 # ----------------------------------------------------------------------------------------------------------------------

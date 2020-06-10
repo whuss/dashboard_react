@@ -19,7 +19,7 @@ const TableRow = (props) => {
     const plot_name = "PlotPowerTimeline";
     const plot_parameters = { device: props.device_id };
     const file_name = `power_timeline_${props.device_id}.xlsx`;
-    const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters);
+    const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters, false);
 
     return (
         <>

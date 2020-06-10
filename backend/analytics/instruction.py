@@ -345,6 +345,8 @@ def plot_power_timeline(data, **kwargs):
 
     y_range = 0, 60 * 24  # Minutes of a day
 
+    #data = data.drop(columns=['NO_DETECT', 'HORIZONTAL', 'VERTICAL', 'UNDEFINED'])
+
     data['color'] = (data.power * 255).astype(int)
     data['color'] = data.color.apply(lambda c: Magma256[c])
 

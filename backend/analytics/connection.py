@@ -131,6 +131,7 @@ def connection_data_per_day(device: str, start_date: date, end_date: date) -> pd
 
     data = connection_data.resample("1d").mean()
 
+    # TODO: Fix bug when end_date <= 11.03.2020
     # DeadMan-Service has only been active since the 12.03.2020,
     # hence for earlier dates we have no connection data.
     # We assume that for earlier dates the device was always connected.
