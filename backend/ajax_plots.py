@@ -1356,8 +1356,8 @@ class PlotGazeData(AjaxPlotBokeh):
 
     def _fetch(self):
         print(f"Fetch data for {self.device}")
-        from analytics.gaze import get_daily_gaze_data
-        gaze_data = get_daily_gaze_data(self.device, self._start_date, self._end_date)
+        from analytics.gaze import get_daily_gaze_lengths
+        gaze_data = get_daily_gaze_lengths(self.device, self._start_date, self._end_date)
         if gaze_data.empty:
             return None
 
@@ -1367,9 +1367,12 @@ class PlotGazeData(AjaxPlotBokeh):
 
     def _plot(self, gaze_data):
         from analytics.gaze import plot_daily_relative_gaze_detection_durations
+        from analytics.gaze import plot_daily_stacked_gaze_detection_durations
         from analytics.gaze import plot_daily_gaze_detection_durations
-        fig1 = plot_daily_relative_gaze_detection_durations(gaze_data.copy())
-        fig2 = plot_daily_gaze_detection_durations(gaze_data, x_range=fig1.x_range)
-        return column([fig1, fig2])
+        fig1 = plot_daily_stacked_gaze_detection_durations(gaze_data.copy())
+        fig2 = plot_daily_relative_gaze_detection_durations(gaze_data.copy(), x_range=fig1.x_range)
+        fig3 = plot_daily_gaze_detection_durations(gaze_data.copy(), x_range=fig1.x_range)
+
+        return column([fig1, fig2, fig3])
 
 # ----------------------------------------------------------------------------------------------------------------------

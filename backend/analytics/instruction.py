@@ -45,7 +45,7 @@ def get_instructions_data(device: str, interval) -> pd.DataFrame:
 
     sq_last_timestamp = query_last_timestamp.subquery()
 
-    # Get the last recorded sensor value before the selected time interval
+    # Get the last recorded instruction before the selected time interval
     query_last_mode = db.session.query(ip.source, ip.target, ip.value) \
         .filter(ip.device == device) \
         .filter(ip.timestamp == sq_last_timestamp.c.timestamp)
