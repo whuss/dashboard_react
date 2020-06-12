@@ -81,6 +81,17 @@
     color: white;
 }
 
+.icon {
+    display: table-cell;
+    text-align: center;
+    margin: auto;
+    height: 25px;
+    width: 25px;
+    vertical-align: middle;
+    border-radius: 5px;
+    color: white;
+}
+
 .error-table thead {
     color: #555;
     background-color: white;

@@ -275,8 +275,10 @@ def backend_download_excel(plot_name: str):
 
 @app.route('/backend/system_restarts/<device>')
 def backend_system_restarts(device: str):
-    table = TableRestarts(plot_parameters={'device': device})
-    return dict(table=table.fetch().__html__())
+    data, pagination = Errors.restarts(device, limit=10, page=1)
+    data.timestamp = data.timestamp.astype(str)
+    data.version_timestamp = data.version_timestamp.astype(str)
+    return dict(table=data.to_dict(orient='records'))
 
 # ----------------------------------------------------------------------------------------------------------------------
 
