@@ -168,7 +168,10 @@ plot_list = {"PlotCrashes": {},
                   },
              "PlotClusteringFrequency": {},
              "PlotClusteringTimeline": {},
-             "PlotPowerTimeline": {}
+             "PlotPowerTimeline":
+                 {"color_scheme":
+                     ["power", "gaze", "face_detected"]
+                 }
              }
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -5,8 +5,56 @@ import Button from "react-bootstrap/Button";
 import DeviceTable from "./DeviceTable";
 
 import { usePlot } from "./BokehPlot";
-import { LoadingAnimation } from "./Toolbar";
+import { LoadingAnimation, useDropdown } from "./Toolbar";
 import { downloadFile } from "./Fetch";
+
+function useToolbar(_color_scheme) {
+    if (!_color_scheme) {
+        _color_scheme = "power";
+    }
+
+    const [color_scheme, setColorScheme] = useDropdown(_color_scheme, {
+        values: ["power", "gaze", "face_detected"],
+        label: "Color Scheme",
+    });
+
+    const Toolbar = <>{setColorScheme}</>
+
+    function plot_parameters(device) {
+        return {
+            device: device,
+            color_scheme: color_scheme,
+        };
+    }
+
+    return [Toolbar, plot_parameters];
+}
+
+function rowFactory(plot_parameters) {
+    const TableRow = (props) => {
+        const device = props.device_id;
+        const plot_name = "PlotPowerTimeline";
+        const file_name = `power_timeline_${device}.xlsx`;
+        const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters(device), false);
+
+        return (
+            <>
+                <td>
+                    <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>
+                        {plot}
+                    </LoadingAnimation>
+                </td>
+                <td>
+                    {!isLoading && !isError && (
+                        <Button onClick={() => downloadFile(plot_name, plot_parameters(device), file_name)}>Download</Button>
+                    )}
+                </td>
+            </>
+        );
+    };
+
+    return TableRow;
+}
 
 const TableHeader = () => (
     <>
@@ -15,28 +63,12 @@ const TableHeader = () => (
     </>
 );
 
-const TableRow = (props) => {
-    const plot_name = "PlotPowerTimeline";
-    const plot_parameters = { device: props.device_id };
-    const file_name = `power_timeline_${props.device_id}.xlsx`;
-    const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters, false);
+const AnalyticsPowerTimeline = (props) => {
+    const color_scheme = undefined;
+    const [tools, plot_parameters] = useToolbar(color_scheme);
+    const TableRow = rowFactory(plot_parameters);
 
-    return (
-        <>
-            <td>
-                <LoadingAnimation isLoading={isLoading} isError={isError} errorMsg={errorMsg}>
-                    {plot}
-                </LoadingAnimation>
-            </td>
-            <td>
-                {!isLoading && !isError && (
-                    <Button onClick={() => downloadFile(plot_name, plot_parameters, file_name)}>Download</Button>
-                )}
-            </td>
-        </>
-    );
+    return (<DeviceTable format_header={TableHeader} format_row={TableRow} toolbar={tools} devices={props.devices}/>);
 };
-
-const AnalyticsPowerTimeline = (props) => <DeviceTable format_header={TableHeader} format_row={TableRow} devices={props.devices}/>;
 
 export default AnalyticsPowerTimeline;

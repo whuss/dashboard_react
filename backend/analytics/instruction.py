@@ -357,7 +357,7 @@ def plot_power_timeline(data, **kwargs):
         data.loc[data.dominant_zone == 'HORIZONTAL', 'color'] = colors[0]
         data.loc[data.dominant_zone == 'UNDEFINED', 'color'] = colors[1]
         data.loc[data.dominant_zone == 'NO_DETECTION', 'color'] = colors[3]
-    elif color_scheme == 'gaze_undefined':
+    elif color_scheme == 'face_detected':
         data['color'] = 'green'
         data.loc[data.dominant_zone == 'NO_DETECTION', 'color'] = 'red'
 
