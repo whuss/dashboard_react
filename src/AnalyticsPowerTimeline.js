@@ -35,7 +35,7 @@ function rowFactory(plot_parameters) {
         const device = props.device_id;
         const plot_name = "PlotPowerTimeline";
         const file_name = `power_timeline_${device}.xlsx`;
-        const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters(device), false);
+        const [{ fields, isLoading, isError, errorMsg }, plot] = usePlot(plot_name, plot_parameters(device));
 
         return (
             <>
