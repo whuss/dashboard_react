@@ -1250,14 +1250,17 @@ class PlotPowerTimeline(AjaxPlotBokeh):
         self._start_date = date(2020, 2, 1)
         self._end_date = date.today() - timedelta(days=1)
         self.device = self.parameters.get('device')
+        self.color_scheme = self.parameters.get('color_scheme', 'power')
         self.threshold = 0.9
 
     # ------------------------------------------------------------------------------------------------------------------
 
     def _fetch(self):
         print(f"Fetch data for {self.device}")
-        from analytics.instruction import get_power
-        power_data = get_power(self.device, self._start_date, resample_rule="1Min")
+        from analytics.gaze import get_joined_gaze_power
+        power_data = get_joined_gaze_power(self.device, self._start_date, self._end_date, resample_rule="1Min")
+        # from analytics.instruction import get_power
+        # power_data = get_power(self.device, self._start_date, self._end_date, resample_rule="1Min")
         if power_data.empty:
             return None
 
@@ -1282,7 +1285,7 @@ class PlotPowerTimeline(AjaxPlotBokeh):
     def _plot(self, power_timeline):
         from analytics.instruction import plot_power_timeline
         print(f"Plot for {self.device} plot_power_timeline")
-        fig = plot_power_timeline(power_timeline)
+        fig = plot_power_timeline(power_timeline, color_scheme=self.color_scheme)
         return fig
 
 # ----------------------------------------------------------------------------------------------------------------------

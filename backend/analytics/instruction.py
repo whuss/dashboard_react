@@ -8,6 +8,7 @@ from db import db, InstructionPackage, VersionPackage
 from utils.interval import TimeInterval, Interval, parse_interval
 from utils.date import start_of_day, end_of_day
 from datetime import date
+from bokeh import palettes
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -337,6 +338,7 @@ def plot_power_timeline(data, **kwargs):
     from bokeh.models.ranges import Range1d
     from bokeh import palettes, layouts
     from bokeh.palettes import Magma256
+    from bokeh.colors.rgb import RGB
 
     from datetime import date
     x_range = kwargs.get('x_range', None)
@@ -345,10 +347,31 @@ def plot_power_timeline(data, **kwargs):
 
     y_range = 0, 60 * 24  # Minutes of a day
 
-    #data = data.drop(columns=['NO_DETECT', 'HORIZONTAL', 'VERTICAL', 'UNDEFINED'])
+    color_scheme = kwargs.get('color_scheme', 'power')
 
-    data['color'] = (data.power * 255).astype(int)
-    data['color'] = data.color.apply(lambda c: Magma256[c])
+    if color_scheme == 'power':
+        data['color'] = 'orange'
+    elif color_scheme == 'gaze':
+        colors = palettes.Category10[4]
+        data['color'] = colors[2]
+        data.loc[data.dominant_zone == 'HORIZONTAL', 'color'] = colors[0]
+        data.loc[data.dominant_zone == 'UNDEFINED', 'color'] = colors[1]
+        data.loc[data.dominant_zone == 'NO_DETECTION', 'color'] = colors[3]
+    elif color_scheme == 'gaze_undefined':
+        data['color'] = 'green'
+        data.loc[data.dominant_zone == 'NO_DETECTION', 'color'] = 'red'
+
+    #data["HORIZONTAL_C"] = (data.HORIZONTAL * 255).astype(int)
+    #data["VERTICAL_C"] = (data.VERTICAL * 255).astype(int)
+    #data["NO_DETECT_C"] = (data.NO_DETECT * 255).astype(int)
+    #data["UNDEFINED_C"] = (data.UNDEFINED * 255).astype(int)
+
+    #from bokeh.colors.rgb import RGB
+
+    #def to_rgba(row):
+    #    return RGB(row.UNDEFINED_C, row.HORIZONTAL_C, row.VERTICAL_C, 255 - row.NO_DETECT_C).to_hex()
+
+    #data['color'] = data.apply(to_rgba, axis=1)
 
     data_source = ColumnDataSource(data)
 
@@ -360,7 +383,7 @@ def plot_power_timeline(data, **kwargs):
                  y_range=y_range,
                  tools="")
 
-    fig.rect(y='minutes', x='date', width=timedelta(days=1)/2, height=1, color='orange', source=data_source)
+    fig.rect(y='minutes', x='date', width=timedelta(days=1)/2, height=1, color='color', source=data_source)
 
     from datetime import time
 
@@ -379,7 +402,8 @@ def plot_power_timeline(data, **kwargs):
     fig.toolbar.logo = None
 
     hover_tool = HoverTool(tooltips=[('Date', '@date{%F}'),
-                                     ('power', '@power')],
+                                     ('power', '@power'),
+                                     ('gaze', '@dominant_zone')],
                            formatters={'date': 'datetime'})
 
     fig.add_tools(hover_tool)

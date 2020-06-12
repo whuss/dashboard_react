@@ -205,15 +205,18 @@ def get_joined_gaze_power(device: str,
     gaze_data = get_gaze_timeseries(device, start_date, end_date)
     power_data = get_power(device, start_date, end_date)
 
-    data = pd.merge(power_data, gaze_data, left_index=True, right_on="timestamp").set_index('timestamp')
+    data = pd.merge(power_data, gaze_data, how="inner", left_index=True, right_on="timestamp").set_index('timestamp')
 
     # change to one hot encoding for gaze zones
-    for zone in data.zone.unique():
+    for zone in ["HORIZONTAL", "VERTICAL", "UNDEFINED", "NO_DETECT"]:
         data[zone] = (data.zone == zone).astype(int)
     data = data.drop(columns=['zone'])
 
     # resample data
     data = data.resample(resample_rule).mean()
+
+    data['dominant_zone'] = data[['HORIZONTAL', 'VERTICAL', 'UNDEFINED', 'NO_DETECT']].idxmax(axis=1)
+
     return data
 
 # ----------------------------------------------------------------------------------------------------------------------
