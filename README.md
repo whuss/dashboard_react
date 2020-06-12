@@ -1,3 +1,38 @@
+
+# Introduction
+
+Source code of Reprolight Web app for PTL telemetry and data analytics.
+The backend uses Flask to provide a JSON API, while the frontend is written using React.
+
+## Deployment
+
+The app is fully dockerized and can be deployed using docker-compose with the following commands:
+
+```
+$ docker-compose build
+$ docker-compose up -d
+```
+
+When running, the webapp listens on port 8003.
+
+The only prerequisites, except a working docker, is the existence of a directory `/docker-volume` that
+needs to be writable by the docker-service.
+
+To update the deployed:
+
+```
+$ git pull
+$ docker-compose down
+$ docker-compose build
+$ docker-compute up -d
+```
+
+## Development
+
+TODO
+
+# Create React App
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
