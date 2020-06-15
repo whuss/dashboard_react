@@ -273,12 +273,26 @@ def backend_download_excel(plot_name: str):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+def pagination_dict(pagination, page):
+    return dict(has_prev=pagination.has_prev,
+                prev_num=pagination.prev_num,
+                current_page=page,
+                num_pages=pagination.pages,
+                pages=list(pagination.iter_pages()),
+                has_next=pagination.has_next,
+                next_num=pagination.next_num)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 @app.route('/backend/system_restarts/<device>')
-def backend_system_restarts(device: str):
-    data, pagination = Errors.restarts(device, limit=10, page=1)
+@app.route('/backend/system_restarts/<device>/<int:page>')
+def backend_system_restarts(device: str, page: int = 1):
+    data, pagination = Errors.restarts(device, limit=10, page=page)
     data.timestamp = data.timestamp.astype(str)
     data.version_timestamp = data.version_timestamp.astype(str)
-    return dict(table=data.to_dict(orient='records'))
+    return dict(table=data.to_dict(orient='records'),
+                pagination=pagination_dict(pagination, page))
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -317,14 +331,7 @@ def backend_logs(device, duration=5, timestamp=None, log_level="TRACE"):
     return dict(devices=devices,
                 log_text=log_text,
                 device=device,
-                pagination=dict(has_prev=pagination.has_prev,
-                                prev_num=pagination.prev_num,
-                                current_page=page,
-                                num_pages=pagination.pages,
-                                pages=list(pagination.iter_pages()),
-                                has_next=pagination.has_next,
-                                next_num=pagination.next_num
-                                ))
+                pagination=pagination_dict(pagination, page))
 
 # ----------------------------------------------------------------------------------------------------------------------
 

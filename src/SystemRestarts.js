@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 import useDataApi from "./Fetch";
 
@@ -8,6 +8,66 @@ import DeviceTable from "./DeviceTable";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeartbeat } from "@fortawesome/free-solid-svg-icons";
+
+import Pagination from "react-bootstrap/Pagination";
+import PageItem from "react-bootstrap/PageItem";
+
+function PaginationBar(props) {
+    const pagination = props.pagination;
+    const setPage = props.setPage;
+
+    if (!pagination) {
+        return <></>;
+    }
+
+    const { current_page, num_pages, has_next, has_prev, next_num, prev_num, pages } = pagination;
+
+    if (num_pages <= 1) {
+        return <></>;
+    }
+
+    function clickPage(page) {
+        console.log("click page: ", page);
+        setPage(page);
+    }
+
+    function prevPage() {
+        console.log("prev page");
+        if (has_prev) {
+            setPage(current_page - 1);
+        }
+    }
+
+    function nextPage() {
+        console.log("next page");
+        if (has_next) {
+            setPage(current_page + 1);
+        }
+    }
+
+    function item(page) {
+        if (page) {
+            return (
+                <Pagination.Item onClick={() => clickPage(page)} key={page} active={page === current_page}>
+                    {page}
+                </Pagination.Item>
+            );
+        }
+        return (
+            <Pagination.Item key="ellipsis" disabled={true} active={false}>
+                &hellip;
+            </Pagination.Item>
+        );
+    }
+
+    return (
+        <Pagination size="sm">
+            <Pagination.Prev  onClick={() => prevPage()} disabled={!has_prev} />
+            {pages.map((page) => item(page))}
+            <Pagination.Next onClick={() => nextPage()} disabled={!has_next} />
+        </Pagination>
+    );
+}
 
 const RestartIcon = (props) => {
     const status = props.crash ? "SICK" : "HEALTHY";
@@ -20,10 +80,18 @@ const RestartIcon = (props) => {
 
 function Restarts(props) {
     const device = props.device;
-    const [{ data, isLoading, isError }] = useDataApi(`/backend/system_restarts/${device}`, {});
+    const [page, setPage ] = useState(1);
+    const [{ data, isLoading, isError }, setUrl] = useDataApi(`/backend/system_restarts/${device}/${page}`, {});
+
+    useEffect(() => {
+        setUrl(`/backend/system_restarts/${device}/${page}`);
+    }, [device, page, setUrl]);
 
     const restartTable = (
         <>
+            {data && data.pagination &&
+                <PaginationBar pagination={data.pagination} setPage={setPage} />
+            }
             <table className="error-table">
                 <thead>
                     <th>Time</th>
