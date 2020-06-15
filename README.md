@@ -29,7 +29,61 @@ $ docker-compute up -d
 
 ## Development
 
-TODO
+A development server, can be started in parallel to the deployed server on the same machine.
+For this to work a local mysql server needs to be running.
+
+### Setup development environment
+
+Install nodejs and install the necessary npm packages:
+
+```
+$ npm ci
+```
+
+Setup a new python virtual environment and install all python library dependencies:
+
+```
+$ cd backend
+$ pip install -r requirements.txt
+```
+
+### Installation of development server
+
+Note: this steps are only needed the first time the development server is started on a new machine
+
+Open `mysql` with root privileges and run the commands in `mysql_cache\sql\create_user.sql` to create
+a mysql user account with the correct credentials.
+
+To create the db tables run:
+
+```
+$ cd backend
+$ export PYTHONPATH=.
+$ python scripts/cache_queries.py init
+```
+
+## Start development server
+
+Open a terminal and switch to the correct python virtual enviroment. Start the backend flask server with:
+
+```
+$ python app.py
+```
+
+The development server listens on port 5000. It can be tested by navigating to the url `http://127.0.0.1:5000/backend/devices`. This should return a json array consisting of the names of all registered PTL's.
+
+To start the frontend server, open a second terminal and run:
+
+```
+npm start
+```
+
+The frontend server listens on port 3000.
+
+Open url `http://127.0.0.1:3000` to see the dashboard.
+
+Both backend and frontend development servers automatically reload when the source code is changed.
+
 
 # Create React App
 
