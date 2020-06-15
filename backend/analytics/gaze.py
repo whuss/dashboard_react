@@ -2,7 +2,7 @@ from typing import Optional
 
 import pandas as pd
 
-from db import db, GazeZonePackage
+from db import db, GazeZonePackage, db_cached
 from datetime import date, timedelta
 
 from utils.date import start_of_day, end_of_day
@@ -115,6 +115,7 @@ def get_gaze_intervals(device: str, start_date: date, end_date: Optional[date] =
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+@db_cached
 def get_daily_gaze_lengths(device: str, start_date: date, end_date: Optional[date] = None) -> pd.DataFrame:
     if end_date is None:
         end_date = date.today()
