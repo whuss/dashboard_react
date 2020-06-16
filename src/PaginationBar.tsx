@@ -2,7 +2,22 @@ import React from "react";
 
 import Pagination from "react-bootstrap/Pagination";
 
-function PaginationBar(props) {
+interface PaginationInterface {
+    current_page: number,
+    num_pages: number,
+    has_next: boolean,
+    has_prev: boolean,
+    next_num: number,
+    prev_num: number,
+    pages: (number|null)[],
+}
+
+interface PaginationBarProps {
+    pagination?: PaginationInterface,
+    setPage: (page: number) => void
+}
+
+function PaginationBar(props: PaginationBarProps) {
     const pagination = props.pagination;
     const setPage = props.setPage;
 
@@ -10,13 +25,13 @@ function PaginationBar(props) {
         return <></>;
     }
 
-    const { current_page, num_pages, has_next, has_prev, next_num, prev_num, pages } = pagination;
+    const { current_page, num_pages, has_next, has_prev, pages } = pagination;
 
     if (num_pages <= 1) {
         return <></>;
     }
 
-    function clickPage(page) {
+    function clickPage(page: number) {
         console.log("click page: ", page);
         setPage(page);
     }
@@ -35,7 +50,7 @@ function PaginationBar(props) {
         }
     }
 
-    function item(page) {
+    function item(page: number|null) {
         if (page) {
             return (
                 <Pagination.Item onClick={() => clickPage(page)} key={page} active={page === current_page}>
