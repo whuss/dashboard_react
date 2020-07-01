@@ -76,47 +76,48 @@ const useStyles = makeStyles((theme) =>
     },
     marginTop: {
         marginTop: 10,
+    },
+    intensityGrid: {
+        '& ul': {
+            listStyleType: "none",
+            margin: 0,
+            padding: 0,
+            '& li': {
+                float: "left",
+                width: "8.3333%",
+                height: 15,
+                textAlign: 'center',
+                color: '#ecf0f1',
+                borderStyle: 'solid',
+                borderColor: 'white',
+                borderWidth: '1px',
+            }
+        }
     }
   }),
 );
 
-const DashboardPanelNew = ({ title, children }) => {
-    const classes = useStyles();
-    return (
-        <Paper className={classes.root} elevation={3}>
-            {children}
-        </Paper>
-        // <div style={{ position: "relative" }}>
-        //     <div
-        //         style={{
-        //             margin: 20,
-        //             padding: 30,
-        //             //  width: "500px",
-        //             //  height: "300px",
-        //             borderWidth: 1,
-        //             borderStyle: "dashed",
-        //             textAlign: "justify",
-        //         }}
-        //     >
-        //         {children}
-        //     </div>
-        //     <div
-        //         style={{
-        //             position: "absolute",
-        //             margin: 0,
-        //             top: 0,
-        //             left: 50,
-        //             padding: 9,
-        //             backgroundColor: "white",
-        //             fontWeight: "bolder",
-        //         }}
-        //     >
-        //         {title}
-        //     </div>
-        // </div>
-    );
-};
+const intensities = [100, 23, 43, 54, 12, 23, 54, 34, 23, 100, 23, 43,
+                     12, 23, 54, 100, 23, 43, 54, 34, 23, 98, 42, 73];
 
+const IntensityGrid = ({intensities}) => {
+    const classes = useStyles();
+
+    const color = (intensity) => {
+        const r = 0;
+        const g = 142;
+        const b = 245;
+        return `rgba(${r}, ${g}, ${b}, ${intensity / 100})`;
+    }
+
+    return (
+        <Box className={classes.intensityGrid}>
+            <ul>
+                {intensities.map((intensity, i) => <li key={i} style={{backgroundColor: color(intensity)}}>&nbsp;</li>)}
+            </ul>
+        </Box>
+    )
+}
 
 const MonthView = () => {
     return (
@@ -194,7 +195,9 @@ const monitorTaskData = {
     colorTemperatureLeft: 4000,
     colorTemperatureRight: 3700,
     intensityLeft: 67.5,
-    intensityRight: 42.3
+    intensityRight: 42.3,
+    intensities: [100, 23, 43, 54, 12, 23, 54, 34, 23, 100, 23, 43,
+                  12, 23, 54, 100, 23, 43, 54, 34, 23, 98, 42, 73]
 }
 
 const paperTaskData = {
@@ -203,14 +206,16 @@ const paperTaskData = {
     colorTemperatureLeft: 5000,
     colorTemperatureRight: 5300,
     intensityLeft: 42.0,
-    intensityRight: 89.9
+    intensityRight: 89.9,
+    intensities: [50, 77, 32, 10, 12, 23, 43, 77, 33, 59, 43, 30,
+                  43, 54, 98, 42, 73,12, 23, 54, 34, 23, 100, 23]
 }
 
 
 const TaskSettings = ({title, data}) => {
     const classes = useStyles();
 
-    const {changed, duration, colorTemperatureLeft, colorTemperatureRight, intensityLeft, intensityRight} = data;
+    const {changed, duration, colorTemperatureLeft, colorTemperatureRight, intensityLeft, intensityRight, intensities} = data;
 
     return (
         <DashboardPanel title={`${title} task settings`}>
@@ -258,7 +263,7 @@ const TaskSettings = ({title, data}) => {
                     </Box>
                 </Grid>
                 <Grid xs={12} className={classes.marginTop}>
-                    TODO: Light grid
+                    <IntensityGrid intensities={intensities}/>
                 </Grid>
             </Grid>
         </DashboardPanel>
