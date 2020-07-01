@@ -7,7 +7,10 @@ import ScopedCssBaseline from "@material-ui/core/ScopedCssBaseline";
 import Box from "@material-ui/core/Box";
 import { Theme, createStyles, makeStyles, rgbToHex } from "@material-ui/core/styles";
 import GazeChart from "./DashboardGazeChart";
+import LightingModeChart from "./DashboardLightingModeChart";
 import UsageChart from "./DashboardUsageChart";
+import Doughnut from "./DashboardDoughnut";
+import LightShowerChart from "./DashboardLightShowerChart";
 
 import useDataApi from "./Fetch";
 
@@ -19,10 +22,13 @@ const text =
 const textShort =
     "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.";
 
+const automaticColor = "red";
 const monitorColor = "#008ef5";
 const monitorColorRgb = [0, 142, 245];
 const paperColor = "#00b100";
 const paperColorRgb = [0, 177, 0];
+const usageProfileColor = "#df892b";
+const usageProfileColorRgb = [223, 137, 43];
 
 const DashboardPanel = ({ title, children }) => {
     const classes = useStyles();
@@ -210,11 +216,12 @@ const MonthView = () => {
 };
 
 const GeneralInformation = () => {
+    const classes = useStyles();
     return (
         <DashboardPanel title="General Information">
             <Grid container direction="row" spacing={2}>
                 <Grid item xs={12}>
-                    PTL 001, Spain
+                    <Box className={classes.dataBig}>PTL 001, Spain</Box>
                 </Grid>
                 <Grid item xs={6}>
                     <MonthView />
@@ -250,22 +257,30 @@ const paperTaskData = {
 const UsageProfile = () => {
     const classes = useStyles();
 
-    const data = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    const histogramData = [
+        [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+        [50, 20, 30, 40, 50, 60, 80, 70, 90, 40],
+        [80, 20, 30, 70, 80, 90, 40, 50, 60, 40],
+        [30, 20, 50, 60, 30, 40, 70, 80, 90, 15],
+        [60, 20, 50, 40, 20, 26, 70, 11, 12, 12],
+    ];
+
+    const percentageData = [89, 56, 72, 43, 53];
 
     const ULine = ({ name, data, percentage }) => (
         <>
             <Grid container alignItems="center">
-            <Grid xs={3} className={classes.marginBottom}>
-                <Box textAlign="left" bgColor="primary.main">{name}</Box>
-            </Grid>
-            <Grid xs={8} className={classes.marginBottom}>
-                <HistogramGrid data={data} colorRgb={monitorColorRgb} />
-            </Grid>
-            <Grid xs={1} className={classes.marginBottom}>
-                <Box style={{ marginLeft: 10 }} textAlign="right">
-                    {percentage}%
-                </Box>
-            </Grid>
+                <Grid xs={3} className={classes.marginBottom}>
+                    <Box textAlign="left">{name}</Box>
+                </Grid>
+                <Grid xs={8} className={classes.marginBottom}>
+                    <HistogramGrid data={data} colorRgb={usageProfileColorRgb} />
+                </Grid>
+                <Grid xs={1} className={classes.marginBottom}>
+                    <Box style={{ marginLeft: 10 }} textAlign="right">
+                        {percentage}%
+                    </Box>
+                </Grid>
             </Grid>
         </>
     );
@@ -274,11 +289,11 @@ const UsageProfile = () => {
         <DashboardPanel title="Usage profile">
             <Grid container justify="space-between" alignItems="center" spacing={2}>
                 <Grid container item xs={7} alignItems="center">
-                    <ULine name="Mode usage" data={data} percentage={89} />
-                    <ULine name="Interaction" data={data} percentage={56} />
-                    <ULine name="Rebound" data={data} percentage={72} />
-                    <ULine name="Frequency" data={data} percentage={43} />
-                    <ULine name="Task" data={data} percentage={53} />
+                    <ULine name="Mode usage" data={histogramData[0]} percentage={percentageData[0]} />
+                    <ULine name="Interaction" data={histogramData[1]} percentage={percentageData[1]} />
+                    <ULine name="Rebound" data={histogramData[2]} percentage={percentageData[2]} />
+                    <ULine name="Frequency" data={histogramData[3]} percentage={percentageData[3]} />
+                    <ULine name="Task" data={histogramData[4]} percentage={percentageData[4]} />
 
                     {/* <ULine name="Mode usage" data={data} percentage={89} />
                     <ULine name="Interaction" data={data} percentage={56} />
@@ -286,7 +301,9 @@ const UsageProfile = () => {
                     <ULine name="Frequency" data={data} percentage={43} />
                     <ULine name="Task" data={data} percentage={53} /> */}
                 </Grid>
-                <Grid xs={5}><UsageChart/></Grid>
+                <Grid xs={5}>
+                    <UsageChart color={usageProfileColor} data={percentageData} />
+                </Grid>
             </Grid>
         </DashboardPanel>
     );
@@ -370,7 +387,7 @@ const gazeDetectionData = {
     meanMonitorDuration: 112,
     meanPaperDuration: 89,
     dataMonitor: [0, 59, 12, 81, 56, 0],
-    dataPaper: [0, 81, 56, 55, 100, 0],
+    dataPaper: [0, 81, 56, 55, 95, 0],
 };
 
 const GazeDetection = ({ data }) => {
@@ -446,6 +463,193 @@ const GazeDetection = ({ data }) => {
     );
 };
 
+const lightingModeData = {
+    autoMode: 868,
+    switchCycles: 27.3,
+    autoOnly: 15,
+    interactions: 178,
+    modeChanges: 96,
+    switchedOff: 68,
+    dataAutomatic: [23, 12, 30, 66, 0, 0],
+    dataMonitor: [0, 59, 12, 81, 56, 0],
+    dataPaper: [0, 81, 56, 55, 95, 0],
+};
+
+const LightingMode = ({ data }) => {
+    const classes = useStyles();
+
+    const {
+        autoMode,
+        switchCycles,
+        autoOnly,
+        interactions,
+        modeChanges,
+        switchedOff,
+        dataAutomatic,
+        dataMonitor,
+        dataPaper,
+    } = data;
+
+    return (
+        <DashboardPanel title="Lighting mode usage">
+            <Grid container justify="space-between" alignItems="center" spacing={2}>
+                <Grid xs={4} className={classes.marginBottom}>
+                    <Box textAlign="left">
+                        <span className={classes.dataBig}>{autoMode} hrs</span>
+                        <br />
+                        auto mode
+                    </Box>
+                </Grid>
+                <Grid xs={4} className={classes.marginBottom}>
+                    <Box textAlign="center">
+                        <span className={classes.dataBig}>{switchCycles} daily</span>
+                        <br />
+                        switch cycles
+                    </Box>
+                </Grid>
+                <Grid xs={4} className={classes.marginBottom}>
+                    <Box textAlign="right">
+                        <span className={classes.dataBig}>{autoOnly} days</span>
+                        <br />
+                        auto only
+                    </Box>
+                </Grid>
+
+                <Grid xs={6}>
+                    <Doughnut
+                        firstLine={<span className={classes.dataBig}>89%</span>}
+                        secondLine={
+                            <span>
+                                automatic
+                                <br />
+                                usage
+                            </span>
+                        }
+                    />
+                </Grid>
+
+                <Grid xs={6}>
+                    <Doughnut
+                        firstLine={<span className={classes.dataBig}>80%</span>}
+                        secondLine={
+                            <span>
+                                manual&nbsp;task
+                                <br />
+                                switch-offs
+                            </span>
+                        }
+                    />
+                </Grid>
+
+                <Grid xs={4} className={classes.marginBottom}>
+                    <Box textAlign="left">
+                        interacted
+                        <br />
+                        <span className={classes.dataBig}>{interactions} times</span>
+                    </Box>
+                </Grid>
+                <Grid xs={4} className={classes.marginBottom}>
+                    <Box textAlign="center">
+                        changed mode
+                        <br />
+                        <span className={classes.dataBig}>{modeChanges} times</span>
+                    </Box>
+                </Grid>
+                <Grid xs={4} className={classes.marginBottom}>
+                    <Box textAlign="right">
+                        switched off
+                        <br />
+                        <span className={classes.dataBig}>{switchedOff} times</span>
+                    </Box>
+                </Grid>
+
+                <Grid xs={12} className={classes.marginTop}>
+                    <LightingModeChart
+                        automaticColor={automaticColor}
+                        monitorColor={monitorColor}
+                        paperColor={paperColor}
+                        dataAutomatic={dataAutomatic}
+                        dataMonitor={dataMonitor}
+                        dataPaper={dataPaper}
+                    />
+                </Grid>
+            </Grid>
+        </DashboardPanel>
+    );
+};
+
+const lightShowerData = {
+    notifications: 29,
+    triggered: 17,
+    duration: 178,
+    daytimeRatio: 0.875,
+    dataHistogram: [23, 12, 30, 66, 23, 40],
+};
+
+const LightShowerUsage = ({ data }) => {
+    const classes = useStyles();
+
+    const { notifications, triggered, duration, daytimeRatio, dataHistogram } = data;
+
+    return (
+        <DashboardPanel title="Light shower usage">
+            <Grid container justify="space-between" alignItems="center" spacing={2}>
+                <Grid xs={6} className={classes.marginBottom}>
+                    <Box textAlign="left">
+                        <span className={classes.dataBig}>{notifications} times</span>
+                        <br />
+                        notified
+                    </Box>
+                </Grid>
+                <Grid xs={6} className={classes.marginBottom}>
+                    <Box textAlign="right">
+                        <span className={classes.dataBig}>{triggered} times</span>
+                        <br />
+                        triggered
+                    </Box>
+                </Grid>
+
+                <Grid xs={12}>
+                    <Doughnut
+                        firstLine={<span className={classes.dataBig}>72%</span>}
+                        secondLine={
+                            <span>
+                                notification
+                                <br />
+                                rebound
+                            </span>
+                        }
+                    />
+                </Grid>
+
+                <Grid xs={6} className={classes.marginBottom}>
+                    <Box textAlign="left">
+                        duration
+                        <br />
+                        <span className={classes.dataBig}>{duration} mins</span>
+                    </Box>
+                </Grid>
+                <Grid xs={6} className={classes.marginBottom}>
+                    <Box textAlign="right">
+                        daytime ratio
+                        <br />
+                        <span className={classes.dataBig}>{daytimeRatio}</span>
+                    </Box>
+                </Grid>
+
+                <Grid xs={12} className={classes.marginTop}>
+                    <LightShowerChart
+                        automaticColor={automaticColor}
+                        monitorColor={monitorColor}
+                        paperColor={paperColor}
+                        data={dataHistogram}
+                    />
+                </Grid>
+            </Grid>
+        </DashboardPanel>
+    );
+};
+
 const Dashboard = () => {
     return (
         <Grid container>
@@ -463,17 +667,17 @@ const Dashboard = () => {
             </Grid>
             <Grid xs={6}>
                 <Grid container direction="column">
-                    <DashboardPanel title="Lighting mode usage">{text}</DashboardPanel>
+                    <LightingMode data={lightingModeData} />
                     <UsageProfile />
                 </Grid>
             </Grid>
             <Grid xs={3}>
                 <Grid container direction="column">
-                    <DashboardPanel title="Light shower usage">{textShort}</DashboardPanel>
+                    <LightShowerUsage data={lightShowerData} />
                     <GazeDetection data={gazeDetectionData} />
                 </Grid>
             </Grid>
-            <Grid xs={12}>
+            <Grid xs={12} justify="space-between">
                 <Grid container direction="column">
                     <DashboardPanel title="Occupancy profile">{textShort}</DashboardPanel>
                 </Grid>

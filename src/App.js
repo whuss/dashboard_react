@@ -132,7 +132,7 @@ const MainView = (props) => {
                 <NavRoute path={["/device_details/:device", "/device_details"]} title="Device Details">
                     <DeviceDetails devices={devices} />
                 </NavRoute>
-                <NavRoute path="/" title="Dashboard">
+                <NavRoute path="/" title="Field study fact sheet (work in progress)">
                     <Dashboard devices={devices} />
                 </NavRoute>
             </Switch>
