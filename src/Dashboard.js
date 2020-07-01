@@ -6,6 +6,7 @@ import Container from '@material-ui/core/Container';
 import ScopedCssBaseline from '@material-ui/core/ScopedCssBaseline';
 import Box from '@material-ui/core/Box';
 import { Theme, createStyles, makeStyles, rgbToHex } from '@material-ui/core/styles';
+import LineExample from './ChartLine';
 
 import useDataApi from "./Fetch";
 
@@ -270,6 +271,79 @@ const TaskSettings = ({title, data}) => {
     );
 }
 
+const gazeDetectionData = {
+    trackingTime: 435,
+    derivedDetections: 93.5,
+    totalMonitorDuration: 177,
+    totalPaperDuration: 113,
+    meanMonitorDuration: 112,
+    meanPaperDuration: 89,
+    intensities: [50, 77, 32, 10, 12, 23, 43, 77, 33, 59, 43, 30,
+                  43, 54, 98, 42, 73,12, 23, 54, 34, 23, 100, 23]
+}
+
+const GazeDetection = ({data}) => {
+    const classes = useStyles();
+
+    const {trackingTime, derivedDetections, totalMonitorDuration,
+        totalPaperDuration,
+        meanMonitorDuration,
+        meanPaperDuration, intensities} = data;
+
+    return (
+        <DashboardPanel title="Gaze Detection">
+            <Grid container justify="space-between" alignItems="center" spacing={2}>
+                <Grid xs={6} className={classes.marginBottom}>
+                <Box textAlign="left">
+                    <span className={classes.dataBig}>{trackingTime} hrs</span><br/>
+                    tracking time
+                    </Box>
+                </Grid>
+                <Grid xs={6} className={classes.marginBottom}>
+                <Box textAlign="right">
+                    <span className={classes.dataBig}>{derivedDetections}%</span><br/>
+                    derived detections
+                </Box>
+                </Grid>
+                <Grid xs={3}>
+                    <Box className={classes.dataSmall} textAlign="left">
+                        {totalMonitorDuration}&nbsp;hrs
+                    </Box>
+                </Grid>
+                <Grid xs={6}>
+                    <Box textAlign="center">
+                        Total task duration
+                    </Box>
+                </Grid>
+                <Grid xs={3}>
+                    <Box className={classes.dataSmall} textAlign="right">
+                        {totalPaperDuration}&nbsp;hrs
+                    </Box>
+                </Grid>
+                <Grid xs={3}>
+                    <Box className={classes.dataSmall} textAlign="left">
+                        {meanMonitorDuration}&nbsp;mins
+                    </Box>
+                </Grid>
+                <Grid xs={6}>
+                    <Box textAlign="center">
+                        Mean task duration
+                    </Box>
+                </Grid>
+                <Grid xs={3}>
+                    <Box className={classes.dataSmall} textAlign="right">
+                        {meanPaperDuration}&nbsp;mins
+                    </Box>
+                </Grid>
+                <Grid xs={12} className={classes.marginTop}>
+                    <LineExample />
+                </Grid>
+            </Grid>
+        </DashboardPanel>
+    );
+}
+
+
 const Dashboard = () => {
     return (
         <Grid container>
@@ -289,7 +363,7 @@ const Dashboard = () => {
             <Grid xs={3}>
                 <Grid container direction="column">
                     <DashboardPanel title="Light shower usage">{textShort}</DashboardPanel>
-                    <DashboardPanel title="Gaze detection">{textShort}</DashboardPanel>
+                    <GazeDetection data={gazeDetectionData}/>
                 </Grid>
             </Grid>
             <Grid xs={12}>
