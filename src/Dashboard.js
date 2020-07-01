@@ -123,16 +123,16 @@ const IntensityGrid = ({ intensities, colorRgb }) => {
 
 const MonthView = () => {
     return (
-        <div className="calendar">
+        <Box className={"calendar"}>
             <ul>
-                <li>Mo</li>
-                <li>Tu</li>
-                <li>We</li>
-                <li>Th</li>
-                <li>Fr</li>
-                <li>Sa</li>
-                <li>Su</li>
-                <li>&nbsp;</li>
+                <li className="days">Mo</li>
+                <li className="days">Tu</li>
+                <li className="days">We</li>
+                <li className="days">Th</li>
+                <li className="days">Fr</li>
+                <li className="days">Sa</li>
+                <li className="days">Su</li>
+                <li className="empty"></li>
                 <li>1</li>
                 <li>2</li>
                 <li>3</li>
@@ -164,12 +164,12 @@ const MonthView = () => {
                 <li>29</li>
                 <li>30</li>
                 <li>31</li>
-                <li>&nbsp;</li>
-                <li>&nbsp;</li>
-                <li>&nbsp;</li>
+                <li className="empty">&nbsp;</li>
+                <li className="empty">&nbsp;</li>
+                <li className="empty">&nbsp;</li>
             </ul>
             June 2020
-        </div>
+        </Box>
     );
 };
 

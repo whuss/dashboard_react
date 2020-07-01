@@ -1,40 +1,40 @@
 .App {
-  text-align: center;
+    text-align: center;
 }
 
 .App-logo {
-  height: 40vmin;
-  pointer-events: none;
+    height: 40vmin;
+    pointer-events: none;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+    .App-logo {
+        animation: App-logo-spin infinite 20s linear;
+    }
 }
 
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+    background-color: #282c34;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
 }
 
 .App-link {
-  color: #61dafb;
+    color: #61dafb;
 }
 
 @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 #titlebar {
@@ -60,15 +60,13 @@
 }
 
 .site-header {
-    background: linear-gradient(
-        rgba(68, 54, 54, 0.85),
-        rgba(141, 123, 123, 0.85) 75%);
+    background: linear-gradient(rgba(68, 54, 54, 0.85), rgba(141, 123, 123, 0.85) 75%);
 }
 
 .error-table {
     background-color: white;
     font-size: 12px;
-    width:100%;
+    width: 100%;
 }
 
 .table i {
@@ -104,7 +102,7 @@
 
 .TRACE {
     font-weight: bold;
-    color: #87AFFF;
+    color: #87afff;
 }
 
 .DEBUG {
@@ -134,7 +132,7 @@
 
 .CRITICAL {
     font-weight: bold;
-    color: #AF0000;
+    color: #af0000;
 }
 
 .NORM {
@@ -191,16 +189,15 @@ table .deviceMode {
 
 .label {
     white-space: nowrap;
-    padding-left:0;
-    padding-right:5px;
+    padding-left: 0;
+    padding-right: 5px;
 }
 
-
 .toolbar {
-    padding-top:4px;
-    padding-bottom:4px;
-    margin:0px;
-    background-color:white;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    margin: 0px;
+    background-color: white;
 }
 
 .toolbar .input-group {
@@ -221,7 +218,6 @@ table .deviceMode {
     margin-right: 12px;
     align-items: center;
 }
-
 
 .errorMsg {
     text-align: left;
@@ -246,18 +242,18 @@ table .deviceMode {
     min-height: 100vh !important;
     z-index: 100;
     overflow-y: auto;
-    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
 }
 
-#sidebar-wrapper{
+#sidebar-wrapper {
     top: 0;
     min-height: 100vh !important;
     width: 100vw;
     margin-left: -1rem;
-    -webkit-transition: margin .25s ease-out;
-    -moz-transition: margin .25s ease-out;
-    -o-transition: margin .25s ease-out;
-    transition: margin .25s ease-out;
+    -webkit-transition: margin 0.25s ease-out;
+    -moz-transition: margin 0.25s ease-out;
+    -o-transition: margin 0.25s ease-out;
+    transition: margin 0.25s ease-out;
 }
 
 #sidebar-wrapper .sidebar-heading {
@@ -281,35 +277,39 @@ table .deviceMode {
 
 .calendar {
     font-size: xx-small;
-    padding: 0;
-    left: 0;
-    top: 0;
     max-width: 130px;
     min-width: 130px;
     min-height: 150px;
     overflow: hidden;
     text-align: center;
-  }
-  
-  .calendar ul {
+}
+
+.calendar ul {
     margin: 0;
     padding: 0;
-  }
-  
-  .calendar li {
-    float: left;
-    padding-bottom: 5px;
-    width: 14.2857%;
-    text-align: center;
     list-style-type: none;
-  }
+}
 
-  .calendar li.selected {
+.calendar li {
     float: left;
     padding-bottom: 5px;
     width: 14.2857%;
     text-align: center;
-    list-style-type: none;
+    background-color: #dddddd;
+    color: #ffffff;
+}
+
+.calendar li.empty {
+    background-color: white;
+    color: white;
+}
+
+.calendar li.days {
+    background-color: white;
+    color: black;
+}
+
+.calendar li.selected {
     background-color: #1b3dff;
     color: #ecf0f1;
-  }
+}
