@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 
 import Grid from "@material-ui/core/Grid";
-import Paper from '@material-ui/core/Paper';
-import Container from '@material-ui/core/Container';
-import ScopedCssBaseline from '@material-ui/core/ScopedCssBaseline';
-import Box from '@material-ui/core/Box';
-import { Theme, createStyles, makeStyles, rgbToHex } from '@material-ui/core/styles';
-import LineExample from './ChartLine';
+import Paper from "@material-ui/core/Paper";
+import Container from "@material-ui/core/Container";
+import ScopedCssBaseline from "@material-ui/core/ScopedCssBaseline";
+import Box from "@material-ui/core/Box";
+import { Theme, createStyles, makeStyles, rgbToHex } from "@material-ui/core/styles";
+import GazeChart from "./DashboardGazeChart";
 
 import useDataApi from "./Fetch";
 
@@ -18,6 +18,10 @@ const text =
 const textShort =
     "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.";
 
+const monitorColor = "#008ef5";
+const monitorColorRgb = [0, 142, 245];
+const paperColor = "#00b100";
+const paperColorRgb = [0, 177, 0];
 
 const DashboardPanel = ({ title, children }) => {
     const classes = useStyles();
@@ -36,10 +40,8 @@ const DashboardPanel = ({ title, children }) => {
                     textAlign: "justify",
                 }}
             >
-                 <ScopedCssBaseline>
-                <Container className={classes.root}>
-                    {children}
-                </Container>
+                <ScopedCssBaseline>
+                    <Container className={classes.root}>{children}</Container>
                 </ScopedCssBaseline>
             </div>
             <div
@@ -60,65 +62,64 @@ const DashboardPanel = ({ title, children }) => {
 };
 
 const useStyles = makeStyles((theme) =>
-  createStyles({
-    root: {
-        background: "white",
-    },
-    dataBig: {
-        fontSize: '20pt',
-        color: '#008ef5',
-    },
-    dataSmall: {
-        fontSize: '16pt',
-        color: '#008ef5',
-    },
-    marginBottom: {
-        marginBottom: 10,
-    },
-    marginTop: {
-        marginTop: 10,
-    },
-    intensityGrid: {
-        '& ul': {
-            listStyleType: "none",
-            margin: 0,
-            padding: 0,
-            '& li': {
-                float: "left",
-                width: "8.3333%",
-                height: 15,
-                textAlign: 'center',
-                color: '#ecf0f1',
-                borderStyle: 'solid',
-                borderColor: 'white',
-                borderWidth: '1px',
-            }
-        }
-    }
-  }),
+    createStyles({
+        root: {
+            background: "white",
+        },
+        dataBig: {
+            fontSize: "20pt",
+        },
+        dataSmall: {
+            fontSize: "16pt",
+        },
+        marginBottom: {
+            marginBottom: 10,
+        },
+        marginTop: {
+            marginTop: 10,
+        },
+        intensityGrid: {
+            "& ul": {
+                listStyleType: "none",
+                margin: 0,
+                padding: 0,
+                "& li": {
+                    float: "left",
+                    width: "8.3333%",
+                    height: 15,
+                    textAlign: "center",
+                    color: "#ecf0f1",
+                    borderStyle: "solid",
+                    borderColor: "white",
+                    borderWidth: "1px",
+                },
+            },
+        },
+    })
 );
 
-const intensities = [100, 23, 43, 54, 12, 23, 54, 34, 23, 100, 23, 43,
-                     12, 23, 54, 100, 23, 43, 54, 34, 23, 98, 42, 73];
+const intensities = [100, 23, 43, 54, 12, 23, 54, 34, 23, 100, 23, 43, 12, 23, 54, 100, 23, 43, 54, 34, 23, 98, 42, 73];
 
-const IntensityGrid = ({intensities}) => {
+const IntensityGrid = ({ intensities, colorRgb }) => {
     const classes = useStyles();
 
     const color = (intensity) => {
-        const r = 0;
-        const g = 142;
-        const b = 245;
+        const [r, g, b] = colorRgb;
         return `rgba(${r}, ${g}, ${b}, ${intensity / 100})`;
-    }
+    };
 
     return (
         <Box className={classes.intensityGrid}>
             <ul>
-                {intensities.map((intensity, i) => <li key={i} style={{backgroundColor: color(intensity)}}>&nbsp;</li>)}
+                {intensities.map((intensity, i) => (
+                    <li key={i} style={{ backgroundColor: color(intensity) }}>
+                        &nbsp;
+                    </li>
+                ))}
             </ul>
         </Box>
-    )
-}
+    );
+};
 
 const MonthView = () => {
     return (
@@ -175,20 +176,20 @@ const MonthView = () => {
 const GeneralInformation = () => {
     return (
         <DashboardPanel title="General Information">
-                    <Grid container direction="row" spacing={2}>
-                        <Grid item xs={12}>
-                            PTL 001, Spain
-                        </Grid>
-                        <Grid item xs={6}>
-                            <MonthView/>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <MonthView/>
-                            </Grid>
-                    </Grid>
-                    </DashboardPanel>
+            <Grid container direction="row" spacing={2}>
+                <Grid item xs={12}>
+                    PTL 001, Spain
+                </Grid>
+                <Grid item xs={6}>
+                    <MonthView />
+                </Grid>
+                <Grid item xs={6}>
+                    <MonthView />
+                </Grid>
+            </Grid>
+        </DashboardPanel>
     );
-}
+};
 
 const monitorTaskData = {
     changed: 12,
@@ -197,9 +198,8 @@ const monitorTaskData = {
     colorTemperatureRight: 3700,
     intensityLeft: 67.5,
     intensityRight: 42.3,
-    intensities: [100, 23, 43, 54, 12, 23, 54, 34, 23, 100, 23, 43,
-                  12, 23, 54, 100, 23, 43, 54, 34, 23, 98, 42, 73]
-}
+    intensities: [100, 23, 43, 54, 12, 23, 54, 34, 23, 100, 23, 43, 12, 23, 54, 100, 23, 43, 54, 34, 23, 98, 42, 73],
+};
 
 const paperTaskData = {
     changed: 9,
@@ -208,68 +208,74 @@ const paperTaskData = {
     colorTemperatureRight: 5300,
     intensityLeft: 42.0,
     intensityRight: 89.9,
-    intensities: [50, 77, 32, 10, 12, 23, 43, 77, 33, 59, 43, 30,
-                  43, 54, 98, 42, 73,12, 23, 54, 34, 23, 100, 23]
-}
+    intensities: [50, 77, 32, 10, 12, 23, 43, 77, 33, 59, 43, 30, 43, 54, 98, 42, 73, 12, 23, 54, 34, 23, 100, 23],
+};
 
-
-const TaskSettings = ({title, data}) => {
+const TaskSettings = ({ title, data, color, colorRgb }) => {
     const classes = useStyles();
 
-    const {changed, duration, colorTemperatureLeft, colorTemperatureRight, intensityLeft, intensityRight, intensities} = data;
+    const {
+        changed,
+        duration,
+        colorTemperatureLeft,
+        colorTemperatureRight,
+        intensityLeft,
+        intensityRight,
+        intensities,
+    } = data;
+
+    const colorStyle={color: color};
 
     return (
         <DashboardPanel title={`${title} task settings`}>
             <Grid container justify="space-between" alignItems="center" spacing={2}>
                 <Grid xs={6} className={classes.marginBottom}>
-                <Box textAlign="left">
-                    <span className={classes.dataBig}>{changed} times</span><br/>
-                    changed
+                    <Box textAlign="left">
+                        <span className={classes.dataBig} style={colorStyle}>{changed} times</span>
+                        <br />
+                        changed
                     </Box>
                 </Grid>
                 <Grid xs={6} className={classes.marginBottom}>
-                <Box textAlign="right">
-                    <span className={classes.dataBig}>{duration} hrs</span><br/>
-                    duration
-                </Box>
+                    <Box textAlign="right">
+                        <span className={classes.dataBig} style={colorStyle}>{duration} hrs</span>
+                        <br />
+                        duration
+                    </Box>
                 </Grid>
                 <Grid xs={3}>
-                    <Box className={classes.dataSmall} textAlign="left">
+                    <Box className={classes.dataSmall} style={colorStyle} textAlign="left">
                         {colorTemperatureLeft}K
                     </Box>
                 </Grid>
                 <Grid xs={6}>
-                    <Box textAlign="center">
-                        Color temperature
+                    <Box textAlign="center">Color temperature</Box>
+                </Grid>
+                <Grid xs={3}>
+                    <Box className={classes.dataSmall} style={colorStyle} textAlign="right">
+                        {colorTemperatureRight}K
                     </Box>
                 </Grid>
                 <Grid xs={3}>
-                    <Box className={classes.dataSmall} textAlign="right">
-                        {colorTemperatureRight}K    
-                    </Box>
-                </Grid>
-                <Grid xs={3}>
-                    <Box className={classes.dataSmall} textAlign="left">
+                    <Box className={classes.dataSmall} style={colorStyle} textAlign="left">
                         {intensityLeft}%
                     </Box>
                 </Grid>
                 <Grid xs={6}>
-                    <Box textAlign="center">
-                        Weighted intensity
-                    </Box>
+                    <Box textAlign="center">Weighted intensity</Box>
                 </Grid>
                 <Grid xs={3}>
-                    <Box className={classes.dataSmall} textAlign="right">
+                    <Box className={classes.dataSmall} style={colorStyle} textAlign="right">
                         {intensityRight}%
                     </Box>
                 </Grid>
                 <Grid xs={12} className={classes.marginTop}>
-                    <IntensityGrid intensities={intensities}/>
+                    <IntensityGrid intensities={intensities} colorRgb={colorRgb} />
                 </Grid>
             </Grid>
         </DashboardPanel>
     );
-}
+};
 
 const gazeDetectionData = {
     trackingTime: 435,
@@ -278,71 +284,77 @@ const gazeDetectionData = {
     totalPaperDuration: 113,
     meanMonitorDuration: 112,
     meanPaperDuration: 89,
-    intensities: [50, 77, 32, 10, 12, 23, 43, 77, 33, 59, 43, 30,
-                  43, 54, 98, 42, 73,12, 23, 54, 34, 23, 100, 23]
-}
+    dataMonitor: [0, 59, 12, 81, 56, 0],
+    dataPaper: [0, 81, 56, 55, 100, 0],
+};
 
-const GazeDetection = ({data}) => {
+const GazeDetection = ({ data }) => {
     const classes = useStyles();
 
-    const {trackingTime, derivedDetections, totalMonitorDuration,
+    const {
+        trackingTime,
+        derivedDetections,
+        totalMonitorDuration,
         totalPaperDuration,
         meanMonitorDuration,
-        meanPaperDuration, intensities} = data;
+        meanPaperDuration,
+        dataMonitor,
+        dataPaper,
+    } = data;
+
+    const monitorStyle = { color: monitorColor };
+    const paperStyle = { color: paperColor };
 
     return (
         <DashboardPanel title="Gaze Detection">
             <Grid container justify="space-between" alignItems="center" spacing={2}>
                 <Grid xs={6} className={classes.marginBottom}>
-                <Box textAlign="left">
-                    <span className={classes.dataBig}>{trackingTime} hrs</span><br/>
-                    tracking time
+                    <Box textAlign="left">
+                        <span className={classes.dataBig}>{trackingTime} hrs</span>
+                        <br />
+                        tracking time
                     </Box>
                 </Grid>
                 <Grid xs={6} className={classes.marginBottom}>
-                <Box textAlign="right">
-                    <span className={classes.dataBig}>{derivedDetections}%</span><br/>
-                    derived detections
-                </Box>
+                    <Box textAlign="right">
+                        <span className={classes.dataBig}>{derivedDetections}%</span>
+                        <br />
+                        derived detections
+                    </Box>
                 </Grid>
                 <Grid xs={3}>
-                    <Box className={classes.dataSmall} textAlign="left">
+                    <Box className={classes.dataSmall} style={monitorStyle} textAlign="left">
                         {totalMonitorDuration}&nbsp;hrs
                     </Box>
                 </Grid>
                 <Grid xs={6}>
-                    <Box textAlign="center">
-                        Total task duration
-                    </Box>
+                    <Box textAlign="center">Total task duration</Box>
                 </Grid>
                 <Grid xs={3}>
-                    <Box className={classes.dataSmall} textAlign="right">
+                    <Box className={classes.dataSmall} style={paperStyle} textAlign="right">
                         {totalPaperDuration}&nbsp;hrs
                     </Box>
                 </Grid>
                 <Grid xs={3}>
-                    <Box className={classes.dataSmall} textAlign="left">
+                    <Box className={classes.dataSmall} style={monitorStyle} textAlign="left">
                         {meanMonitorDuration}&nbsp;mins
                     </Box>
                 </Grid>
                 <Grid xs={6}>
-                    <Box textAlign="center">
-                        Mean task duration
-                    </Box>
+                    <Box textAlign="center">Mean task duration</Box>
                 </Grid>
                 <Grid xs={3}>
-                    <Box className={classes.dataSmall} textAlign="right">
+                    <Box className={classes.dataSmall} style={paperStyle} textAlign="right">
                         {meanPaperDuration}&nbsp;mins
                     </Box>
                 </Grid>
                 <Grid xs={12} className={classes.marginTop}>
-                    <LineExample />
+                    <GazeChart monitorColor={monitorColor} paperColor={paperColor} dataMonitor={dataMonitor} dataPaper={dataPaper} />
                 </Grid>
             </Grid>
         </DashboardPanel>
     );
-}
-
+};
 
 const Dashboard = () => {
     return (
@@ -350,8 +362,8 @@ const Dashboard = () => {
             <Grid xs={3}>
                 <Grid container direction="column">
                     <GeneralInformation />
-                    <TaskSettings title="Monitor" data={monitorTaskData} />
-                    <TaskSettings title="Paper" data={paperTaskData} />
+                    <TaskSettings title="Monitor" data={monitorTaskData} color={monitorColor} colorRgb={monitorColorRgb}/>
+                    <TaskSettings title="Paper" data={paperTaskData} color={paperColor} colorRgb={paperColorRgb} />
                 </Grid>
             </Grid>
             <Grid xs={6}>
@@ -363,7 +375,7 @@ const Dashboard = () => {
             <Grid xs={3}>
                 <Grid container direction="column">
                     <DashboardPanel title="Light shower usage">{textShort}</DashboardPanel>
-                    <GazeDetection data={gazeDetectionData}/>
+                    <GazeDetection data={gazeDetectionData} />
                 </Grid>
             </Grid>
             <Grid xs={12}>
@@ -372,7 +384,6 @@ const Dashboard = () => {
                 </Grid>
             </Grid>
         </Grid>
-        
     );
 };
 
