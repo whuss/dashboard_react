@@ -278,3 +278,24 @@ table .deviceMode {
     color: #777;
     text-decoration: none;
 }
+
+.large_handle {
+    fill: rgb(244, 0, 137);
+    cursor: grab;
+}
+
+.large_handle:hover {
+    fill: rgb(244, 100, 137);
+    cursor: grab;
+}
+
+.small_handle {
+    fill: white;
+    stroke: rgb(244, 0, 137);
+    strokeWidth: 2;
+    cursor: grab;
+}
+
+.small_handle:hover {
+    fill: #eee;
+}

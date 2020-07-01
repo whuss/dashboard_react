@@ -36,6 +36,7 @@ function Navigation() {
                         <NavDropdown.Divider />
                         <NavDropLink to="/analytics/settings" name="Settings" />
                         <NavDropLink to="/analytics/power" name="Power timeline" />
+                        <NavDropLink to="/statistics/switch_cycles" name="On/Off Cycles" />
                         <NavDropLink to="/analytics/scenes" name="Scenes" />
                         <NavDropLink to="/analytics/connection" name="Connection" />
                         <NavDropdown.Divider />
@@ -44,9 +45,6 @@ function Navigation() {
                         <NavDropLink to="/analytics/mouse" name="Mouse" />
                         <NavDropdown.Divider />
                         <NavDropLink to="/analytics/gaze" name="Gaze" />
-                    </NavDropdown>
-                    <NavDropdown title="Statistics" id="basic-nav-dropdown">
-                        <NavDropLink to="/statistics/switch_cycles" name="On/Off Cycles" />
                     </NavDropdown>
                     <NavDropdown title="Clustering" id="basic-nav-dropdown">
                         <NavDropLink to="/clustering/input_distributions" name="Input Distributions" />
@@ -58,11 +56,10 @@ function Navigation() {
                         <NavDropLink to="/system/stability" name="Stability" />
                         <NavDropLink to="/system/restarts" name="Restarts" />
                         <NavDropLink to="/system/errors" name="Errors" />
+                        <NavDropLink to="/system/device_status" name="Device Status" />    
+                        <NavDropLink to="/database_size" name="Database Size" />
                         <NavDropdown.Divider />
                         <NavDropLink to="/logs" name="Logs" />
-                    </NavDropdown>
-                    <NavDropdown title="Database" id="basic-nav-dropdown">
-                        <NavDropLink to="/database_size" name="Size" />
                     </NavDropdown>
                     <NavLink to="/about" name="About" />
                 </Nav>
