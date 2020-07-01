@@ -2,7 +2,10 @@ import React, { useState } from "react";
 
 import Grid from "@material-ui/core/Grid";
 import Paper from '@material-ui/core/Paper';
-import { Theme, createStyles, makeStyles } from '@material-ui/core/styles';
+import Container from '@material-ui/core/Container';
+import ScopedCssBaseline from '@material-ui/core/ScopedCssBaseline';
+import Box from '@material-ui/core/Box';
+import { Theme, createStyles, makeStyles, rgbToHex } from '@material-ui/core/styles';
 
 import useDataApi from "./Fetch";
 
@@ -16,12 +19,15 @@ const textShort =
 
 
 const DashboardPanel = ({ title, children }) => {
+    const classes = useStyles();
+
     return (
         <div style={{ position: "relative" }}>
             <div
                 style={{
                     margin: 20,
-                    padding: 30,
+                    paddingTop: 30,
+                    paddingBottom: 30,
                     //  width: "500px",
                     //  height: "300px",
                     borderWidth: 1,
@@ -29,7 +35,11 @@ const DashboardPanel = ({ title, children }) => {
                     textAlign: "justify",
                 }}
             >
-                {children}
+                 <ScopedCssBaseline>
+                <Container className={classes.root}>
+                    {children}
+                </Container>
+                </ScopedCssBaseline>
             </div>
             <div
                 style={{
@@ -51,12 +61,22 @@ const DashboardPanel = ({ title, children }) => {
 const useStyles = makeStyles((theme) =>
   createStyles({
     root: {
-    //   display: 'flex',
-    //   flexWrap: 'wrap',
-      '& > *': {
-        margin: theme.spacing(30),
-      },
+        background: "white",
     },
+    dataBig: {
+        fontSize: '20pt',
+        color: '#008ef5',
+    },
+    dataSmall: {
+        fontSize: '16pt',
+        color: '#008ef5',
+    },
+    marginBottom: {
+        marginBottom: 10,
+    },
+    marginTop: {
+        marginTop: 10,
+    }
   }),
 );
 
@@ -157,41 +177,93 @@ const GeneralInformation = () => {
                         <Grid item xs={12}>
                             PTL 001, Spain
                         </Grid>
-                        {/* <Grid item xs={6}>
+                        <Grid item xs={6}>
                             <MonthView/>
                         </Grid>
                         <Grid item xs={6}>
                             <MonthView/>
-                            </Grid> */}
+                            </Grid>
                     </Grid>
                     </DashboardPanel>
     );
 }
 
-const MonitorTaskSettings = () => {
+const monitorTaskData = {
+    changed: 12,
+    duration: 1023,
+    colorTemperatureLeft: 4000,
+    colorTemperatureRight: 3700,
+    intensityLeft: 67.5,
+    intensityRight: 42.3
+}
+
+const paperTaskData = {
+    changed: 9,
+    duration: 543,
+    colorTemperatureLeft: 5000,
+    colorTemperatureRight: 5300,
+    intensityLeft: 42.0,
+    intensityRight: 89.9
+}
+
+
+const TaskSettings = ({title, data}) => {
+    const classes = useStyles();
+
+    const {changed, duration, colorTemperatureLeft, colorTemperatureRight, intensityLeft, intensityRight} = data;
+
     return (
-        <DashboardPanel title="Monitor task settings">
-            <Grid container justify="space-between" alignItems="stretch" spacing={2}>
-                <Grid xs={6}>
-                    12 times
+        <DashboardPanel title={`${title} task settings`}>
+            <Grid container justify="space-between" alignItems="center" spacing={2}>
+                <Grid xs={6} className={classes.marginBottom}>
+                <Box textAlign="left">
+                    <span className={classes.dataBig}>{changed} times</span><br/>
                     changed
+                    </Box>
+                </Grid>
+                <Grid xs={6} className={classes.marginBottom}>
+                <Box textAlign="right">
+                    <span className={classes.dataBig}>{duration} hrs</span><br/>
+                    duration
+                </Box>
+                </Grid>
+                <Grid xs={3}>
+                    <Box className={classes.dataSmall} textAlign="left">
+                        {colorTemperatureLeft}K
+                    </Box>
                 </Grid>
                 <Grid xs={6}>
-                    1.023 hrs
-                    duration
+                    <Box textAlign="center">
+                        Color temperature
+                    </Box>
+                </Grid>
+                <Grid xs={3}>
+                    <Box className={classes.dataSmall} textAlign="right">
+                        {colorTemperatureRight}K    
+                    </Box>
+                </Grid>
+                <Grid xs={3}>
+                    <Box className={classes.dataSmall} textAlign="left">
+                        {intensityLeft}%
+                    </Box>
+                </Grid>
+                <Grid xs={6}>
+                    <Box textAlign="center">
+                        Weighted intensity
+                    </Box>
+                </Grid>
+                <Grid xs={3}>
+                    <Box className={classes.dataSmall} textAlign="right">
+                        {intensityRight}%
+                    </Box>
+                </Grid>
+                <Grid xs={12} className={classes.marginTop}>
+                    TODO: Light grid
                 </Grid>
             </Grid>
         </DashboardPanel>
     );
 }
-
-const PaperTaskSettings = () => {
-    return (
-        <DashboardPanel title="Paper task settings">calendar information</DashboardPanel>
-    );
-}
-
-
 
 const Dashboard = () => {
     return (
@@ -199,8 +271,8 @@ const Dashboard = () => {
             <Grid xs={3}>
                 <Grid container direction="column">
                     <GeneralInformation />
-                    <MonitorTaskSettings />
-                    <PaperTaskSettings />
+                    <TaskSettings title="Monitor" data={monitorTaskData} />
+                    <TaskSettings title="Paper" data={paperTaskData} />
                 </Grid>
             </Grid>
             <Grid xs={6}>
