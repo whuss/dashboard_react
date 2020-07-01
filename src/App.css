@@ -279,23 +279,38 @@ table .deviceMode {
     text-decoration: none;
 }
 
-.large_handle {
-    fill: rgb(244, 0, 137);
-    cursor: grab;
-}
+.calendar {
+    font-size: xx-small;
+    padding: 0;
+    left: 0;
+    top: 0;
+    max-width: 130px;
+    min-width: 130px;
+    min-height: 150px;
+    overflow: hidden;
+    text-align: center;
+  }
+  
+  .calendar ul {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .calendar li {
+    float: left;
+    padding-bottom: 5px;
+    width: 14.2857%;
+    text-align: center;
+    list-style-type: none;
+  }
 
-.large_handle:hover {
-    fill: rgb(244, 100, 137);
-    cursor: grab;
-}
-
-.small_handle {
-    fill: white;
-    stroke: rgb(244, 0, 137);
-    strokeWidth: 2;
-    cursor: grab;
-}
-
-.small_handle:hover {
-    fill: #eee;
-}
+  .calendar li.selected {
+    float: left;
+    padding-bottom: 5px;
+    width: 14.2857%;
+    text-align: center;
+    list-style-type: none;
+    //border-radius: 2px;
+    background-color: #1b3dff;
+    color: #ecf0f1;
+  }
