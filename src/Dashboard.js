@@ -7,6 +7,7 @@ import ScopedCssBaseline from "@material-ui/core/ScopedCssBaseline";
 import Box from "@material-ui/core/Box";
 import { Theme, createStyles, makeStyles, rgbToHex } from "@material-ui/core/styles";
 import GazeChart from "./DashboardGazeChart";
+import UsageChart from "./DashboardUsageChart";
 
 import useDataApi from "./Fetch";
 
@@ -95,10 +96,24 @@ const useStyles = makeStyles((theme) =>
                 },
             },
         },
+        histogramGrid: {
+            "& ul": {
+                listStyleType: "none",
+                margin: 0,
+                padding: 0,
+                "& li": {
+                    float: "left",
+                    width: "10%",
+                    height: 15,
+                    textAlign: "center",
+                    borderStyle: "solid",
+                    borderColor: "white",
+                    borderWidth: "1px",
+                },
+            },
+        },
     })
 );
-
-const intensities = [100, 23, 43, 54, 12, 23, 54, 34, 23, 100, 23, 43, 12, 23, 54, 100, 23, 43, 54, 34, 23, 98, 42, 73];
 
 const IntensityGrid = ({ intensities, colorRgb }) => {
     const classes = useStyles();
@@ -113,6 +128,27 @@ const IntensityGrid = ({ intensities, colorRgb }) => {
             <ul>
                 {intensities.map((intensity, i) => (
                     <li key={i} style={{ backgroundColor: color(intensity) }}>
+                        &nbsp;
+                    </li>
+                ))}
+            </ul>
+        </Box>
+    );
+};
+
+const HistogramGrid = ({ data, colorRgb }) => {
+    const classes = useStyles();
+
+    const color = (h) => {
+        const [r, g, b] = colorRgb;
+        return `rgba(${r}, ${g}, ${b}, ${h / 100})`;
+    };
+
+    return (
+        <Box className={classes.histogramGrid}>
+            <ul>
+                {data.map((h, i) => (
+                    <li key={i} style={{ backgroundColor: color(h) }}>
                         &nbsp;
                     </li>
                 ))}
@@ -211,6 +247,51 @@ const paperTaskData = {
     intensities: [50, 77, 32, 10, 12, 23, 43, 77, 33, 59, 43, 30, 43, 54, 98, 42, 73, 12, 23, 54, 34, 23, 100, 23],
 };
 
+const UsageProfile = () => {
+    const classes = useStyles();
+
+    const data = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+
+    const ULine = ({ name, data, percentage }) => (
+        <>
+            <Grid container alignItems="center">
+            <Grid xs={3} className={classes.marginBottom}>
+                <Box textAlign="left" bgColor="primary.main">{name}</Box>
+            </Grid>
+            <Grid xs={8} className={classes.marginBottom}>
+                <HistogramGrid data={data} colorRgb={monitorColorRgb} />
+            </Grid>
+            <Grid xs={1} className={classes.marginBottom}>
+                <Box style={{ marginLeft: 10 }} textAlign="right">
+                    {percentage}%
+                </Box>
+            </Grid>
+            </Grid>
+        </>
+    );
+
+    return (
+        <DashboardPanel title="Usage profile">
+            <Grid container justify="space-between" alignItems="center" spacing={2}>
+                <Grid container item xs={7} alignItems="center">
+                    <ULine name="Mode usage" data={data} percentage={89} />
+                    <ULine name="Interaction" data={data} percentage={56} />
+                    <ULine name="Rebound" data={data} percentage={72} />
+                    <ULine name="Frequency" data={data} percentage={43} />
+                    <ULine name="Task" data={data} percentage={53} />
+
+                    {/* <ULine name="Mode usage" data={data} percentage={89} />
+                    <ULine name="Interaction" data={data} percentage={56} />
+                    <ULine name="Rebound" data={data} percentage={72} />
+                    <ULine name="Frequency" data={data} percentage={43} />
+                    <ULine name="Task" data={data} percentage={53} /> */}
+                </Grid>
+                <Grid xs={5}><UsageChart/></Grid>
+            </Grid>
+        </DashboardPanel>
+    );
+};
+
 const TaskSettings = ({ title, data, color, colorRgb }) => {
     const classes = useStyles();
 
@@ -224,21 +305,25 @@ const TaskSettings = ({ title, data, color, colorRgb }) => {
         intensities,
     } = data;
 
-    const colorStyle={color: color};
+    const colorStyle = { color: color };
 
     return (
         <DashboardPanel title={`${title} task settings`}>
             <Grid container justify="space-between" alignItems="center" spacing={2}>
                 <Grid xs={6} className={classes.marginBottom}>
                     <Box textAlign="left">
-                        <span className={classes.dataBig} style={colorStyle}>{changed} times</span>
+                        <span className={classes.dataBig} style={colorStyle}>
+                            {changed} times
+                        </span>
                         <br />
                         changed
                     </Box>
                 </Grid>
                 <Grid xs={6} className={classes.marginBottom}>
                     <Box textAlign="right">
-                        <span className={classes.dataBig} style={colorStyle}>{duration} hrs</span>
+                        <span className={classes.dataBig} style={colorStyle}>
+                            {duration} hrs
+                        </span>
                         <br />
                         duration
                     </Box>
@@ -349,7 +434,12 @@ const GazeDetection = ({ data }) => {
                     </Box>
                 </Grid>
                 <Grid xs={12} className={classes.marginTop}>
-                    <GazeChart monitorColor={monitorColor} paperColor={paperColor} dataMonitor={dataMonitor} dataPaper={dataPaper} />
+                    <GazeChart
+                        monitorColor={monitorColor}
+                        paperColor={paperColor}
+                        dataMonitor={dataMonitor}
+                        dataPaper={dataPaper}
+                    />
                 </Grid>
             </Grid>
         </DashboardPanel>
@@ -362,14 +452,19 @@ const Dashboard = () => {
             <Grid xs={3}>
                 <Grid container direction="column">
                     <GeneralInformation />
-                    <TaskSettings title="Monitor" data={monitorTaskData} color={monitorColor} colorRgb={monitorColorRgb}/>
+                    <TaskSettings
+                        title="Monitor"
+                        data={monitorTaskData}
+                        color={monitorColor}
+                        colorRgb={monitorColorRgb}
+                    />
                     <TaskSettings title="Paper" data={paperTaskData} color={paperColor} colorRgb={paperColorRgb} />
                 </Grid>
             </Grid>
             <Grid xs={6}>
                 <Grid container direction="column">
                     <DashboardPanel title="Lighting mode usage">{text}</DashboardPanel>
-                    <DashboardPanel title="Usage Profile">{text}</DashboardPanel>
+                    <UsageProfile />
                 </Grid>
             </Grid>
             <Grid xs={3}>
