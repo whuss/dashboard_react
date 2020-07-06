@@ -1,0 +1,12 @@
+# Dockerfile
+# Starting from Python 3.6.9 base image
+FROM python:3.6.9
+
+
+# Set the WORKDIR
+WORKDIR /app
+
+COPY requirements.txt ./
+RUN pip install --trusted-host=pypi.org --trusted-host=pypi.python.org --trusted-host=files.pythonhosted.org --no-cache-dir -r requirements.txt
+
+ENV PYTHONPATH .

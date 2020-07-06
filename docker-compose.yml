@@ -12,6 +12,8 @@ services:
         command: "python app.py"
         environment:
             TZ: "Europe/Vienna"
+        volumes:
+            - ".:/app"
 
     frontend:
         restart: always
