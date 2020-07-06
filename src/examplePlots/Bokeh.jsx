@@ -6,7 +6,7 @@ import { LoadingAnimation } from "../framework/Toolbar";
 const Plot = () => {
     const plot_name = "PlotExampleBokeh";
     const plot_parameters = {number_of_points: 100};
-    const { flags, plot } = usePlot(plot_name, plot_parameters, false);
+    const { flags, plot } = usePlot(plot_name, plot_parameters);
     const { fields, isLoading, isError, errorMsg } = flags;
 
     return (

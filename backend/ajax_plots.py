@@ -21,11 +21,6 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_svg import FigureCanvasSVG
 from matplotlib.figure import Figure
 
-import plots
-from config import Config
-from db import DatabaseDelay, PresenceDetectorStatistics, Errors, Dashboard
-from utils.date import start_of_day, end_of_day, format_time_span, parse_date
-
 # ----------------------------------------------------------------------------------------------------------------------
 
 

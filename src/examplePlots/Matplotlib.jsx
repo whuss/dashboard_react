@@ -16,7 +16,7 @@ const Plot = () => {
     });
     const plot_name = "PlotExampleMatplotlib";
     const file_name = "example_data.xlsx";
-    const { flags, plot, plotParameters, setPlotParameters } = usePlot(plot_name, { sigma: sigma, mu: mu }, false);
+    const { flags, plot, plotParameters, setPlotParameters } = usePlot(plot_name, { sigma: sigma, mu: mu });
     const { fields, isLoading, isError, errorMsg } = flags;
 
     useEffect(() => {
