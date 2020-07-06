@@ -19,7 +19,7 @@ const data = {
        pointRadius: 0,
        pointHitRadius: 20,
       data: [65, 59, 80, 81, 56, 55, 40]
-    }, 
+    },
     {
         label: "Paper",
         fill: false,
@@ -50,7 +50,7 @@ const LineExample = () => {
                 },
                 gridLines: {
                     display:false
-                }   
+                }
             }]
         }
     }

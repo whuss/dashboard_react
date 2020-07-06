@@ -9,8 +9,7 @@ from flask import Flask, jsonify, request, json, Response
 from flask_caching import Cache
 from flask_cors import CORS, cross_origin
 
-from ajax_plots import AjaxFactory, PlotDatabaseSize
-from ajax_plots import TableRestarts
+from ajax_plots import AjaxFactory
 from config import Config
 from db import Errors, Dashboard
 from db import db

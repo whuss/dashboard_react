@@ -1,7 +1,7 @@
 import React from "react";
 
-import { usePlot } from "../BokehPlot";
-import { LoadingAnimation } from "../Toolbar";
+import { usePlot } from "../framework/Plot";
+import { LoadingAnimation } from "../framework/Toolbar";
 
 const Plot = () => {
     const plot_name = "PlotExampleBokeh";

@@ -1,23 +1,16 @@
-import React, { useState } from "react";
+import React from "react";
 
 import Grid from "@material-ui/core/Grid";
-import Paper from "@material-ui/core/Paper";
 import Container from "@material-ui/core/Container";
 import ScopedCssBaseline from "@material-ui/core/ScopedCssBaseline";
 import Box from "@material-ui/core/Box";
-import { Theme, createStyles, makeStyles, rgbToHex } from "@material-ui/core/styles";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
 import GazeChart from "./DashboardGazeChart";
 import LightingModeChart from "./DashboardLightingModeChart";
 import UsageChart from "./DashboardUsageChart";
 import Doughnut from "./DashboardDoughnut";
 import LightShowerChart from "./DashboardLightShowerChart";
 
-import useDataApi from "./Fetch";
-
-import { LoadingAnimation } from "./Toolbar";
-
-const text =
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
 const textShort =
     "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.";
@@ -68,7 +61,7 @@ const DashboardPanel = ({ title, children }) => {
     );
 };
 
-const useStyles = makeStyles((theme) =>
+const useStyles = makeStyles(() =>
     createStyles({
         root: {
             background: "white",

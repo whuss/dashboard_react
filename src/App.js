@@ -5,9 +5,8 @@ import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 
 import "./App.css";
-import Dashboard from "./Dashboard";
+import Dashboard from "./dashboard/Dashboard";
 import Navigation from "./Navigation";
-import { LoadingAnimation, useDevice } from "./Toolbar";
 import ExamplePlotBokeh from "./examplePlots/Bokeh";
 import ExamplePlotMatplotlib from "./examplePlots/Matplotlib";
 import ExamplePlotChartJs from "./examplePlots/ChartJS";

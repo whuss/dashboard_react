@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import Button from "react-bootstrap/Button";
 
-import { usePlot } from "../BokehPlot";
-import { LoadingAnimation, useDropdown } from "../Toolbar";
-import { downloadFile } from "../Fetch";
+import { usePlot } from "../framework/Plot";
+import { LoadingAnimation, useDropdown } from "../framework/Toolbar";
+import { downloadFile } from "../framework/Fetch";
 
 const Plot = () => {
     const [sigma, setSigma] = useDropdown(15, {

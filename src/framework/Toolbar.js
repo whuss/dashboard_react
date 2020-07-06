@@ -66,7 +66,7 @@ function useDropdown(initialValue, config) {
 }
 
 const LoadingAnimation = (props) => {
-    const spinner = props.spinner ? <></> : <div style={props.style}><Spinner animation="border" size="sm" variant="secondary" /></div>; 
+    const spinner = props.spinner ? <></> : <div style={props.style}><Spinner animation="border" size="sm" variant="secondary" /></div>;
     const use_spinner = props.silent ? <></> : spinner;
 
     return (
@@ -158,7 +158,7 @@ function Toolbar(props) {
 
 function ToolbarBottom(props) {
     const toolBarRoot = document.getElementById("toolbar-bottom-root");
-    
+
     const toolBar = <Container fluid className="toolbar border-top"><Row lg={12}>{props.children}</Row></Container>;
     //const toolBar = <>{props.children}</>
 

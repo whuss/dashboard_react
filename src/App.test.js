@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { render } from "@testing-library/react";
 import App, { MainView } from "./App";
 import { MemoryRouter } from "react-router-dom";
-import { useDevice, LoadingAnimation } from "./Toolbar";
+import { useDevice, LoadingAnimation } from "./framework/Toolbar";
 
 jest.mock("react-dom");
 

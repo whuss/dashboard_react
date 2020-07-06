@@ -1,7 +1,7 @@
 import React from "react";
 import { Line } from "react-chartjs-2";
-import { LoadingAnimation } from "../Toolbar";
-import useDataApi from "../Fetch";
+import { LoadingAnimation } from "../framework/Toolbar";
+import useDataApi from "../framework/Fetch";
 
 const GazeChart = ({ monitorColor, paperColor, dataMonitor, dataPaper }) => {
     const data = {
