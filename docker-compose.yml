@@ -2,20 +2,6 @@ version: '3'
 
 services:
 
-    mysqlcache:
-        restart: always
-        build: mysql_cache
-        environment:
-            MYSQL_DATABASE: bbf_inf_cache
-            MYSQL_ROOT_PASSWORD: iGe9kH9j
-            TZ: "Europe/Vienna"
-        #ports:
-        #   - "3308:3306"
-        expose:
-            - 3306
-        volumes:
-            - "/docker_volume/mysql:/var/lib/mysql:rw"
-
     backend:
         restart: always
         build: ./backend
@@ -25,7 +11,7 @@ services:
             - 5000
         depends_on:
             - mysqlcache
-        command: sh -c "/wait && python scripts/cache_queries.py init --yes && ./gunicorn_starter.sh"
+        command: sh -c "./gunicorn_starter.sh"
         environment:
             WAIT_HOSTS: "mysqlcache:3306"
             WAIT_HOSTS_TIMEOUT: 300
@@ -47,27 +33,3 @@ services:
             - backend
         environment:
             TZ: "Europe/Vienna"
-
-    cache:
-        restart: always
-        build:
-            context: ./backend
-            dockerfile: Dockerfile.cache
-        depends_on:
-            - backend
-            - mysqlcache
-        volumes:
-            - "/docker_volume/jobber_logs:/jobber_logs:rw"
-        environment:
-            TZ: "Europe/Vienna"
-
-#    adminer:
-#        build: ./adminer
-#        ports:
-#            - 8080:8080
-#        expose:
-#            - 8080
-#        depends_on:
-#            - mysqlcache
-#        environment:
-#            TZ: "Europe/Vienna"
