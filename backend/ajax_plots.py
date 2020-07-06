@@ -11,6 +11,7 @@ from base64 import b64encode, b64decode
 from datetime import timedelta, date
 from typing import Dict
 
+import numpy as np
 import pandas as pd
 from bokeh.embed import components
 from bokeh.layouts import column
@@ -770,7 +771,7 @@ class PlotDatabaseDelay(AjaxPlotBokeh):
 
     def _plot(self, device_data):
         fig = plots.plot_duration_histogram(device_data.delay, time_scale="s",
-                                            x_axis_label="Package delay", 
+                                            x_axis_label="Package delay",
                                             y_axis_label="Amount",
                                             plot_width=600, plot_height=400)
         return fig
@@ -1377,5 +1378,86 @@ class PlotGazeData(AjaxPlotBokeh):
         fig3 = plot_daily_gaze_detection_durations(gaze_data.copy(), x_range=fig1.x_range)
 
         return column([fig1, fig2, fig3])
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotExampleBokeh(AjaxPlotBokeh):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self.number_of_points = plot_parameters.get('number_of_points', 100)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        import numpy as np
+        # create three normal population samples with different parameters
+        x = np.array(range(self.number_of_points))
+        y = np.sin(x/10)
+        data = pd.DataFrame(np.vstack([x,y]).T, columns=['x', 'y'])
+        if data.empty:
+            return None
+
+        return data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, data):
+        x = data.x
+        y = data.y
+        from bokeh.plotting import figure
+
+        p = figure(title="simple line example", x_axis_label='x', y_axis_label='y')
+
+        # add a line renderer with legend and line thickness
+        p.line(x, y, legend_label="sin(x/10)", line_width=2)
+        return p
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class PlotExampleMatplotlib(AjaxPlotMpl):
+    def __init__(self, plot_parameters: dict):
+        super().__init__(plot_parameters)
+        self.sigma = plot_parameters.get('sigma', 15)  # standard deviation of distribution
+        self.mu = plot_parameters.get('mu', 100)
+
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _fetch(self):
+        # example data
+        x = self.mu + self.sigma * np.random.randn(437)
+
+        data = pd.DataFrame(x, columns=['x'])
+        if data.empty:
+            return None
+
+        return data
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def _plot(self, data):
+        x = data.x
+        import matplotlib.pyplot as plt
+
+        # the histogram of the data
+        num_bins = 50
+        fig, ax = plt.subplots()
+        n, bins, patches = ax.hist(x, num_bins, density=1)
+
+        y = ((1 / (np.sqrt(2 * np.pi) * self.sigma)) *
+                np.exp(-0.5 * (1 / self.sigma * (bins - self.mu))**2))
+
+        # add a 'best fit' line
+
+        ax.plot(bins, y, '--')
+        ax.set_xlabel('Smarts')
+        ax.set_ylabel('Probability density')
+        ax.set_title(f'Histogram of IQ: $\\mu={self.mu}$, $\\sigma={self.sigma}$')
+
+        # Tweak spacing to prevent clipping of ylabel
+        fig.tight_layout()
+        return fig
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -31,35 +31,11 @@ function Navigation() {
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="mr-auto">
                     <NavLink to="/" name="Dashboard" />
-                    <NavDropdown title="Analytics" id="basic-nav-dropdown">
-                        <NavDropLink to="/analytics/sensor" name="Sensor" />
+                    <NavDropdown title="Plots" id="basic-nav-dropdown">
+                        <NavDropLink to="/plots/bokeh" name="Bokeh" />
                         <NavDropdown.Divider />
-                        <NavDropLink to="/analytics/settings" name="Settings" />
-                        <NavDropLink to="/analytics/power" name="Power timeline" />
-                        <NavDropLink to="/statistics/switch_cycles" name="On/Off Cycles" />
-                        <NavDropLink to="/analytics/scenes" name="Scenes" />
-                        <NavDropLink to="/analytics/connection" name="Connection" />
-                        <NavDropdown.Divider />
-                        <NavDropLink to="/analytics/keyboard" name="Keyboard" />
-                        <NavDropLink to="/analytics/keypress" name="Keypress" />
-                        <NavDropLink to="/analytics/mouse" name="Mouse" />
-                        <NavDropdown.Divider />
-                        <NavDropLink to="/analytics/gaze" name="Gaze" />
-                    </NavDropdown>
-                    <NavDropdown title="Clustering" id="basic-nav-dropdown">
-                        <NavDropLink to="/clustering/input_distributions" name="Input Distributions" />
-                        <NavDropLink to="/clustering/scatter_plot" name="Cluster Scatter Plot" />
-                        <NavDropLink to="/clustering/frequency" name="Daily Cluster Frequency" />
-                        <NavDropLink to="/clustering/timeline" name="Daily Cluster Timeline" />
-                    </NavDropdown>
-                    <NavDropdown title="System" id="basic-nav-dropdown">
-                        <NavDropLink to="/system/stability" name="Stability" />
-                        <NavDropLink to="/system/restarts" name="Restarts" />
-                        <NavDropLink to="/system/errors" name="Errors" />
-                        <NavDropLink to="/system/device_status" name="Device Status" />    
-                        <NavDropLink to="/database_size" name="Database Size" />
-                        <NavDropdown.Divider />
-                        <NavDropLink to="/logs" name="Logs" />
+                        <NavDropLink to="/plots/matplotlib" name="Matplotlib" />
+                        <NavDropLink to="/plots/chartjs" name="ChartJS" />
                     </NavDropdown>
                     <NavLink to="/about" name="About" />
                 </Nav>

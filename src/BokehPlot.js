@@ -188,19 +188,23 @@ function element(isError, errorMsg, data) {
     return data && data.plot && plotDispatch(data.plot);
 }
 
-function usePlot(plot_name, plot_parameters, cached) {
+function usePlot(plot_name, initial_plot_parameters, cached) {
+    const [plotParameters, setPlotParameters] = useState(initial_plot_parameters);
     const url = plotUrl(plot_name, cached);
-    const [{ data, isLoading, isError, errorMsg }, doFetch] = usePostApi(url, plot_parameters);
+    const [{ data, isLoading, isError, errorMsg }, doFetch] = usePostApi(url, plotParameters);
 
     const { plot, fields } = data;
 
     const plotElement = element(isError, errorMsg, data);
 
-    //useEffect(() => {
-    //    doFetch(url, plot_parameters);
-    //}, [url, plot_parameters, doFetch]);
+    useEffect(() => {
+        doFetch(url, plotParameters);
+    }, [url, plotParameters, doFetch]);
 
-    return [{ fields, isLoading, isError, errorMsg }, plotElement];
+    return {flags: { fields, isLoading, isError, errorMsg },
+            plot: plotElement,
+            plotParameters,
+            setPlotParameters};
 }
 
 export default Plot;

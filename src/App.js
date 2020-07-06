@@ -4,51 +4,40 @@ import Jumbotron from "react-bootstrap/Jumbotron";
 import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 
-import AnalyticsConnection from "./AnalyticsConnection";
-import AnalyticsGaze from "./AnalyticsGaze";
-import AnalyticsKeyboard from "./AnalyticsKeyboard";
-import AnalyticsKeypress from "./AnalyticsKeypress";
-import AnalyticsMouse from "./AnalyticsMouse";
-import AnalyticsPowerTimeline from "./AnalyticsPowerTimeline";
-import AnalyticsScenes from "./AnalyticsScenes";
-import AnalyticsSensor from "./AnalyticsSensor";
-import AnalyticsSettings from "./AnalyticsSettings";
 import "./App.css";
-import Plot from "./BokehPlot";
-import ClusteringFrequency from "./ClusteringFrequency";
-import ClusteringInputDistributions from "./ClusteringInputDistributions";
-import ClusteringScatterPlot from "./ClusteringScatterPlot";
-import ClusteringTimeline from "./ClusteringTimeline";
 import Dashboard from "./Dashboard";
-import DeviceDetails from "./DeviceDetails";
 import Navigation from "./Navigation";
-import SwitchCycles from "./SwitchCycles";
-import SystemErrors from "./SystemErrors";
-import SystemLogs from "./SystemLogs";
-import SystemRestarts from "./SystemRestarts";
-import SystemStability from "./SystemStability";
-import DeviceStatus from "./SystemDeviceStatus";
 import { LoadingAnimation, useDevice } from "./Toolbar";
+import ExamplePlotBokeh from "./examplePlots/Bokeh";
+import ExamplePlotMatplotlib from "./examplePlots/Matplotlib";
+import ExamplePlotChartJs from "./examplePlots/ChartJS";
 
 const Title = (props) => {
     const titleBar = document.getElementById("titlebar-root");
     return ReactDOM.createPortal(<h2>{props.title}</h2>, titleBar);
 };
 
-const NavPortal = (props) => {
+const NavPortal = () => {
     const titleBar = document.getElementById("navbar-root");
     return ReactDOM.createPortal(<Navigation />, titleBar);
 };
 
-const NavRoute = (props) => (
-    <Route path={props.path}>
-        <Title title={props.title} />
-        {props.children}
+const NavRoute = ({ path, title, children }) => (
+    <Route path={path}>
+        <Title title={title} />
+        {children}
     </Route>
 );
 
-const MainView = (props) => {
-    const devices = props.devices;
+const About = () => (
+    <>
+        <Jumbotron>
+            <h1 className="header">Todo ...</h1>
+        </Jumbotron>
+    </>
+);
+
+const MainView = () => {
     return (
         <Container fluid>
             {/* A <Switch> looks through its children <Route>s and
@@ -57,112 +46,30 @@ const MainView = (props) => {
                 <NavRoute path="/about" title="About">
                     <About />
                 </NavRoute>
-                <NavRoute
-                    path={["/analytics/sensor/:device/:sensor/:sample_rate/:start_date/:end_date", "/analytics/sensor"]}
-                    title="Analytics Sensor"
-                >
-                    <AnalyticsSensor devices={devices} />
+                <NavRoute path="/plots/bokeh" title="Bokeh Plot">
+                    <ExamplePlotBokeh />
                 </NavRoute>
-                <NavRoute path="/analytics/settings" title="Analytics Settings">
-                    <AnalyticsSettings devices={devices} />
+                <NavRoute path="/plots/matplotlib" title="Matplotlib Plot">
+                    <ExamplePlotMatplotlib />
                 </NavRoute>
-                <NavRoute path="/analytics/scenes" title="Analytics Scenes">
-                    <AnalyticsScenes devices={devices} />
-                </NavRoute>
-                <NavRoute path="/analytics/power" title="Analytics Power timeline">
-                    <AnalyticsPowerTimeline devices={devices} />
-                </NavRoute>
-                <NavRoute path="/analytics/connection" title="Analytics Connection">
-                    <AnalyticsConnection devices={devices} />
-                </NavRoute>
-                <NavRoute path="/analytics/keyboard" title="Analytics Keyboard">
-                    <AnalyticsKeyboard devices={devices} />
-                </NavRoute>
-                <NavRoute path="/analytics/keypress" title="Analytics Keypress">
-                    <AnalyticsKeypress devices={devices} />
-                </NavRoute>
-                <NavRoute path="/analytics/mouse" title="Analytics Mouse">
-                    <AnalyticsMouse devices={devices} />
-                </NavRoute>
-                <NavRoute path="/analytics/gaze" title="Analytics Gaze">
-                    <AnalyticsGaze devices={devices} />
-                </NavRoute>
-                <NavRoute path="/clustering/input_distributions" title="Clustering Input Distributions">
-                    <ClusteringInputDistributions devices={devices} />
-                </NavRoute>
-                <NavRoute path="/clustering/scatter_plot" title="Clustering Scatter Plot">
-                    <ClusteringScatterPlot devices={devices} />
-                </NavRoute>
-                <NavRoute path="/clustering/frequency" title="Daily Cluster Frequency">
-                    <ClusteringFrequency devices={devices} />
-                </NavRoute>
-                <NavRoute path="/clustering/timeline" title="Daily Cluster Timeline">
-                    <ClusteringTimeline devices={devices} />
-                </NavRoute>
-                <NavRoute path="/statistics/switch_cycles" title="Statistics On/Off Cycles">
-                    <SwitchCycles devices={devices} />
-                </NavRoute>
-                <NavRoute path="/system/stability" title="System Stability">
-                    <SystemStability devices={devices} />
-                </NavRoute>
-                <NavRoute path="/system/restarts" title="System Restarts">
-                    <SystemRestarts devices={devices} />
-                </NavRoute>
-                <NavRoute path="/system/errors" title="System Errors">
-                    <SystemErrors devices={devices} />
-                </NavRoute>
-                <NavRoute path="/system/device_status" title="Device Status">
-                    <DeviceStatus devices={devices} />
-                </NavRoute>
-                <NavRoute path="/database_size" title="Database Size">
-                    <Plot src="/backend/plot_database_size" />
-                </NavRoute>
-                <NavRoute
-                    path={[
-                        "/logs/:device/:duration/:log_level/:timestamp",
-                        "/logs/:device/:duration/:log_level",
-                        "/logs/:device/:duration",
-                        "/logs/:device",
-                        "/logs",
-                    ]}
-                    title="Logs"
-                >
-                    <SystemLogs devices={devices} />
-                </NavRoute>
-                <NavRoute path={["/device_details/:device", "/device_details"]} title="Device Details">
-                    <DeviceDetails devices={devices} />
+                <NavRoute path="/plots/chartjs" title="ChartJS Plot">
+                    <ExamplePlotChartJs />
                 </NavRoute>
                 <NavRoute path="/" title="Field study fact sheet (work in progress)">
-                    <Dashboard devices={devices} />
+                    <Dashboard />
                 </NavRoute>
             </Switch>
         </Container>
     );
 };
 
-const AppRouter = (props) => {
-    const [devices, isLoading, isError] = useDevice();
+const App = () => {
     return (
         <Router>
             <NavPortal />
-            <LoadingAnimation isLoading={isLoading} isError={isError}>
-                <MainView devices={devices} />
-            </LoadingAnimation>
+            <MainView />
         </Router>
     );
 };
 
-const About = (props) => (
-    <>
-    <Jumbotron>
-        <h1 className="header">Todo ...</h1>
-    </Jumbotron>
-    <div style={{width: 500, height: 500}}>
-    </div>
-    </>
-);
-
-const App = () => <AppRouter />;
-
 export default App;
-export { MainView };
