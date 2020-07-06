@@ -11,7 +11,13 @@ import { useParams, Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSortDown, faSortUp } from "@fortawesome/free-solid-svg-icons";
 
-const DrawTable = (props) => {
+interface DrawTableProps {
+    devices: string[],
+    format_header: any,
+    format_row: any
+}
+
+const DrawTable = (props: DrawTableProps) => {
     const [ascending, setAscenting] = useState(DrawTable.ascending);
 
     function sort(d: string[]) {
