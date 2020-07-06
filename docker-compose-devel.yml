@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+
+    backend:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile.devel
+        ports:
+          - "5000:5000"
+        expose:
+            - 5000
+        command: "python app.py"
+        environment:
+            TZ: "Europe/Vienna"
+        volumes:
+            - "./backend:/app"
+
+    frontend:
+        build:
+            context: .
+            dockerfile: Dockerfile.devel
+        ports:
+            - 3000:3000
+        expose:
+            - 3000
+        depends_on:
+            - backend
+        environment:
+            TZ: "Europe/Vienna"
+        #volumes:
+        #    - ".:/app"

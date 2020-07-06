@@ -9,11 +9,9 @@ services:
         #  - "5000:5000"
         expose:
             - 5000
-        command: "python app.py"
+        command: sh -c "./gunicorn_starter.sh"
         environment:
             TZ: "Europe/Vienna"
-        volumes:
-            - ".:/app"
 
     frontend:
         restart: always
