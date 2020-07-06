@@ -12,14 +12,4 @@ RUN pip install --trusted-host=pypi.org --trusted-host=pypi.python.org --trusted
 
 COPY . ./
 
-ENV CACHE_DB mysqlcache
 ENV PYTHONPATH .
-
-#ENTRYPOINT ["./gunicorn_starter.sh"]
-
-ENV WAIT_VERSION 2.7.2
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/$WAIT_VERSION/wait /wait
-RUN chmod +x /wait
-
-# initialize cache tables
-CMD ["python", "scripts/cache_queries.py", "init", "--yes"]
